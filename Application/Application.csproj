@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="Bus.Interfaces\" />
+      <Folder Include="Repositories.Interfaces\" />
+      <Folder Include="UseCases\ActivateAccount\" />
+      <Folder Include="UseCases\AuthenticateAccount\" />
+      <Folder Include="UseCases\AuthorizeAccount\" />
+      <Folder Include="UseCases\ChangeEmailAccount\" />
+      <Folder Include="UseCases\ChangePasswordAccount\" />
+      <Folder Include="UseCases\ChangePhoneAccount\" />
+      <Folder Include="UseCases\CreateAccount\" />
+      <Folder Include="UseCases\DeactivateAccount\" />
+    </ItemGroup>
+
+</Project>
