@@ -1,35 +1,33 @@
 using System;
-using Domain.Account;
+using Domain.AccountAggregate;
 
 namespace Domain.Tests.AccountTests.Common;
 
 public class TestingAccountCreator
 {
-    public Account.Account CreateAccount(
+    public Account CreateAccount(
         bool isValidId = true,
-        bool isValidRoleId = true,
+        bool isValidRole = true,
         bool isValidEmail = true,
         bool isValidPhone = true,
         bool isValidPassword = true,
-        bool isActive = true,
-        bool isDeleted = false)
+        bool isValidStatus = true)
     {
         return new AccountFactory().CreateAccount(
             CreateId(isValidId),
-            CreateRoleId(isValidRoleId),
+            CreateRoleId(isValidRole),
             CreateEmail(isValidEmail),
             CreatePhone(isValidPhone),
             CreatePassword(isValidPassword),
-            isActive,
-            isDeleted);
+            CreateStatus(isValidStatus));
     }
 
     // todo: remove this if we don't need it
     private Guid CreateId(bool isValidId) =>
         isValidId ? Guid.NewGuid() : Guid.Empty;
 
-    private int CreateRoleId(bool isValidRoleId) => 
-        isValidRoleId ? 1 : -1;
+    private Role CreateRoleId(bool isValidRole) =>
+        isValidRole ? Role.Customer : new Role("unsupported", 0);
     
     private string CreateEmail(bool isValidEmail) =>
         isValidEmail ? "email@mail.com" : "email.com";
@@ -39,4 +37,7 @@ public class TestingAccountCreator
     
     private string CreatePassword(bool isValidPassword) =>
         isValidPassword ? "somepassword" : "pass";
+    
+    private Status CreateStatus(bool isValidStatus) =>
+        isValidStatus ? Status.Confirmed : new Status("unsupported", 0);
 }

@@ -17,6 +17,8 @@
       <Folder Include="UseCases\ChangePhoneAccount\" />
       <Folder Include="UseCases\CreateAccount\" />
       <Folder Include="UseCases\DeactivateAccount\" />
+      <Folder Include="UseCases\GetByEmailAccount\" />
+      <Folder Include="UseCases\GetByIdAccount\" />
     </ItemGroup>
 
 </Project>

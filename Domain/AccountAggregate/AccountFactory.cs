@@ -1,28 +1,26 @@
 using Domain.Exceptions;
 
-namespace Domain.Account;
+namespace Domain.AccountAggregate;
 
 public class AccountFactory
 {
     public Account CreateAccount(
         Guid id,
-        int roleId,
+        Role role,
         string email,
         string phone,
         string password,
-        bool isActive = true,
-        bool isDeleted = false)
+        Status status)
     {
-        var errors = EntityValidate(id, roleId, email, phone, password);
+        var errors = EntityValidate(id, email, phone, password);
         if (errors.Any() == false)
-            return new Account(id, roleId, email, phone, password, isActive, isDeleted);
+            return new Account(id, role, email, phone, password, status);
         
         throw new FactoryException(errors);
     }
 
-    private IEnumerable<DomainException> EntityValidate(
+    private List<DomainException> EntityValidate(
         Guid id,
-        int roleId,
         string email,
         string phone,
         string password)
@@ -32,10 +30,6 @@ public class AccountFactory
         if (id == Guid.Empty)
             errors.Add(new DomainException("Id is required",
                 "Id is invalid or empty"));
-
-        if (roleId is < 0 or > 4)              // TODO: add roles validation
-            errors.Add(new DomainException("RoleId is required",
-                "RoleId is invalid or empty"));
 
         if (string.IsNullOrEmpty(email))
             errors.Add(new DomainException("Email is required",

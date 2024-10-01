@@ -4,18 +4,142 @@ option csharp_namespace = "API";
 
 package greet;
 
-// The greeting service definition.
-service Greeter {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply);
+// Common messages
+message Error {
+  string Title = 1;
+  string Description = 2;
+  int32 StatusCode = 3;
 }
 
-// The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
+enum Role{
+  CUSTOMER = 0;
+  ADMIN = 1;
+  SUPPORT = 2;
+  MAINTENANCE = 3;
+  HR = 4;
 }
 
-// The response message containing the greetings.
-message HelloReply {
-  string message = 1;
+enum Status{
+  UNCONFIRMED = 0;
+  CONFIRMED = 1;
+  DEACTIVATED = 2;
+  DELETED = 3;
 }
+
+
+// Service
+service Identity {
+  rpc Authorize (AuthorizeReq) returns (AuthorizeResp);
+}
+
+
+// Authorize account
+message AuthorizeReq {
+  string cor_tkn = 1;
+  string tkn = 2;
+}
+
+message AuthorizeResp {
+  string cor_tkn = 1;
+  string user_id = 2;
+  Role role = 3;
+  Status status = 4;
+  optional Error error = 5;
+}
+
+
+// Authenticate account
+message AuthenticateRequest{
+  string cor_tkn = 1;
+  string email = 2;
+  string pass = 3;
+}
+
+message AuthenticateResponse{
+  string cor_tkn = 1;
+  string tkn = 2;
+  optional Error error = 3;
+}
+
+
+// Create account
+message CreateRequest{
+  string cor_tkn = 1;
+  Role role = 2;
+  string email = 3;
+  string Phone = 4;
+  string Password = 5;
+}
+
+message CreateResponse{
+  string cor_tkn = 1;
+  string user_id = 2;
+  optional Error error = 3;
+}
+
+
+// Activate account
+message ActivateRequest{
+  string cor_tkn = 1;
+  string user_id = 2;
+}
+
+message ActivateResponse{
+  string cor_tkn = 1;
+  optional Error error = 2;
+}
+
+
+// Deactivate account
+message DeactivateRequest{
+  string cor_tkn = 1;
+  string user_id = 2;
+}
+
+message DeactivateResponse{
+  string cor_tkn = 1;
+  optional Error error = 2;
+}
+
+
+// Change account password
+message ChangePhoneRequest{
+  string cor_tkn = 1;
+  string user_id = 2;
+  string phone = 3;
+}
+
+message ChangePhoneResponse{
+  string cor_tkn = 1;
+  optional Error error = 2;
+}
+
+
+// Change account email
+message ChangeEmailRequest{
+  string cor_tkn = 1;
+  string user_id = 2;
+  string email = 3;
+}
+
+message ChangeEmailResponse{
+  string cor_tkn = 1;
+  optional Error error = 2;
+}
+
+
+// Change account password
+message ChangePasswordRequest{
+  string cor_tkn = 1;
+  string user_id = 2;
+  string password = 3;
+}
+
+message ChangePasswordResponse{
+  string cor_tkn = 1;
+  optional Error error = 2;
+}
+
+
+
+

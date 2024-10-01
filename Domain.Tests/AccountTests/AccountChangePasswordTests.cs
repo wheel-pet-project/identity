@@ -1,3 +1,4 @@
+using Domain.AccountAggregate;
 using Domain.Exceptions;
 using Domain.Tests.AccountTests.Common;
 using JetBrains.Annotations;
@@ -5,7 +6,7 @@ using Xunit;
 
 namespace Domain.Tests.AccountTests;
 
-[TestSubject(typeof(Account.Account))]
+[TestSubject(typeof(Account))]
 public class AccountChangePasswordTests
 {
     private TestingAccountCreator _accountCreator;

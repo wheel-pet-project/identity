@@ -1,30 +1,28 @@
 using System.Text.RegularExpressions;
 using Domain.Exceptions;
 
-namespace Domain.Account;
+namespace Domain.AccountAggregate;
 
 public class Account
 {
     internal Account(Guid id,
-        int roleId,
+        Role role,
         string email,
         string phone,
         string password,
-        bool isActive,
-        bool isDeleted)
+        Status status)
     {
         Id = id;
-        RoleId = roleId;
+        Role = role;
         Email = email;
         Phone = phone;
         Password = password;
-        IsActive = isActive;
-        IsDeleted = isDeleted;
+        Status = status;
     }
 
     public Guid Id { get; private set; }
 
-    public int RoleId { get; private set; }
+    public Role Role { get; private set; }
 
     public string Email { get; private set; }
 
@@ -32,9 +30,7 @@ public class Account
 
     public string Password { get; private set; }
 
-    public bool IsActive { get; private set; }
-
-    public bool IsDeleted { get; private set; }
+    public Status Status { get; private set; }
     
     
     public void ChangeEmail(string newEmail)
@@ -69,9 +65,13 @@ public class Account
                 "Password must be at least 6 characters long and different from the current password");
     }
 
-    public void Activate() => IsActive = true;
+    public void Activate() => Confirm();
     
-    public void DisActivate() => IsActive = false;
+    public void DisActivate() => Status = Status.Deactivated;
     
-    public void MarkAsDeleted() => IsDeleted = true;
+    public void Confirm() => Status = Status.Confirmed;
+    
+    public void UnConfirm() => Status = Status.Unconfirmed;
+    
+    public void MarkAsDeleted() => Status = Status.Deleted;
 }
