@@ -7,18 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Bus.Interfaces\" />
-      <Folder Include="Repositories.Interfaces\" />
-      <Folder Include="UseCases\ActivateAccount\" />
+      <Folder Include="Infrastructure.Interfaces\Bus\" />
       <Folder Include="UseCases\AuthenticateAccount\" />
       <Folder Include="UseCases\AuthorizeAccount\" />
       <Folder Include="UseCases\ChangeEmailAccount\" />
       <Folder Include="UseCases\ChangePasswordAccount\" />
       <Folder Include="UseCases\ChangePhoneAccount\" />
-      <Folder Include="UseCases\CreateAccount\" />
-      <Folder Include="UseCases\DeactivateAccount\" />
-      <Folder Include="UseCases\GetByEmailAccount\" />
-      <Folder Include="UseCases\GetByIdAccount\" />
+      <Folder Include="UseCases\VerifyAccount\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 
 </Project>

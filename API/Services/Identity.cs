@@ -1,25 +1,38 @@
+using System.Diagnostics;
+using API.Transformers;
+using Application.UseCases.CreateAccount;
+using Application.UseCases.Interfaces;
 using Grpc.Core;
 
 namespace API.Services;
 
-public class Identity : API.Identity.IdentityBase
+public class Identity(
+    ILogger<Identity> logger,
+    IUseCase<CreateAccountRequest, CreateAccountResponse> createUseCase) 
+    : API.Identity.IdentityBase
 {
-    private readonly ILogger<Identity> _logger;
-    
-    public Identity(ILogger<Identity> logger) => _logger = logger;
+    readonly ActivitySource _activitySource = new("Identity");
 
-    public override Task<AuthorizeResp> Authorize(AuthorizeReq req, ServerCallContext context)
+    public override async Task<CreateResponse> CreateAccount(
+        CreateRequest request, ServerCallContext context)
     {
-        Guid id = Guid.NewGuid();
-        for (var i = 0; i < 10000; i++)
+        using var activity = _activitySource
+            .StartActivity("Create account request received")
+            .SetTag("CorrelationId", request.CorId);
+        
+        var transformer = new RoleFromRequestTransformer();
+        var result = await createUseCase.Execute(
+            new CreateAccountRequest(Guid.Parse(request.CorId), 
+                transformer.FromRequest(request.Role), 
+                request.Email, 
+                request.Phone, 
+                request.Pass));
+
+        return new CreateResponse
         {
-            id = Guid.NewGuid();
-        }
-        return Task.FromResult(new AuthorizeResp
-        {
-            CorTkn = "some-token",
-            Role = Role.Admin,
-            UserId = id.ToString()
-        });
+            AccId = result.AccountId.ToString(),
+            CorId = result.CorrelationId.ToString(),
+            Err = null
+        };
     }
 }

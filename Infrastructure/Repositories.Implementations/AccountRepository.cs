@@ -1,22 +1,27 @@
+using System.Diagnostics;
+using Application.Infrastructure.Interfaces.Repositories;
 using Dapper;
 using Domain.AccountAggregate;
 using Infrastructure.Settings;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Infrastructure.Repositories.Implementations;
 
-public class AccountRepository(IOptions<DbConnectionOptions> dbConnectionOptions)
+public class AccountRepository(IOptions<DbConnectionOptions> dbConnectionOptions) : IAccountRepository
 {
     private readonly DbConnectionOptions _dbConnectionOptions = dbConnectionOptions.Value;
+    readonly ActivitySource _activitySource = new("Identity");
 
     public async Task<Account?> GetById(Guid id)
     {
-        var sql = @"SELECT * 
+        var sql = @"
+SELECT * 
 FROM account 
 WHERE id = @id
 LIMIT 1";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
 
         var result = await connection.QuerySingleOrDefaultAsync<Account>(sql, 
@@ -26,11 +31,13 @@ LIMIT 1";
 
     public async Task<Account?> GetByEmail(string email)
     {
-        var sql = @"SELECT * 
+        var sql = @"
+SELECT * 
 FROM account 
 WHERE email = @email
 LIMIT 1";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
 
         var result = await connection.QuerySingleOrDefaultAsync<Account>(sql, 
@@ -40,9 +47,13 @@ LIMIT 1";
     
     public async Task Create(Account account)
     {
-        var sql = @"INSERT INTO account (id, role_id, email, phone, password, status_id)
+        using var activity = _activitySource.StartActivity("Save account to db");
+        activity?.SetTag("accountId", account.Id);
+        var sql = @"
+INSERT INTO account (id, role_id, email, phone, password, status_id)
 VALUES (@id, @roleId, @email, @phone, @password, @statusId)";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
         await connection.ExecuteAsync(sql, 
             new
@@ -58,10 +69,12 @@ VALUES (@id, @roleId, @email, @phone, @password, @statusId)";
 
     public async Task UpdateStatus(Account account)
     {
-        var sql = @"UPDATE account 
+        var sql = @"
+UPDATE account 
 SET status_id = @statusId 
 WHERE id = @id";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
 
         await connection.ExecuteAsync(sql, 
@@ -74,10 +87,12 @@ WHERE id = @id";
 
     public async Task UpdatePassword(Account account)
     {
-        var sql = @"UPDATE account 
+        var sql = @"
+UPDATE account 
 SET password = @password 
 WHERE id = @id";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
 
         await connection.ExecuteAsync(sql, 
@@ -90,10 +105,12 @@ WHERE id = @id";
 
     public async Task UpdateEmail(Account account)
     {
-        var sql = @"UPDATE account 
+        var sql = @"
+UPDATE account 
 SET email = @email 
 WHERE id = @id";
-        await using var connection = new SqlConnection(_dbConnectionOptions.ConnectionString);
+        
+        await using var connection = new NpgsqlConnection(_dbConnectionOptions.ConnectionString);
         await connection.OpenAsync();
 
         await connection.ExecuteAsync(sql, 

@@ -69,9 +69,9 @@ public class Account
     
     public void DisActivate() => Status = Status.Deactivated;
     
-    public void Confirm() => Status = Status.Confirmed;
+    public void Confirm() => Status = Status.PendingApproval;
     
-    public void UnConfirm() => Status = Status.Unconfirmed;
+    public void UnConfirm() => Status = Status.PendingVerification;
     
     public void MarkAsDeleted() => Status = Status.Deleted;
 }

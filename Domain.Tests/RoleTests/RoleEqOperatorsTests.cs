@@ -26,7 +26,7 @@ public class RoleEqOperatorsTests
     {
         // Arrange
         var roleA = Role.Customer;
-        var roleB = Role.Administrator;
+        var roleB = Role.Admin;
 
         // Act
         var actual = roleA == roleB;
@@ -54,7 +54,7 @@ public class RoleEqOperatorsTests
     {
         // Arrange
         var roleA = Role.Customer;
-        var roleB = Role.Administrator;
+        var roleB = Role.Admin;
 
         // Act
         var actual = roleA != roleB;

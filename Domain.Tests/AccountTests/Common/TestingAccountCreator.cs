@@ -39,5 +39,5 @@ public class TestingAccountCreator
         isValidPassword ? "somepassword" : "pass";
     
     private Status CreateStatus(bool isValidStatus) =>
-        isValidStatus ? Status.Confirmed : new Status("unsupported", 0);
+        isValidStatus ? Status.PendingApproval : new Status("unsupported", 0);
 }

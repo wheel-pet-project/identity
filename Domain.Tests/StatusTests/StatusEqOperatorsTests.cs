@@ -9,8 +9,8 @@ public class StatusEqOperatorsTests
     public void Eq_Should_Return_True_If_Statuses_Is_Identical()
     {
         // Arrange
-        var statusA = Status.Confirmed;
-        var statusB = Status.Confirmed;
+        var statusA = Status.PendingApproval;
+        var statusB = Status.PendingApproval;
 
         // Act
         var actual = statusA == statusB;
@@ -23,7 +23,7 @@ public class StatusEqOperatorsTests
     public void Eq_Should_Return_False_If_Statuses_Is_Not_Identical()
     {
         // Arrange
-        var statusA = Status.Confirmed;
+        var statusA = Status.PendingApproval;
         var statusB = Status.Deleted;
 
         // Act
@@ -37,8 +37,8 @@ public class StatusEqOperatorsTests
     public void NotEq_Should_Return_False_If_Statuses_Is_Identical()
     {
         // Arrange
-        var statusA = Status.Confirmed;
-        var statusB = Status.Confirmed;
+        var statusA = Status.PendingApproval;
+        var statusB = Status.PendingApproval;
 
         // Act
         var actual = statusA != statusB;
@@ -51,7 +51,7 @@ public class StatusEqOperatorsTests
     public void NotEq_Should_Return_True_If_Statuses_Is_Not_Identical()
     {
         // Arrange
-        var statusA = Status.Confirmed;
+        var statusA = Status.PendingApproval;
         var statusB = Status.Deleted;
 
         // Act

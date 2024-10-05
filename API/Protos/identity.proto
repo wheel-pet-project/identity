@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+option csharp_namespace = "API";
+
+package identity;
+
+// Service
+service Identity {
+  rpc CreateAccount (CreateRequest) returns (CreateResponse);
+}
+
+// Common messages
+message Error {
+  string Title = 1;
+  string Description = 2;
+  int32 StatusCode = 3;
+}
+
+enum Role{
+  CUSTOMER = 0;
+  ADMIN = 1;
+  SUPPORT = 2;
+  MAINTENANCE = 3;
+  HR = 4;
+}
+
+enum Status{
+  PENDING_VERIFICATION = 0;
+  PENDING_APPROVAL = 1;
+  APPROVED = 2;
+  DEACTIVATED = 3;
+  DELETED = 4;
+}
+
+
+// Authorize account
+message AuthorizeRequest {
+  string cor_id = 1;
+  string tkn = 2;
+}
+
+message AuthorizeResponse {
+  string cor_id = 1;
+  string acc_id = 2;
+  Role role = 3;
+  Status status = 4;
+  optional Error err = 5;
+}
+
+
+// Authenticate account
+message AuthenticateRequest{
+  string cor_id = 1;
+  string email = 2;
+  string pass = 3;
+}
+
+message AuthenticateResponse{
+  string cor_id = 1;
+  string tkn = 2;
+  optional Error err = 3;
+}
+
+
+// Create account
+message CreateRequest{
+  string cor_id = 1;
+  Role role = 2;
+  string email = 3;
+  string phone = 4;
+  string pass = 5;
+}
+
+message CreateResponse{
+  string cor_id = 1;
+  string acc_id = 2;
+  optional Error err = 3;
+}
+
+
+// Activate account
+message ActivateRequest{
+  string cor_id = 1;
+  string acc_id = 2;
+}
+
+message ActivateResponse{
+  string cor_id = 1;
+  optional Error err = 2;
+}
+
+
+// Deactivate account
+message DeactivateRequest{
+  string cor_id = 1;
+  string acc_id = 2;
+}
+
+message DeactivateResponse{
+  string cor_id = 1;
+  optional Error err = 2;
+}
+
+
+// Change account password
+message ChangePhoneRequest{
+  string cor_id = 1;
+  string acc_id = 2;
+  string phone = 3;
+}
+
+message ChangePhoneResponse{
+  string cor_id = 1;
+  optional Error err = 2;
+}
+
+
+// Change account email
+message ChangeEmailRequest{
+  string cor_id = 1;
+  string acc_id = 2;
+  string email = 3;
+}
+
+message ChangeEmailResponse{
+  string cor_id = 1;
+  optional Error err = 2;
+}
+
+
+// Change account password
+message ChangePasswordRequest{
+  string cor_id = 1;
+  string acc_id = 2;
+  string pass = 3;
+}
+
+message ChangePasswordResponse{
+  string cor_id = 1;
+  optional Error err = 2;
+}
+
+
+
+
