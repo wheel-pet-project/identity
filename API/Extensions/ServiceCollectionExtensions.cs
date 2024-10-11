@@ -1,34 +1,50 @@
-using Application.Infrastructure.Interfaces.EmailProvider;
+using System.Data;
+using Application.Application.Interfaces;
+using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.PasswordHasher;
 using Application.Infrastructure.Interfaces.Repositories;
-using Application.UseCases.CreateAccount;
-using Application.UseCases.Interfaces;
+using Application.UseCases.Account.Authenticate;
+using Application.UseCases.Account.Authorize;
+using Application.UseCases.Account.Create;
 using Ardalis.SmartEnum.Dapper;
 using Dapper;
-using Infrastructure.EmailProvider;
+using Domain.AccountAggregate;
+using Infrastructure.JwtProvider;
 using Infrastructure.PasswordHasher;
 using Infrastructure.Repositories.Implementations;
 using Infrastructure.Settings;
+using MassTransit;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
+using Status = Domain.AccountAggregate.Status;
 
 namespace API.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddSqlMapperForEnums()
+    public static IServiceCollection AddDbConnection(this IServiceCollection services,
+        IConfiguration configuration)
     {
-        SqlMapper.AddTypeHandler(typeof(Role), new SmartEnumByValueTypeHandler<Domain.AccountAggregate.Role>());
-        SqlMapper.AddTypeHandler(typeof(Status), new SmartEnumByValueTypeHandler<Domain.AccountAggregate.Status>());
+        var dbSettings = configuration.GetSection("ConnectionStrings")
+            .Get<DbConnectionSettings>();
+        services.AddScoped<IDbConnection>(_ => 
+            new NpgsqlConnection(dbSettings!.ConnectionString));
+
+        return services;
     }
 
     public static IServiceCollection AddUseCases(this IServiceCollection services)
     {
-        services.AddScoped<IUseCase<CreateAccountRequest, CreateAccountResponse>, CreateAccountUseCase>();
+        services.AddScoped<IUseCase<CreateAccountRequest, CreateAccountResponse>, 
+            CreateAccountUseCase>();
+        services.AddScoped<IUseCase<AuthenticateAccountRequest, AuthenticateAccountResponse>,
+            AuthenticateAccountUseCase>();
+        services.AddScoped<IUseCase<AuthorizeAccountRequest, AuthorizeAccountResponse>,
+            AuthorizeAccountUseCase>();
         
         return services;
     }
@@ -42,26 +58,15 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddPasswordHasher(this IServiceCollection services)
     {
-        services.AddTransient<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
         
         return services;
     }
 
-    public static IServiceCollection AddEmailProvider(this IServiceCollection services)
+    public static IServiceCollection AddJwtProvider(this IServiceCollection services)
     {
-        services.AddTransient<IEmailProvider, EmailProvider>();
-        
-        return services;
-    }
-    
-    public static IServiceCollection ConfigureFluentEmail(this IServiceCollection services, 
-        IConfiguration configuration)
-    {
-        var emailSettings = configuration.GetSection("EmailSettings").Get<EmailSettings>();
+        services.AddScoped<IJwtProvider, JwtProvider>();
 
-        services.AddFluentEmail(emailSettings!.DefaultFromEmail)
-            .AddSmtpSender(emailSettings.SmtpHost, emailSettings.SmtpPort);
-        
         return services;
     }
     
@@ -72,6 +77,31 @@ public static class ServiceCollectionExtensions
             .CreateLogger();
         services.AddSerilog();
         
+        return services;
+    }
+
+    public static IServiceCollection ConfigureMassTransit(this IServiceCollection services)
+    {
+        services.AddMassTransit(x =>
+        {
+            x.UsingInMemory();
+
+            x.AddRider(rider =>
+            {
+                // rider.AddConsumer<KafkaMessageConsumer>();
+
+                rider.UsingKafka((context, k) =>
+                {
+                    k.Host("localhost:9092");
+
+                    // k.TopicEndpoint<KafkaMessage>("topic-name", "consumer-group-name", e =>
+                    // {
+                    //     e.ConfigureConsumer<KafkaMessageConsumer>(context);
+                    // });
+                });
+            });
+        });
+
         return services;
     }
     

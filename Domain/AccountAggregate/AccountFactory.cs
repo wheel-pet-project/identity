@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Domain.Exceptions;
 
 namespace Domain.AccountAggregate;
@@ -5,44 +6,19 @@ namespace Domain.AccountAggregate;
 public class AccountFactory
 {
     public Account CreateAccount(
-        Guid id,
         Role role,
-        string email,
-        string phone,
-        string password,
-        Status status)
-    {
-        var errors = EntityValidate(id, email, phone, password);
-        if (errors.Any() == false)
-            return new Account(id, role, email, phone, password, status);
-        
-        throw new FactoryException(errors);
-    }
-
-    private List<DomainException> EntityValidate(
-        Guid id,
+        Status status,
         string email,
         string phone,
         string password)
     {
-        var errors = new List<DomainException>();
-
-        if (id == Guid.Empty)
-            errors.Add(new DomainException("Id is required",
-                "Id is invalid or empty"));
-
-        if (string.IsNullOrEmpty(email))
-            errors.Add(new DomainException("Email is required",
-                "Email is invalid or empty"));
-
-        if (string.IsNullOrEmpty(phone))
-            errors.Add(new DomainException("Phone is required",
-                "Phone is invalid or empty"));
-
-        if (string.IsNullOrEmpty(password))
-            errors.Add(new DomainException("Password is required",
-                "Password is invalid or empty"));
+        var account = new Account(Guid.NewGuid());
+        account.SetRole(role);
+        account.SetStatus(status);
+        account.SetEmail(email);
+        account.SetPhone(phone);
+        account.SetPassword(password);
         
-        return errors;
-    } 
+        return account;
+    }
 }

@@ -1,6 +1,6 @@
 using Domain.AccountAggregate;
 
-namespace Application.UseCases.CreateAccount;
+namespace Application.UseCases.Account.Create;
 
 public class CreateAccountRequest(
     Guid correlationId,

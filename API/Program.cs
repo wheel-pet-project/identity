@@ -1,4 +1,5 @@
 using API.Extensions;
+using API.Interceptors;
 using Infrastructure.Settings;
 
 namespace API;
@@ -9,28 +10,22 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         var services = builder.Services;
-        // builder.Logging.ClearProviders().AddConsole().AddDebug().AddOpenTelemetry(options =>
-        // {
-        //     options
-        //         .SetResourceBuilder(ResourceBuilder
-        //             .CreateDefault()
-        //             .AddService("Identity"))
-        //         .IncludeScopes = true;
-        // });
+        services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
+        SqlMapperRegister.Register();
         
-        services.Configure<DbConnectionOptions>(builder.Configuration
-            .GetSection("ConnectionStrings"));
         
-        services.AddGrpc();
+        services.AddGrpc(options =>
+        {
+            options.Interceptors.Add<ExceptionHandlerInterceptor>();
+        });
         
-        ServiceCollectionExtensions.AddSqlMapperForEnums();
         
         // Extensions
         services
             .ConfigureSerilog()
-            .ConfigureFluentEmail(builder.Configuration)
-            .AddEmailProvider()
+            .AddDbConnection(builder.Configuration)
             .AddPasswordHasher()
+            .AddJwtProvider()
             .AddTelemetry()
             .AddUseCases()
             .AddRepositories();

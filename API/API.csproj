@@ -8,14 +8,21 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Protobuf Include="Protos\*.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\identity.proto" GrpcServices="Server" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Ardalis.SmartEnum.ProtoBufNet" Version="8.1.0" />
         <PackageReference Include="Dapper" Version="2.1.35" />
         <PackageReference Include="FluentEmail.Core" Version="3.0.2" />
         <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
-        <PackageReference Include="Grpc.AspNetCore" Version="2.57.0"/>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.67.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MassTransit" Version="8.2.5" />
+        <PackageReference Include="MassTransit.Kafka" Version="8.2.5" />
         <PackageReference Include="Npgsql.OpenTelemetry" Version="8.0.4" />
         <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0-beta.1" />
         <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.6.0-rc.1" />
@@ -33,10 +40,6 @@
       <ProjectReference Include="..\Application\Application.csproj" />
       <ProjectReference Include="..\Domain\Domain.csproj" />
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Middlewares\" />
     </ItemGroup>
 
 </Project>

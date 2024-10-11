@@ -4,11 +4,11 @@ namespace Application.Infrastructure.Interfaces.Repositories;
 
 public interface IAccountRepository
 { 
-     Task<Account?> GetById(Guid id);
+     Task<Account?> GetById(Guid id, CancellationToken cancellationToken = default);
 
-     Task<Account?> GetByEmail(string email);
+     Task<Account?> GetByEmail(string email, CancellationToken cancellationToken = default);
 
-     Task Create(Account account);
+     Task Create(Account account, Guid confirmationId);
 
      Task UpdateStatus(Account account);
 

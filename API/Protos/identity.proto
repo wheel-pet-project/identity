@@ -1,20 +1,8 @@
 syntax = "proto3";
 
-option csharp_namespace = "API";
+option csharp_namespace = "Proto.Identity";
 
 package identity;
-
-// Service
-service Identity {
-  rpc CreateAccount (CreateRequest) returns (CreateResponse);
-}
-
-// Common messages
-message Error {
-  string Title = 1;
-  string Description = 2;
-  int32 StatusCode = 3;
-}
 
 enum Role{
   CUSTOMER = 0;
@@ -25,11 +13,16 @@ enum Role{
 }
 
 enum Status{
-  PENDING_VERIFICATION = 0;
-  PENDING_APPROVAL = 1;
-  APPROVED = 2;
+  APPROVED_UNSPECIFIED = 0;
+  PENDING_CONFIRMATION = 1;
+  PENDING_APPROVAL = 2;
   DEACTIVATED = 3;
-  DELETED = 4;
+}
+
+service Identity {
+  rpc CreateAccount (CreateRequest) returns (CreateResponse);
+  rpc Authorize (AuthorizeRequest) returns (AuthorizeResponse);
+  rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
 }
 
 
@@ -40,11 +33,9 @@ message AuthorizeRequest {
 }
 
 message AuthorizeResponse {
-  string cor_id = 1;
   string acc_id = 2;
   Role role = 3;
   Status status = 4;
-  optional Error err = 5;
 }
 
 
@@ -56,9 +47,7 @@ message AuthenticateRequest{
 }
 
 message AuthenticateResponse{
-  string cor_id = 1;
   string tkn = 2;
-  optional Error err = 3;
 }
 
 
@@ -72,72 +61,41 @@ message CreateRequest{
 }
 
 message CreateResponse{
-  string cor_id = 1;
-  string acc_id = 2;
-  optional Error err = 3;
-}
-
-
-// Activate account
-message ActivateRequest{
-  string cor_id = 1;
-  string acc_id = 2;
-}
-
-message ActivateResponse{
-  string cor_id = 1;
-  optional Error err = 2;
-}
-
-
-// Deactivate account
-message DeactivateRequest{
-  string cor_id = 1;
-  string acc_id = 2;
-}
-
-message DeactivateResponse{
-  string cor_id = 1;
-  optional Error err = 2;
+  string acc_id = 1;
 }
 
 
 // Change account password
-message ChangePhoneRequest{
+message UpdatePhoneRequest{
   string cor_id = 1;
   string acc_id = 2;
   string phone = 3;
 }
 
-message ChangePhoneResponse{
-  string cor_id = 1;
-  optional Error err = 2;
+message UpdatePhoneResponse{
 }
 
 
 // Change account email
-message ChangeEmailRequest{
+message UpdateEmailRequest{
   string cor_id = 1;
   string acc_id = 2;
   string email = 3;
 }
 
-message ChangeEmailResponse{
-  string cor_id = 1;
-  optional Error err = 2;
+message UpdateEmailResponse{
 }
 
 
 // Change account password
-message ChangePasswordRequest{
+message UpdatePasswordRequest{
   string cor_id = 1;
   string acc_id = 2;
   string pass = 3;
 }
 
-message ChangePasswordResponse{
+message UpdatePasswordResponse{
   string cor_id = 1;
-  optional Error err = 2;
 }
 
 

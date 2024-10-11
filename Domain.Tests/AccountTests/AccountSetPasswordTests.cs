@@ -7,50 +7,47 @@ using Xunit;
 namespace Domain.Tests.AccountTests;
 
 [TestSubject(typeof(Account))]
-public class AccountChangePasswordTests
+public class AccountSetPasswordTests
 {
-    private TestingAccountCreator _accountCreator;
-
-    public AccountChangePasswordTests() => 
-        _accountCreator = new TestingAccountCreator();
+    private readonly TestingAccountCreator _accountCreator = new();
 
     [Theory]
     [InlineData("password")]
     [InlineData("Password123")]
     [InlineData("Password123*\"![]")]
-    public void ChangePassword_Should_Change_Password(string password)
+    public void UpdatePassword_Should_Update_Password(string password)
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
 
         // Act
-        account.ChangePassword(password);
+        account.SetPassword(password);
 
         // Assert
         Assert.Equal(password, account.Password);
     }
 
     [Fact]
-    public void ChangePassword_Should_Throw_Exception_When_Password_Is_Empty()
+    public void UpdatePassword_Should_Throw_Exception_When_Password_Is_Empty()
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
 
         // Act
-        void Act() => account.ChangePassword(string.Empty);
+        void Act() => account.SetPassword(string.Empty);
 
         // Assert
         Assert.Throws<DomainException>(Act);
     }
 
     [Fact]
-    public void ChangePassword_Should_Throw_Exception_When_Password_Is_Less_Than_6_Characters()
+    public void UpdatePassword_Should_Throw_Exception_When_Password_Is_Less_Than_6_Characters()
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
 
         // Act
-        void Act() => account.ChangePassword("55555");
+        void Act() => account.SetPassword("55555");
 
         // Assert
         Assert.Throws<DomainException>(Act);

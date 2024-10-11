@@ -1,8 +1,6 @@
-namespace Domain.Exceptions;
+namespace Application.Exceptions;
 
-public class DomainException(
-    string title, 
-    string description) : Exception
+public class ApplicationException(string title, string description) : Exception
 {
     public string Title { get; private set; } = title;
 

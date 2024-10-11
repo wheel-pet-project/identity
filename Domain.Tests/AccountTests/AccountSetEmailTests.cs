@@ -7,24 +7,21 @@ using Xunit;
 namespace Domain.Tests.AccountTests;
 
 [TestSubject(typeof(Account))]
-public class AccountChangeEmailTests
+public class AccountSetEmailTests
 {
-    private readonly TestingAccountCreator _accountCreator;
-
-    public AccountChangeEmailTests() => 
-        _accountCreator = new TestingAccountCreator();
+    private readonly TestingAccountCreator _accountCreator = new();
 
     [Theory]
     [InlineData("test@test.com")]
     [InlineData("gmail@gmail.com")]
     [InlineData("someemail@yandex.ru")]
-    public void ChangeEmail_Should_Change_Email(string newEmail)
+    public void SetEmail_Should_Update_Email(string newEmail)
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
         
         // Act
-        account.ChangeEmail(newEmail);
+        account.SetEmail(newEmail);
         var actualEmail = account.Email;
         
         // Assert
@@ -32,26 +29,29 @@ public class AccountChangeEmailTests
     }
 
     [Fact]
-    public void ChangeEmail_Should_Throw_DomainException_If_Email_Is_Empty()
+    public void SetEmail_Should_Throw_DomainException_If_Email_Is_Empty()
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
 
         // Act
-        void Act()  => account.ChangeEmail("");
+        void Act()  => account.SetEmail("");
 
         // Assert
         Assert.Throws<DomainException>(Act);
     }
     
-    [Fact]
-    public void ChangeEmail_Should_Throw_DomainException_If_Email_Is_Invalid()
+    [Theory]
+    [InlineData("bademail.com")]
+    [InlineData("gmail@com")]
+    [InlineData("some.email@yandexru")]
+    public void SetEmail_Should_Throw_DomainException_If_Email_Is_Invalid(string newEmail)
     {
         // Arrange
         var account = _accountCreator.CreateAccount();
 
         // Act
-        void Act()  => account.ChangeEmail("bademail.com");
+        void Act()  => account.SetEmail(newEmail);
 
         // Assert
         Assert.Throws<DomainException>(Act);

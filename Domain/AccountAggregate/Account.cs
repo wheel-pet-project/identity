@@ -5,35 +5,31 @@ namespace Domain.AccountAggregate;
 
 public class Account
 {
-    internal Account(Guid id,
-        Role role,
-        string email,
-        string phone,
-        string password,
-        Status status)
+    public Account () {}
+    
+    internal Account(Guid id)
     {
         Id = id;
-        Role = role;
-        Email = email;
-        Phone = phone;
-        Password = password;
-        Status = status;
     }
 
     public Guid Id { get; private set; }
 
-    public Role Role { get; private set; }
+    public Role Role { get; private set; } = null!;
 
-    public string Email { get; private set; }
+    public string Email { get; private set; } = null!;
 
-    public string Phone { get; private set; }
+    public string Phone { get; private set; } = null!;
 
-    public string Password { get; private set; }
+    public string Password { get; private set; } = null!;
 
-    public Status Status { get; private set; }
+    public Status Status { get; private set; } = null!;
+
     
+    public void SetStatus(Status status) => Status = status;
     
-    public void ChangeEmail(string newEmail)
+    public void SetRole(Role role) => Role = role;
+
+    public void SetEmail(string newEmail)
     {
         if (Regex.IsMatch(
                 newEmail,
@@ -44,7 +40,7 @@ public class Account
                 "Email doesn't match the email regex pattern");
     }
     
-    public void ChangePhone(string newPhone)
+    public void SetPhone(string newPhone)
     {
         if (Regex.IsMatch(
                 newPhone,
@@ -56,7 +52,7 @@ public class Account
         
     }
 
-    public void ChangePassword(string newPassword)
+    public void SetPassword(string newPassword)
     {
         if(newPassword.Length >= 6 && Password != newPassword)
             Password = newPassword;
@@ -64,14 +60,4 @@ public class Account
                 "Invalid password",
                 "Password must be at least 6 characters long and different from the current password");
     }
-
-    public void Activate() => Confirm();
-    
-    public void DisActivate() => Status = Status.Deactivated;
-    
-    public void Confirm() => Status = Status.PendingApproval;
-    
-    public void UnConfirm() => Status = Status.PendingVerification;
-    
-    public void MarkAsDeleted() => Status = Status.Deleted;
 }

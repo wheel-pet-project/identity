@@ -8,12 +8,8 @@
 
     <ItemGroup>
       <Folder Include="Infrastructure.Interfaces\Bus\" />
-      <Folder Include="UseCases\AuthenticateAccount\" />
-      <Folder Include="UseCases\AuthorizeAccount\" />
-      <Folder Include="UseCases\ChangeEmailAccount\" />
-      <Folder Include="UseCases\ChangePasswordAccount\" />
-      <Folder Include="UseCases\ChangePhoneAccount\" />
-      <Folder Include="UseCases\VerifyAccount\" />
+      <Folder Include="UseCases\Account\Confirm\" />
+      <Folder Include="UseCases\Account\UpdatePhone\" />
     </ItemGroup>
 
     <ItemGroup>

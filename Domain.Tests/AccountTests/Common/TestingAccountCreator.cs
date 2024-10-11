@@ -6,7 +6,6 @@ namespace Domain.Tests.AccountTests.Common;
 public class TestingAccountCreator
 {
     public Account CreateAccount(
-        bool isValidId = true,
         bool isValidRole = true,
         bool isValidEmail = true,
         bool isValidPhone = true,
@@ -14,12 +13,11 @@ public class TestingAccountCreator
         bool isValidStatus = true)
     {
         return new AccountFactory().CreateAccount(
-            CreateId(isValidId),
             CreateRoleId(isValidRole),
+            CreateStatus(isValidStatus),
             CreateEmail(isValidEmail),
             CreatePhone(isValidPhone),
-            CreatePassword(isValidPassword),
-            CreateStatus(isValidStatus));
+            CreatePassword(isValidPassword));
     }
 
     // todo: remove this if we don't need it
@@ -33,7 +31,7 @@ public class TestingAccountCreator
         isValidEmail ? "email@mail.com" : "email.com";
     
     private string CreatePhone(bool isValidPhone) =>
-        isValidPhone ? "+7-900-000-00-00" : "900-000-00";
+        isValidPhone ? "+79008007060" : "69008007060";
     
     private string CreatePassword(bool isValidPassword) =>
         isValidPassword ? "somepassword" : "pass";
