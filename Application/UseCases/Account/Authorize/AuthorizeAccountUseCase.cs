@@ -10,17 +10,10 @@ public class AuthorizeAccountUseCase(IJwtProvider jwtProvider)
 {
     public async Task<AuthorizeAccountResponse> Execute(AuthorizeAccountRequest request)
     {
-        var accData = await jwtProvider.VerifyToken(request.AccessToken);
-        if (accData.isValid)
-        {
-            if(accData.status == Status.PendingConfirmation)
-                throw new ApplicationException(
-                    "Account is pending confirmation","" +
-                    $"Account with id {accData.accId} is pending confirmation");
+        var verificationResult = await jwtProvider.VerifyToken(request.AccessToken);
+        if (verificationResult.isValid)
             return new AuthorizeAccountResponse(
-                accData.accId, accData.role!, accData.status!);
-        }
-            
+                verificationResult.accId, verificationResult.role, verificationResult.status);
         
         throw new ApplicationException("Invalid token",
             $"Invalid token: {request.AccessToken}");

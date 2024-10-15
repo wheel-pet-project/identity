@@ -1,6 +1,3 @@
-using System.Text.RegularExpressions;
-using Domain.Exceptions;
-
 namespace Domain.AccountAggregate;
 
 public class AccountFactory

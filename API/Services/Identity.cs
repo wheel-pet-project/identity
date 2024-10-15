@@ -56,7 +56,8 @@ public class Identity(
     
         return new AuthenticateResponse
         {
-            Tkn = result.AccessToken
+            Tkn = result.AccessToken,
+            RefreshTkn = result.RefreshToken
         };
     }
     

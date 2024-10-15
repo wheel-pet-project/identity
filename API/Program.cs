@@ -1,5 +1,6 @@
 using API.Extensions;
 using API.Interceptors;
+using API.Registrars;
 using Infrastructure.Settings;
 
 namespace API;

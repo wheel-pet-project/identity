@@ -6,10 +6,11 @@ namespace Application.UseCases.Account.UpdatePassword;
 
 public class UpdateAccountPasswordUseCase(
     IAccountRepository accountRepository,
-    IPasswordHasher passwordHasher) 
+    IHasher hasher) 
     : IUseCase<UpdateAccountPasswordRequest, UpdateAccountPasswordResponse>
 {
-    public Task<UpdateAccountPasswordResponse> Execute(UpdateAccountPasswordRequest request)
+    public Task<UpdateAccountPasswordResponse> Execute(
+        UpdateAccountPasswordRequest request)
     {
         throw new NotImplementedException();
     }

@@ -5,7 +5,7 @@ option csharp_namespace = "Proto.Identity";
 package identity;
 
 enum Role{
-  CUSTOMER = 0;
+  CUSTOMER_UNSPECIFIED = 0;
   ADMIN = 1;
   SUPPORT = 2;
   MAINTENANCE = 3;
@@ -31,7 +31,6 @@ message AuthorizeRequest {
   string cor_id = 1;
   string tkn = 2;
 }
-
 message AuthorizeResponse {
   string acc_id = 2;
   Role role = 3;
@@ -45,9 +44,9 @@ message AuthenticateRequest{
   string email = 2;
   string pass = 3;
 }
-
 message AuthenticateResponse{
-  string tkn = 2;
+  string tkn = 1;
+  string refresh_tkn = 2;
 }
 
 
@@ -59,10 +58,18 @@ message CreateRequest{
   string phone = 4;
   string pass = 5;
 }
-
 message CreateResponse{
   string acc_id = 1;
 }
+
+
+// Confirm email
+message ConfirmEmailRequest{
+  string acc_id = 1;
+  string confirmation_id = 2;
+}
+message ConfirmEmailResponse{
+} 
 
 
 // Change account password
@@ -71,7 +78,6 @@ message UpdatePhoneRequest{
   string acc_id = 2;
   string phone = 3;
 }
-
 message UpdatePhoneResponse{
 }
 
@@ -82,7 +88,6 @@ message UpdateEmailRequest{
   string acc_id = 2;
   string email = 3;
 }
-
 message UpdateEmailResponse{
 }
 
@@ -93,7 +98,6 @@ message UpdatePasswordRequest{
   string acc_id = 2;
   string pass = 3;
 }
-
 message UpdatePasswordResponse{
   string cor_id = 1;
 }

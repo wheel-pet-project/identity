@@ -54,10 +54,10 @@ public class Account
 
     public void SetPassword(string newPassword)
     {
-        if(newPassword.Length >= 6 && Password != newPassword)
+        if(newPassword.Length >= 6)
             Password = newPassword;
         else throw new DomainException(
                 "Invalid password",
-                "Password must be at least 6 characters long and different from the current password");
+                "Password must be at least 6 characters long");
     }
 }

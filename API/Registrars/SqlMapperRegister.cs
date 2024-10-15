@@ -2,7 +2,7 @@ using Ardalis.SmartEnum.Dapper;
 using Dapper;
 using Domain.AccountAggregate;
 
-namespace API.Extensions;
+namespace API.Registrars;
 
 public static class SqlMapperRegister
 {

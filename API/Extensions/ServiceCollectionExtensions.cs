@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using Application.Application.Interfaces;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.PasswordHasher;
@@ -6,21 +7,18 @@ using Application.Infrastructure.Interfaces.Repositories;
 using Application.UseCases.Account.Authenticate;
 using Application.UseCases.Account.Authorize;
 using Application.UseCases.Account.Create;
-using Ardalis.SmartEnum.Dapper;
-using Dapper;
-using Domain.AccountAggregate;
+using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
-using Infrastructure.PasswordHasher;
 using Infrastructure.Repositories.Implementations;
 using Infrastructure.Settings;
 using MassTransit;
 using Npgsql;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
-using Status = Domain.AccountAggregate.Status;
 
 namespace API.Extensions;
 
@@ -58,7 +56,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddPasswordHasher(this IServiceCollection services)
     {
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IHasher, Hasher>();
         
         return services;
     }
