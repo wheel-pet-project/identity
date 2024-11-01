@@ -1,24 +1,28 @@
 using Domain.AccountAggregate;
+using FluentResults;
 
 namespace Application.Infrastructure.Interfaces.Repositories;
 
 public interface IAccountRepository
 { 
-     Task<Account?> GetById(Guid id, CancellationToken cancellationToken = default);
+     Task<Result<Account>> GetById(Guid id, CancellationToken cancellationToken = default);
 
-     Task<Account?> GetByEmail(string email, CancellationToken cancellationToken = default);
+     Task<Result<Account>> GetByEmail(string email, CancellationToken cancellationToken = default);
      
-     Task<(bool isExist, Guid confirmationId)> GetConfirmationRecord(Guid accountId);
+     Task<Result> AddAccountAndConfirmationToken(Account account, Guid confirmationToken);
      
-     Task<bool> DeleteConfirmationRecord(Guid accountId);
+     Task<Result> DeleteConfirmationToken(Guid accountId, Guid confirmationToken);
 
-     Task<bool> CreateAccount(Account account, Guid confirmationId);
+     Task<Result> AddRefreshTokenInfo(Guid refreshTokenId, Guid accountId);
 
-     Task<bool> CreateRefreshToken(Guid accountId, string refreshToken, DateTime expiresIn);
+     Task<Result<(Guid accountId, bool isRevoked)>> GetRefreshTokenInfo(Guid accountId);
 
-     Task<bool> UpdateStatus(Account account);
+     Task<Result> UpdateRefreshTokenInfo(Guid refreshTokenId, bool isRevoked);
 
-     Task<bool> UpdatePassword(Account account);
+     Task<Result> AddRefreshTokenInfoAndRevokeOldRefreshToken(Guid newRefreshTokenId, Guid accountId,
+          Guid oldRefreshTokenId);
+     
+     Task<Result> UpdateStatus(Account account);
 
-     Task<bool> UpdateEmail(Account account);
+     Task<Result> UpdatePassword(Account account);
 }

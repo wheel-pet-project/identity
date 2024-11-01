@@ -23,6 +23,8 @@ service Identity {
   rpc CreateAccount (CreateRequest) returns (CreateResponse);
   rpc Authorize (AuthorizeRequest) returns (AuthorizeResponse);
   rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
+  rpc ConfirmEmail (ConfirmEmailRequest) returns (ConfirmEmailResponse);
+  rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse);
 }
 
 
@@ -65,42 +67,53 @@ message CreateResponse{
 
 // Confirm email
 message ConfirmEmailRequest{
-  string acc_id = 1;
-  string confirmation_id = 2;
+  string cor_id = 1;
+  string acc_id = 2;
+  string confirmation_id = 3;
 }
 message ConfirmEmailResponse{
 } 
 
 
-// Change account password
-message UpdatePhoneRequest{
+// Refresh access token
+message RefreshAccessTokenRequest{
   string cor_id = 1;
-  string acc_id = 2;
-  string phone = 3;
+  string refresh_tkn = 2;
 }
-message UpdatePhoneResponse{
+message RefreshAccessTokenResponse{
+  string tkn = 1;
+  string refresh_tkn = 2;
 }
 
 
-// Change account email
-message UpdateEmailRequest{
-  string cor_id = 1;
-  string acc_id = 2;
-  string email = 3;
-}
-message UpdateEmailResponse{
-}
-
-
-// Change account password
-message UpdatePasswordRequest{
-  string cor_id = 1;
-  string acc_id = 2;
-  string pass = 3;
-}
-message UpdatePasswordResponse{
-  string cor_id = 1;
-}
+//// Update account password
+//message UpdatePhoneRequest{
+//  string cor_id = 1;
+//  string acc_id = 2;
+//  string phone = 3;
+//}
+//message UpdatePhoneResponse{
+//}
+//
+//
+//// Update account email
+//message UpdateEmailRequest{
+//  string cor_id = 1;
+//  string acc_id = 2;
+//  string email = 3;
+//}
+//message UpdateEmailResponse{
+//}
+//
+//
+//// Update account password
+//message UpdatePasswordRequest{
+//  string cor_id = 1;
+//  string acc_id = 2;
+//  string pass = 3;
+//}
+//message UpdatePasswordResponse{
+//}
 
 
 

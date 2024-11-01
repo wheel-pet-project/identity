@@ -1,23 +1,25 @@
 using System.Data;
-using System.Diagnostics;
+using API.Settings;
 using Application.Application.Interfaces;
+using Application.Application.UseCases.Account.Authenticate;
+using Application.Application.UseCases.Account.Authorize;
+using Application.Application.UseCases.Account.ConfirmEmail;
+using Application.Application.UseCases.Account.Create;
+using Application.Application.UseCases.Account.RefreshAccessToken;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.PasswordHasher;
 using Application.Infrastructure.Interfaces.Repositories;
-using Application.UseCases.Account.Authenticate;
-using Application.UseCases.Account.Authorize;
-using Application.UseCases.Account.Create;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Repositories.Implementations;
 using Infrastructure.Settings;
 using MassTransit;
 using Npgsql;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace API.Extensions;
@@ -43,6 +45,10 @@ public static class ServiceCollectionExtensions
             AuthenticateAccountUseCase>();
         services.AddScoped<IUseCase<AuthorizeAccountRequest, AuthorizeAccountResponse>,
             AuthorizeAccountUseCase>();
+        services.AddScoped<IUseCase<ConfirmAccountEmailRequest, ConfirmAccountEmailResponse>,
+            ConfirmAccountEmailUseCase>();
+        services.AddScoped<IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse>,
+            RefreshAccountAccessTokenUseCase>();
         
         return services;
     }
@@ -68,10 +74,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection ConfigureSerilog(this IServiceCollection services)
+    public static IServiceCollection ConfigureSerilog(this IServiceCollection services,
+        IConfiguration configuration)
     {
+        var settings = configuration.GetSection("MongoSettings").Get<MongoSettings>();
+        
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen)
+            .WriteTo.MongoDBBson(settings!.ConnectionString, 
+            "logs",
+            LogEventLevel.Verbose, 
+            512,
+            TimeSpan.FromSeconds(20))
             .CreateLogger();
         services.AddSerilog();
         

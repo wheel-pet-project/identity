@@ -15,15 +15,13 @@ public class Program
         SqlMapperRegister.Register();
         
         
-        services.AddGrpc(options =>
-        {
-            options.Interceptors.Add<ExceptionHandlerInterceptor>();
-        });
+        services.AddGrpc(options => 
+            options.Interceptors.Add<ExceptionHandlerInterceptor>());
         
         
         // Extensions
         services
-            .ConfigureSerilog()
+            .ConfigureSerilog(builder.Configuration)
             .AddDbConnection(builder.Configuration)
             .AddPasswordHasher()
             .AddJwtProvider()

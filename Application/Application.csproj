@@ -8,12 +8,14 @@
 
     <ItemGroup>
       <Folder Include="Infrastructure.Interfaces\Bus\" />
-      <Folder Include="UseCases\Account\RefreshAccessToken\" />
-      <Folder Include="UseCases\Account\UpdatePhone\" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Domain\Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FluentResults" Version="3.16.0" />
     </ItemGroup>
 
 </Project>

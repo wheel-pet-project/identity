@@ -1,4 +1,5 @@
 using Proto.Identity;
+using DomainRole = Domain.AccountAggregate.Role;
 
 namespace API.Transformers;
 
@@ -12,8 +13,7 @@ public class RoleTransformer
             Role.Support => Domain.AccountAggregate.Role.Support,
             Role.Maintenance => Domain.AccountAggregate.Role.Maintenance,
             Role.Hr => Domain.AccountAggregate.Role.HR,
-            _ => throw new ArgumentOutOfRangeException(nameof(role), 
-                role, "Invalid role")
+            _ => throw new ArgumentOutOfRangeException(nameof(role), role, "Unknown role")
         };
     
     
@@ -25,22 +25,18 @@ public class RoleTransformer
             2 => Role.Support,
             3 => Role.Maintenance,
             4 => Role.Hr,
-            _ => throw new ArgumentOutOfRangeException(nameof(roleId), 
-                roleId, "Invalid role")
+            _ => throw new ArgumentOutOfRangeException(nameof(roleId), roleId, "Unknown role")
         };
-    public Role ToResponse(Domain.AccountAggregate.Role role)
-    {
-        var result = Role.CustomerUnspecified;
-        role.When(Domain.AccountAggregate.Role.Admin)
-            .Then(() => result = Role.Admin);
-        role.When(Domain.AccountAggregate.Role.Support)
-            .Then(() => result = Role.Support);
-        role.When(Domain.AccountAggregate.Role.Maintenance)
-            .Then(() => result = Role.Maintenance);
-        role.When(Domain.AccountAggregate.Role.HR)
-            .Then(() => result = Role.Hr);
-        
-        return result;
-    }
-        
+
+
+    public Role ToResponse(DomainRole r) =>
+        r switch
+        {
+            DomainRole role when role == DomainRole.Customer => Role.CustomerUnspecified,
+            DomainRole role when role == DomainRole.Admin => Role.Admin,
+            DomainRole role when role == DomainRole.Support => Role.Support,
+            DomainRole role when role == DomainRole.Maintenance => Role.Maintenance,
+            DomainRole role when role == DomainRole.HR => Role.Hr,
+            _ => throw new ArgumentOutOfRangeException(nameof(r), r, "Unknown role")
+        };
 }

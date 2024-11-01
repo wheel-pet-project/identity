@@ -36,8 +36,7 @@ public class Account
                 @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"))
             Email = newEmail;
         else throw new DomainException(
-                "Invalid email",
-                "Email doesn't match the email regex pattern");
+                "Invalid email");
     }
     
     public void SetPhone(string newPhone)
@@ -47,8 +46,7 @@ public class Account
                 @"(^8|7|\+7)((\d{10})|(\s\(\d{3}\)\s\d{3}\s\d{2}\s\d{2}))")) 
             Phone = newPhone;
         else throw new DomainException(
-                "Invalid phone number",
-                "Phone number doesn't match the phone regex pattern");
+                "Invalid phone number");
         
     }
 
@@ -57,7 +55,6 @@ public class Account
         if(newPassword.Length >= 6)
             Password = newPassword;
         else throw new DomainException(
-                "Invalid password",
-                "Password must be at least 6 characters long");
+                "Invalid password length");
     }
 }

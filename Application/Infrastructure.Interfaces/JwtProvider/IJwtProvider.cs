@@ -1,10 +1,15 @@
 using Domain.AccountAggregate;
+using FluentResults;
 
 namespace Application.Infrastructure.Interfaces.JwtProvider;
 
 public interface IJwtProvider
 {
-    string GenerateToken(Account account);
+    string GenerateAccessToken(Account account);
 
-    Task<(bool isValid, Guid accId, int role, int status)> VerifyToken(string accessToken);
+    string GenerateRefreshToken(Guid refreshTokenId);
+
+    Task<Result<(Guid accountId, int roleId, int statusId)>> VerifyAccessToken(string accessToken);
+
+    Task<Result<Guid>> VerifyRefreshToken(string refreshToken);
 }

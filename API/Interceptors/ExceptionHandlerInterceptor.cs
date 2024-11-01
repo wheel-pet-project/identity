@@ -19,27 +19,16 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
         }
         catch (ApplicationException ex)
         {
-            logger.LogWarning("""
-                              Application Exception. 
-                              Title: {title}, description: {description}
-                              """, ex.Title, ex.Description);
-        
-            throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Title));
+            logger.LogError("Application Exception, description: {description}", ex.Description);
+
+            throw new RpcException(new Status(StatusCode.DataLoss, ex.Title));
         }
         catch (DomainException ex)
         {
-            logger.LogError("""
-                            Domain exception. 
-                            Title: {title}, description: {description}
-                            """, ex.Title, ex.Description);
-        
-            throw new RpcException(new Status(StatusCode.Internal, 
+            logger.LogError("Domain exception, description: {description}", ex.Description);
+
+            throw new RpcException(new Status(StatusCode.Internal,
                 "Internal server error"));
         }
-        // catch (Exception ex)
-        // {
-        //     throw new RpcException(new Status(StatusCode.Internal, 
-        //         "Internal server error"));
-        // }
     }
 }

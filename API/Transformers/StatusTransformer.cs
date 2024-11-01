@@ -1,4 +1,5 @@
 using Proto.Identity;
+using DomainStatus = Domain.AccountAggregate.Status;
 
 namespace API.Transformers;
 
@@ -15,18 +16,13 @@ public class StatusTransformer
                 statusId, "Invalid role")
         };
 
-    public Status ToResponse(Domain.AccountAggregate.Status status)
-    {
-        var result = Status.ApprovedUnspecified;
-        status.When(Domain.AccountAggregate.Status.Approved)
-            .Then(() => result = Status.ApprovedUnspecified);
-        status.When(Domain.AccountAggregate.Status.PendingConfirmation)
-            .Then(() => result = Status.PendingConfirmation);
-        status.When(Domain.AccountAggregate.Status.PendingApproval)
-            .Then(() => result = Status.PendingApproval);
-        status.When(Domain.AccountAggregate.Status.Deactivated)
-            .Then(() => result = Status.Deactivated);
-
-        return result;
-    }
+    public Status ToResponse(DomainStatus s) =>
+        s switch
+        {
+            DomainStatus status when status == DomainStatus.Approved => Status.ApprovedUnspecified,
+            DomainStatus status when status == DomainStatus.PendingConfirmation => Status.PendingConfirmation,
+            DomainStatus status when status == DomainStatus.PendingApproval => Status.PendingApproval,
+            DomainStatus status when status == DomainStatus.Deactivated => Status.Deactivated,
+            _ => throw new ArgumentOutOfRangeException(nameof(s), s, "Unknown status")
+        };
 }
