@@ -1,2 +1,14 @@
-Микросервис Identity — микросервис авторизации и аунтентификации для проекта [Carsharing Backend](https://gitlab.com/carsharing-backend).
+Микросервис Identity — микросервис аутентификации и авторизации для проекта [Carsharing Backend](https://gitlab.com/carsharing-backend).
+
+Основные фичи:
+
+- Создание аккаунта;
+
+- Подтверждение аккаунта по ссылке из email;
+
+- Сброс пароля от аккаунта;
+
+- Аутентификация и авторизация посредство JWT (access и refresh токены);
+
+- Обновление access токена и refresh токена.
 
