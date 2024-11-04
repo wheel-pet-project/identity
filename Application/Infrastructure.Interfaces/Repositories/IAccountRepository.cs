@@ -7,15 +7,17 @@ public interface IAccountRepository
 { 
      Task<Result<Account>> GetById(Guid id, CancellationToken cancellationToken = default);
 
-     Task<Result<Account>> GetByEmail(string email, CancellationToken cancellationToken = default);
+     Task<Result<Account>> GetByEmail(string Email, CancellationToken cancellationToken = default);
      
-     Task<Result> AddAccountAndConfirmationToken(Account account, Guid confirmationToken);
+     Task<Result> AddAccountAndConfirmationToken(Account account, string confirmationTokenHash);
+
+     Task<Result<string>> GetConfirmationToken(Guid accountId);
      
      Task<Result> DeleteConfirmationToken(Guid accountId, Guid confirmationToken);
 
      Task<Result> AddRefreshTokenInfo(Guid refreshTokenId, Guid accountId);
 
-     Task<Result<(Guid accountId, bool isRevoked)>> GetRefreshTokenInfo(Guid accountId);
+     Task<Result<(Guid AccountId, bool IsRevoked)>> GetRefreshTokenInfo(Guid accountId);
 
      Task<Result> UpdateRefreshTokenInfo(Guid refreshTokenId, bool isRevoked);
 

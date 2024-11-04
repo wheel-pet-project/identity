@@ -1,5 +1,5 @@
 namespace Infrastructure.Repositories.Implementations.DapperModels;
 
 public record RefreshTokenInfoModel(
-    Guid AccountId, 
-    bool IsRevoked);
+    Guid account_id, 
+    bool is_revoked);

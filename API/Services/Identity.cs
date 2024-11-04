@@ -121,7 +121,7 @@ public class Identity(
         logger.LogInformation("Confirm email request received");
 
         var result = await confirmEmailUseCase.Execute(new ConfirmAccountEmailRequest(
-            Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationId)));
+            Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationToken)));
 
         return result.IsSuccess
             ? new ConfirmEmailResponse()

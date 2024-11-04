@@ -23,10 +23,10 @@ public class RefreshAccountAccessTokenUseCase(
             return Result.Fail(gettingTokenInfoResult.Errors);
 
         var tokenInfo = gettingTokenInfoResult.Value;
-        if (tokenInfo.isRevoked)
+        if (tokenInfo.IsRevoked)
             return Result.Fail("Refresh token is revoked");
         
-        var gettingAccountResult = await accountRepository.GetById(tokenInfo.accountId);
+        var gettingAccountResult = await accountRepository.GetById(tokenInfo.AccountId);
         if (gettingAccountResult.IsFailed)
             throw new ApplicationException("Account not found",
                 "Refresh token not revoked for deleted account");

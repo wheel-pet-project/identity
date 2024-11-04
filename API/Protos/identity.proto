@@ -69,7 +69,7 @@ message CreateResponse{
 message ConfirmEmailRequest{
   string cor_id = 1;
   string acc_id = 2;
-  string confirmation_id = 3;
+  string confirmation_token = 3;
 }
 message ConfirmEmailResponse{
 } 

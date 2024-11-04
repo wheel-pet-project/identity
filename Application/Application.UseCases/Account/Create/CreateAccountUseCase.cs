@@ -20,12 +20,17 @@ public class CreateAccountUseCase(
             request.Email, 
             request.Phone,
             hasher.GenerateHash(request.Password));
+
+        var confirmationToken = Guid.NewGuid();
+        Console.BackgroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"Confirmation token: {confirmationToken}");
+        var result = await accountRepository.AddAccountAndConfirmationToken(account, 
+            confirmationTokenHash: hasher.GenerateHash(confirmationToken.ToString()));
         
-        var result = await accountRepository.AddAccountAndConfirmationToken(account, confirmationToken: Guid.NewGuid());
+        // send command to notification
 
-        if (result.IsFailed)
-            return Result.Fail("Failed to create account");
-
-        return Result.Ok(new CreateAccountResponse(account.Id));
+        return result.IsSuccess 
+            ? Result.Ok(new CreateAccountResponse(account.Id)) 
+            : Result.Fail(result.Errors);
     }
 }

@@ -55,7 +55,7 @@ INNER JOIN status ON account.status_id = status.Id
 WHERE email = @email
 LIMIT 1";
         
-        var queryCommand = new CommandDefinition(sql, new { email }, 
+        var queryCommand = new CommandDefinition(sql, new { email = email }, 
             cancellationToken: cancellationToken);
 
         var accounts = await connection
@@ -74,23 +74,35 @@ LIMIT 1";
             ? Result.Ok(accountList.FirstOrDefault())!
             : Result.Fail(new NotFound("Account not found")))!;
     }
-    
-    // GetConfirmationToken
+
+    public async Task<Result<string>> GetConfirmationToken(Guid accountId)
+    {
+        var sql = @"
+SELECT confirmation_token
+FROM pending_confirmation_token
+WHERE account_id = @accountId
+LIMIT 1";
+
+        var command = new CommandDefinition(sql, new { accountId });
+        var result = await connection.QuerySingleOrDefaultAsync<string>(command);
+        
+        return result is not null
+            ? Result.Ok(result)
+            : Result.Fail(new NotFound("Confirmation token not found"));
+    }
     
     public async Task<Result> DeleteConfirmationToken(Guid accountId, Guid confirmationToken)
     {
         var sql = @"
 DELETE FROM pending_confirmation_token
-WHERE account_id = @accountId
-  AND confirmation_token = @confirmationToken";
+WHERE account_id = @accountId";
         
         var command = new CommandDefinition(sql, new { accountId, confirmationToken });
         var affectedRows = await connection.ExecuteAsync(command);
-
-        var isSuccess = affectedRows > 0;
-        return isSuccess
+        
+        return affectedRows > 0
             ? Result.Ok() 
-            : Result.Fail(new DbError("Account confirmation failed"));
+            : Result.Fail(new DbError("Failed to delete confirmation token in db"));
     }
 
     public async Task<Result> AddRefreshTokenInfo(Guid refreshTokenId, Guid accountId)
@@ -104,14 +116,13 @@ VALUES (@refreshTokenId, @accountId, false, @issueDate);";
             accountId, refreshTokenId, issueDate = DateTime.UtcNow
         });
         var affectedRows = await connection.ExecuteAsync(command);
-        var isSuccess = affectedRows > 0;
         
-        return isSuccess
+        return affectedRows > 0
             ? Result.Ok()
             : Result.Fail(new DbError("Saving refresh token info failed"));
     }
 
-    public async Task<Result<(Guid accountId, bool isRevoked)>> GetRefreshTokenInfo(Guid refreshTokenId)
+    public async Task<Result<(Guid AccountId, bool IsRevoked)>> GetRefreshTokenInfo(Guid refreshTokenId)
     {
         var sql = @"
 SELECT account_id, is_revoked
@@ -124,7 +135,7 @@ LIMIT 1";
             .QuerySingleOrDefaultAsync<RefreshTokenInfoModel>(command);
 
         return result is not null
-            ? Result.Ok((result.AccountId, result.IsRevoked))
+            ? Result.Ok((result.account_id, result.is_revoked))
             : Result.Fail(new NotFound("Refresh token not found"));
     }
 
@@ -138,11 +149,10 @@ WHERE id = @refreshTokenId";
         var command = new CommandDefinition(sql, new { isRevoked , refreshTokenId});
 
         var affectedRows = await connection.ExecuteAsync(command);
-        var isSuccess = affectedRows > 0;
 
-        return isSuccess
+        return affectedRows > 0
             ? Result.Ok()
-            : Result.Fail(new DbError("Updating refresh token failed"));
+            : Result.Fail(new DbError("Updating refresh token in db failed"));
     }
 
     public async Task<Result> AddRefreshTokenInfoAndRevokeOldRefreshToken(
@@ -183,10 +193,10 @@ VALUES (@newRefreshTokenId, @accountId, false, @issueDate);";
         
         return isSuccess 
             ? Result.Ok()
-            : Result.Fail(new DbError("Revoking refresh token failed"));
+            : Result.Fail(new DbError("Update refresh token in db failed"));
     }
 
-    public async Task<Result> AddAccountAndConfirmationToken(Account account, Guid confirmationToken)
+    public async Task<Result> AddAccountAndConfirmationToken(Account account, string confirmationTokenHash)
     {
         using var activity = _activitySource.StartActivity("Adding account to db");
         activity?.SetTag("accountId", account.Id);
@@ -199,7 +209,7 @@ VALUES (@id, @roleId, @email, @phone, @password, @statusId)";
         
         var sqlForCreateConfirmRecord = @"
 INSERT INTO pending_confirmation_token (account_id, confirmation_token)
-VALUES (@accountId, @confirmationToken)";
+VALUES (@accountId, @confirmationTokenHash)";
         
         connection.Open();
         using var transaction = connection.BeginTransaction();
@@ -215,7 +225,7 @@ VALUES (@accountId, @confirmationToken)";
                 statusId = account.Status.Id
             }, transaction, 3);
         var createConfirmRecordCommand = new CommandDefinition(sqlForCreateConfirmRecord,
-            new { accountId = account.Id, confirmationToken }, transaction, 3);
+            new { accountId = account.Id, confirmationTokenHash }, transaction, 3);
         
         try
         {
@@ -249,18 +259,59 @@ WHERE id = @id";
                 statusId = account.Status.Id
             });
         
-        var isSuccess = affectedRows > 0;
-        return isSuccess
+        return affectedRows > 0
             ? Result.Ok()
             : Result.Fail(new DbError("Failed to update account status in db"));
     }
 
-    // public async Task<Result> AddResetPasswordToken(Guid accountId, Guid resetToken)
-    // {
-    //     
-    // }
-    //
-    // public async Task<Result> GetResetPasswordToken(Guid )
+    public async Task<Result> AddResetPasswordToken(Guid accountId, Guid resetToken, DateTime expiresIn)
+    {
+        var sql = @"
+INSERT INTO password_reset_token (account_id, reset_token, is_already_applied, expires_in)
+VALUES (@accountId, @resetToken, false, @expiresIn);";
+        
+        var command = new CommandDefinition(sql, new { accountId, resetToken, expiresIn });
+        var affectedRows = await connection.ExecuteAsync(command);
+        
+        return affectedRows > 0
+            ? Result.Ok()
+            : Result.Fail(new DbError("Failed to add password reset token in db"));
+    }
+
+    public async Task<Result<(string ResetPasswordTokenHash, 
+        bool IsAlreadyApplied,
+        DateTime ExpiresIn)>> GetResetPasswordToken(Guid accountId)
+    {
+        var sql = @"
+SELECT reset_token, is_already_applied, expires_in
+FROM password_reset_token
+WHERE account_id = @accountId
+LIMIT 1";
+        
+        var command = new CommandDefinition(sql, new { accountId });
+
+        var result = await connection.QuerySingleOrDefaultAsync<PasswordResetTokenModel>(command);
+        
+        return result is not null
+            ? Result.Ok((result.reset_token, result.is_already_applied, result.expires_in))
+            : Result.Fail(new NotFound("Password reset token not found"));
+    }
+
+    public async Task<Result> MarkResetPasswordAsApplied(Guid accountId)
+    {
+        var sql = @"
+UPDATE password_reset_token
+SET is_already_applied = true
+WHERE account_id = @accountId";
+        
+        var command = new CommandDefinition(sql, new { accountId });
+        
+        var affectedRows = await connection.ExecuteAsync(command);
+        
+        return affectedRows > 0
+            ? Result.Ok()
+            : Result.Fail(new DbError("Failed to update password reset token's status in db"));
+    }
 
     public async Task<Result> UpdatePassword(Account account)
     {
@@ -275,9 +326,8 @@ WHERE id = @id";
                 id = account.Id,
                 account.Password
             });
-
-        var isSuccess = affectedRows > 0;
-        return isSuccess 
+        
+        return affectedRows > 0 
             ? Result.Ok() 
             : Result.Fail(new DbError("Failed to update password in db"));
     }
