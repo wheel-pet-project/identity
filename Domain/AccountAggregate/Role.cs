@@ -30,15 +30,15 @@ public class Role(string value, int id) : SmartEnum<Role>(value, id)
 
     public static Role FromId(int id) => FromValue(id);
     
-    public static bool operator == (Role a, Role b)
+    public static bool operator == (Role? a, Role? b)
     {
         if (a is null && b is null)
             return true;
-
+        
         if (a is null || b is null)
             return false;
         
-        return a.Id == b.Id;
+        return a!.Id == b.Id;
     }
 
     public static bool operator != (Role a, Role b) => !(a == b);

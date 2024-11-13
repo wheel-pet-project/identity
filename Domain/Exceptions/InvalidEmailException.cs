@@ -1,4 +1,4 @@
 namespace Domain.Exceptions;
 
-public class InvalidEmailException(string description) 
-    : DomainException(description);
+public class InvalidEmailException(string description, Exception? innerException = null) 
+    : DomainException(description, innerException);
