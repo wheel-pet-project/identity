@@ -38,6 +38,6 @@ public class AccountSetPhoneTests
         var act = () => account.SetPhone(newPhone);
 
         // Assert
-        Assert.Throws<DomainException>(act);
+        Assert.Throws<InvalidPhoneException>(act);
     }
 }

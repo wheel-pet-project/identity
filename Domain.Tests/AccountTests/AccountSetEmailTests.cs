@@ -38,7 +38,7 @@ public class AccountSetEmailTests
         void Act()  => account.SetEmail("");
 
         // Assert
-        Assert.Throws<DomainException>(Act);
+        Assert.Throws<InvalidEmailException>(Act);
     }
     
     [Theory]
@@ -54,6 +54,6 @@ public class AccountSetEmailTests
         void Act()  => account.SetEmail(newEmail);
 
         // Assert
-        Assert.Throws<DomainException>(Act);
+        Assert.Throws<InvalidEmailException>(Act);
     }
 }

@@ -12,9 +12,8 @@ public class AccountSetPasswordTests
     private readonly TestingAccountCreator _accountCreator = new();
 
     [Theory]
-    [InlineData("password")]
-    [InlineData("Password123")]
-    [InlineData("Password123*\"![]")]
+    [InlineData("$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG")]
+    [InlineData("$2a$11$4327xt8asdawadwgaegchzS6lZhZkjy7NKoLpuxVS6ZN7895tgh3T")]
     public void UpdatePassword_Should_Update_Password(string password)
     {
         // Arrange
@@ -37,7 +36,7 @@ public class AccountSetPasswordTests
         void Act() => account.SetPassword(string.Empty);
 
         // Assert
-        Assert.Throws<DomainException>(Act);
+        Assert.Throws<InvalidPasswordException>(Act);
     }
 
     [Fact]
@@ -47,9 +46,9 @@ public class AccountSetPasswordTests
         var account = _accountCreator.CreateAccount();
 
         // Act
-        void Act() => account.SetPassword("55555");
+        void Act() => account.SetPassword("notHash");
 
         // Assert
-        Assert.Throws<DomainException>(Act);
+        Assert.Throws<InvalidPasswordException>(Act);
     }
 }
