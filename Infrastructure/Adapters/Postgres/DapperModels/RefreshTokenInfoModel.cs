@@ -1,4 +1,4 @@
-namespace Infrastructure.Repositories.Implementations.DapperModels;
+namespace Infrastructure.Adapters.Postgres.DapperModels;
 
 public record RefreshTokenInfoModel(
     Guid account_id, 

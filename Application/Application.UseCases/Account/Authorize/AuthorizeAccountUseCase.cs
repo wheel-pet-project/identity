@@ -12,12 +12,11 @@ public class AuthorizeAccountUseCase(IJwtProvider jwtProvider)
         var result = await jwtProvider.VerifyAccessToken(request.AccessToken);
         if (result.IsFailed)
             return Result.Fail(result.Errors);
-
         var accountAuthData = result.Value;
         
         return Result.Ok(new AuthorizeAccountResponse(
                 accountAuthData.accountId, 
-                accountAuthData.roleId, 
-                accountAuthData.statusId));
+                accountAuthData.role, 
+                accountAuthData.status));
     }
 }

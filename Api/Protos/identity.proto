@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option csharp_namespace = "Proto.Identity";
+option csharp_namespace = "Proto.IdentityV1";
 
-package identity;
+package identity.v1;
 
 enum Role{
   CUSTOMER_UNSPECIFIED = 0;
@@ -25,6 +25,8 @@ service Identity {
   rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
   rpc ConfirmEmail (ConfirmEmailRequest) returns (ConfirmEmailResponse);
   rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse);
+  rpc RecoverPassword (RecoverPasswordRequest) returns (RecoverPasswordResponse);
+  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse);
 }
 
 
@@ -69,7 +71,7 @@ message CreateResponse{
 message ConfirmEmailRequest{
   string cor_id = 1;
   string acc_id = 2;
-  string confirmation_token = 3;
+  string confirmation_tkn = 3;
 }
 message ConfirmEmailResponse{
 } 
@@ -86,35 +88,21 @@ message RefreshAccessTokenResponse{
 }
 
 
-//// Update account password
-//message UpdatePhoneRequest{
-//  string cor_id = 1;
-//  string acc_id = 2;
-//  string phone = 3;
-//}
-//message UpdatePhoneResponse{
-//}
-//
-//
-//// Update account email
-//message UpdateEmailRequest{
-//  string cor_id = 1;
-//  string acc_id = 2;
-//  string email = 3;
-//}
-//message UpdateEmailResponse{
-//}
-//
-//
-//// Update account password
-//message UpdatePasswordRequest{
-//  string cor_id = 1;
-//  string acc_id = 2;
-//  string pass = 3;
-//}
-//message UpdatePasswordResponse{
-//}
+// Recover password
+message RecoverPasswordRequest{
+  string cor_id = 1;
+  string email = 2;
+}
+message RecoverPasswordResponse{}
 
 
+// Update Password
+message UpdatePasswordRequest{
+  string cor_id = 1;
+  string new_pass = 2;
+  string email = 3;
+  string reset_tkn = 4;
+}
+message UpdatePasswordResponse{}
 
 

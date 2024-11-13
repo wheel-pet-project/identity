@@ -5,15 +5,22 @@ using Application.Application.UseCases.Account.Authenticate;
 using Application.Application.UseCases.Account.Authorize;
 using Application.Application.UseCases.Account.ConfirmEmail;
 using Application.Application.UseCases.Account.Create;
+using Application.Application.UseCases.Account.RecoverPassword;
 using Application.Application.UseCases.Account.RefreshAccessToken;
+using Application.Application.UseCases.Account.UpdatePassword;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.PasswordHasher;
-using Application.Infrastructure.Interfaces.Repositories;
+using Application.Infrastructure.Interfaces.Ports.Postgres;
+using Confluent.Kafka;
+using HealthChecks.Kafka;
+using Infrastructure.Adapters.Postgres;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
-using Infrastructure.Repositories.Implementations;
 using Infrastructure.Settings;
+using Infrastructure.Settings.Polly;
 using MassTransit;
+using MassTransit.Monitoring;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -21,6 +28,7 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using RetryPolicy = Infrastructure.Settings.Polly.RetryPolicy;
 
 namespace API.Extensions;
 
@@ -29,17 +37,15 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDbConnection(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var dbSettings = configuration.GetSection("ConnectionStrings")
-            .Get<DbConnectionSettings>();
-        services.AddScoped<IDbConnection>(_ => 
-            new NpgsqlConnection(dbSettings!.ConnectionString));
+        var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
+        services.AddScoped<IDbConnection>(_ => new NpgsqlConnection(dbSettings!.ConnectionString));
 
         return services;
     }
 
     public static IServiceCollection AddUseCases(this IServiceCollection services)
     {
-        services.AddScoped<IUseCase<CreateAccountRequest, CreateAccountResponse>, 
+        services.AddScoped<IUseCase<CreateAccountRequest, CreateAccountResponse>,
             CreateAccountUseCase>();
         services.AddScoped<IUseCase<AuthenticateAccountRequest, AuthenticateAccountResponse>,
             AuthenticateAccountUseCase>();
@@ -49,21 +55,27 @@ public static class ServiceCollectionExtensions
             ConfirmAccountEmailUseCase>();
         services.AddScoped<IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse>,
             RefreshAccountAccessTokenUseCase>();
-        
+        services.AddScoped<IUseCase<RecoverAccountPasswordRequest, RecoverAccountPasswordResponse>,
+            RecoverAccountPasswordUseCase>();
+        services.AddScoped<IUseCase<UpdateAccountPasswordRequest, UpdateAccountPasswordResponse>,
+            UpdateAccountPasswordUseCase>();
+
         return services;
     }
 
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddTransient<IAccountRepository, AccountRepository>();
-        
+        services.AddTransient<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
+
         return services;
     }
 
     public static IServiceCollection AddPasswordHasher(this IServiceCollection services)
     {
         services.AddScoped<IHasher, Hasher>();
-        
+
         return services;
     }
 
@@ -73,24 +85,31 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-    
+
     public static IServiceCollection ConfigureSerilog(this IServiceCollection services,
         IConfiguration configuration)
     {
         var settings = configuration.GetSection("MongoSettings").Get<MongoSettings>();
-        
+
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen)
-            .WriteTo.MongoDBBson(settings!.ConnectionString, 
-            "logs",
-            LogEventLevel.Verbose, 
-            512,
-            TimeSpan.FromSeconds(20))
+            .WriteTo.MongoDBBson(settings!.ConnectionString,
+                "logs",
+                LogEventLevel.Verbose,
+                512,
+                TimeSpan.FromSeconds(20))
+            // todo: check this configuration
+            .WriteTo.MongoDBBson(settings.ConnectionString,
+                "errors",
+                LogEventLevel.Error,
+                64,
+                TimeSpan.FromSeconds(20))
             .CreateLogger();
         services.AddSerilog();
-        
+
         return services;
     }
+
 
     public static IServiceCollection ConfigureMassTransit(this IServiceCollection services)
     {
@@ -116,7 +135,7 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-    
+
     public static IServiceCollection AddTelemetry(this IServiceCollection services)
     {
         services.AddOpenTelemetry()
@@ -147,8 +166,26 @@ public static class ServiceCollectionExtensions
                     .AddSource("Identity")
                     // .AddSource("MassTransit") 
                     .AddJaegerExporter();
-            });;
+            });
+
+        return services;
+    }
+    
+    public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, IConfiguration configuration)
+    {
+        var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
+
+        services.AddGrpcHealthChecks()
+            .AddNpgSql(dbSettings!.ConnectionString, timeout: TimeSpan.FromSeconds(10))
+            .AddKafka(cfg => cfg.BootstrapServers = "localhost:9092", timeout: TimeSpan.FromSeconds(10));
         
+        return services;
+    }
+
+    public static IServiceCollection AddRetryPolicy(this IServiceCollection services)
+    {
+        services.AddTransient<IDapperRetryPolicy, RetryPolicy>();
+
         return services;
     }
 }

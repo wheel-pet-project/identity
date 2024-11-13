@@ -2,5 +2,5 @@ namespace Application.Application.UseCases.Account.UpdatePassword;
 
 public record UpdateAccountPasswordRequest(
     string NewPassword,
-    Guid AccountId,
+    string Email,
     Guid ResetToken);

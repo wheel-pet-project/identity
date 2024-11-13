@@ -9,7 +9,7 @@ public interface IJwtProvider
 
     string GenerateRefreshToken(Guid refreshTokenId);
 
-    Task<Result<(Guid accountId, int roleId, int statusId)>> VerifyAccessToken(string accessToken);
+    Task<Result<(Guid accountId, Role role, Status status)>> VerifyAccessToken(string accessToken);
 
     Task<Result<Guid>> VerifyRefreshToken(string refreshToken);
 }

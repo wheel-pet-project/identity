@@ -1,4 +1,4 @@
-namespace Infrastructure.Repositories.Implementations.DapperModels;
+namespace Infrastructure.Adapters.Postgres.DapperModels;
 
 public record PasswordResetTokenModel(
     string reset_token, 

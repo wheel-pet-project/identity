@@ -5,21 +5,25 @@ using Application.Application.UseCases.Account.Authenticate;
 using Application.Application.UseCases.Account.Authorize;
 using Application.Application.UseCases.Account.ConfirmEmail;
 using Application.Application.UseCases.Account.Create;
+using Application.Application.UseCases.Account.RecoverPassword;
 using Application.Application.UseCases.Account.RefreshAccessToken;
+using Application.Application.UseCases.Account.UpdatePassword;
 using Grpc.Core;
-using Proto.Identity;
+using Proto.IdentityV1;
 using Status = Grpc.Core.Status;
 
 namespace API.Services;
 
-public class Identity(
-    ILogger<Identity> logger,
+public class IdentityV1(
+    ILogger<IdentityV1> logger,
     IUseCase<CreateAccountRequest, CreateAccountResponse> createQueryUseCase,
     IUseCase<AuthenticateAccountRequest, AuthenticateAccountResponse> authenticateUseCase,
     IUseCase<AuthorizeAccountRequest, AuthorizeAccountResponse> authorizeUseCase,
     IUseCase<ConfirmAccountEmailRequest, ConfirmAccountEmailResponse> confirmEmailUseCase,
-    IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse> refreshAccessTokenUseCase)
-    : Proto.Identity.Identity.IdentityBase
+    IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse> refreshAccessTokenUseCase,
+    IUseCase<RecoverAccountPasswordRequest, RecoverAccountPasswordResponse> recoverPasswordUseCase,
+    IUseCase<UpdateAccountPasswordRequest, UpdateAccountPasswordResponse> updatePasswordUseCase)
+    : Proto.IdentityV1.Identity.IdentityBase
 {
     private readonly ActivitySource _activitySource = new("Identity");
 
@@ -29,7 +33,6 @@ public class Identity(
         using var activity = _activitySource
             .StartActivity("Create account request received")
             .SetTag("CorrelationId", request.CorId);
-        logger.LogInformation("Creating account request received");
 
         var transformer = new RoleTransformer();
         var result = await createQueryUseCase.Execute(
@@ -44,6 +47,23 @@ public class Identity(
             : throw new RpcException(new Status(StatusCode.InvalidArgument,
                 string.Join(' ', result.Errors.Select(x => x.Message))));
     }
+    
+    public override async Task<ConfirmEmailResponse> ConfirmEmail(ConfirmEmailRequest request,
+        ServerCallContext context)
+    {
+        using var activity = _activitySource
+            .StartActivity("Confirm email request received")
+            .SetTag("CorrelationId", request.CorId)
+            .SetTag("AccountId", request.AccId);
+
+        var result = await confirmEmailUseCase.Execute(new ConfirmAccountEmailRequest(
+            Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationTkn)));
+
+        return result.IsSuccess
+            ? new ConfirmEmailResponse()
+            : throw new RpcException(new Status(StatusCode.InvalidArgument,
+                string.Join(' ', result.Errors.Select(x => x.Message))));
+    }
 
     public override async Task<AuthenticateResponse> Authenticate(
         AuthenticateRequest request, ServerCallContext context)
@@ -52,7 +72,6 @@ public class Identity(
             .StartActivity("Authenticate account request received")
             .SetTag("CorrelationId", request.CorId)
             .SetTag("Account email", request.Email);
-        logger.LogInformation("Authenticating account request received");
 
         var result = await authenticateUseCase.Execute(
             new AuthenticateAccountRequest(request.Email,
@@ -71,7 +90,6 @@ public class Identity(
         using var activity = _activitySource
             .StartActivity("Authorize account request received")
             .SetTag("CorrelationId", request.CorId);
-        logger.LogInformation("Authorizing account request received");
 
         var roleTransformer = new RoleTransformer();
         var statusTransformer = new StatusTransformer();
@@ -96,7 +114,6 @@ public class Identity(
         using var activity = _activitySource
             .StartActivity("Refresh access token request received")
             .SetTag("CorrelationId", request.CorId);
-        logger.LogInformation("Refresh access token request received");
 
         var result = await refreshAccessTokenUseCase.Execute(
             new RefreshAccountAccessTokenRequest(request.RefreshTkn));
@@ -111,20 +128,34 @@ public class Identity(
                 string.Join(' ', result.Errors.Select(x => x.Message))));
     }
 
-    public override async Task<ConfirmEmailResponse> ConfirmEmail(ConfirmEmailRequest request,
+    public override async Task<RecoverPasswordResponse> RecoverPassword(RecoverPasswordRequest request, 
         ServerCallContext context)
     {
         using var activity = _activitySource
-            .StartActivity("Confirm email request received")
-            .SetTag("CorrelationId", request.CorId)
-            .SetTag("AccountId", request.AccId);
-        logger.LogInformation("Confirm email request received");
+            .StartActivity("Recover password request received")
+            .SetTag("CorrelationId", request.CorId);
 
-        var result = await confirmEmailUseCase.Execute(new ConfirmAccountEmailRequest(
-            Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationToken)));
-
+        var result = await recoverPasswordUseCase.Execute(
+            new RecoverAccountPasswordRequest(request.Email));
+        
         return result.IsSuccess
-            ? new ConfirmEmailResponse()
+            ? new RecoverPasswordResponse()
+            : throw new RpcException(new Status(StatusCode.InvalidArgument,
+                string.Join(' ', result.Errors.Select(x => x.Message))));
+    }
+
+    public override async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordRequest request, 
+        ServerCallContext context)
+    {
+        using var activity = _activitySource
+            .StartActivity("Update password request received")
+            .SetTag("CorrelationId", request.CorId);
+
+        var result = await updatePasswordUseCase.Execute(new UpdateAccountPasswordRequest(
+            request.NewPass, request.Email, Guid.Parse(request.ResetTkn)));
+        
+        return result.IsSuccess
+            ? new UpdatePasswordResponse()
             : throw new RpcException(new Status(StatusCode.InvalidArgument,
                 string.Join(' ', result.Errors.Select(x => x.Message))));
     }

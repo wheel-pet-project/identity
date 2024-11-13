@@ -1,4 +1,4 @@
-using Proto.Identity;
+using Proto.IdentityV1;
 using DomainRole = Domain.AccountAggregate.Role;
 
 namespace API.Transformers;
@@ -15,19 +15,6 @@ public class RoleTransformer
             Role.Hr => Domain.AccountAggregate.Role.HR,
             _ => throw new ArgumentOutOfRangeException(nameof(role), role, "Unknown role")
         };
-    
-    
-    public Role ToResponse(int roleId) =>
-        roleId switch
-        {
-            0 => Role.CustomerUnspecified,
-            1 => Role.Admin,
-            2 => Role.Support,
-            3 => Role.Maintenance,
-            4 => Role.Hr,
-            _ => throw new ArgumentOutOfRangeException(nameof(roleId), roleId, "Unknown role")
-        };
-
 
     public Role ToResponse(DomainRole r) =>
         r switch

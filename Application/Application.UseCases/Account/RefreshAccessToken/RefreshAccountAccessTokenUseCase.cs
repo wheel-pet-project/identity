@@ -1,6 +1,6 @@
 using Application.Application.Interfaces;
 using Application.Infrastructure.Interfaces.JwtProvider;
-using Application.Infrastructure.Interfaces.Repositories;
+using Application.Infrastructure.Interfaces.Ports.Postgres;
 using FluentResults;
 using ApplicationException = Application.Exceptions.ApplicationException;
 
@@ -8,17 +8,18 @@ namespace Application.Application.UseCases.Account.RefreshAccessToken;
 
 public class RefreshAccountAccessTokenUseCase(
     IAccountRepository accountRepository,
+    IRefreshTokenRepository refreshTokenRepository,
     IJwtProvider jwtProvider)
     : IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse>
 {
     public async Task<Result<RefreshAccountAccessTokenResponse>> Execute(RefreshAccountAccessTokenRequest request)
     {
         var refreshTokenVerifyingResult = await jwtProvider.VerifyRefreshToken(request.RefreshToken);
-        if (refreshTokenVerifyingResult.IsFailed)
+        if (refreshTokenVerifyingResult.IsFailed) 
             return Result.Fail(refreshTokenVerifyingResult.Errors);
         
         var refreshTokenId = refreshTokenVerifyingResult.Value;
-        var gettingTokenInfoResult = await accountRepository.GetRefreshTokenInfo(refreshTokenId);
+        var gettingTokenInfoResult = await refreshTokenRepository.GetRefreshTokenInfo(refreshTokenId);
         if (gettingTokenInfoResult.IsFailed)
             return Result.Fail(gettingTokenInfoResult.Errors);
 
@@ -28,12 +29,12 @@ public class RefreshAccountAccessTokenUseCase(
         
         var gettingAccountResult = await accountRepository.GetById(tokenInfo.AccountId);
         if (gettingAccountResult.IsFailed)
-            throw new ApplicationException("Account not found",
+            throw new ApplicationException("Account not found", 
                 "Refresh token not revoked for deleted account");
 
         var newRefreshTokenId = Guid.NewGuid();
         var account = gettingAccountResult.Value;
-        var tokenUpdateResult = await accountRepository.AddRefreshTokenInfoAndRevokeOldRefreshToken(
+        var tokenUpdateResult = await refreshTokenRepository.AddRefreshTokenInfoAndRevokeOldRefreshToken(
             newRefreshTokenId, account.Id, refreshTokenId);
         
         var accessToken = jwtProvider.GenerateAccessToken(account);

@@ -56,7 +56,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         return new JwtSecurityTokenHandler().WriteToken(refreshToken);
     }
 
-    public async Task<Result<(Guid accountId, int roleId, int statusId)>> VerifyAccessToken(
+    public async Task<Result<(Guid accountId, Role role, Status status)>> VerifyAccessToken(
         string accessToken)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -81,10 +81,10 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         
         var claims = result.Claims;
         var accountId = Guid.Parse(claims.First(c => c.Key == "acc_id").Value.ToString()!);
-        var roleId = int.Parse(claims.First(c => c.Key == "role_id").Value.ToString()!);
-        var statusId = int.Parse(claims.First(c => c.Key == "status_id").Value.ToString()!);
+        var role = Role.FromId(int.Parse(claims.First(c => c.Key == "role_id").Value.ToString()!));
+        var status = Status.FromId(int.Parse(claims.First(c => c.Key == "status_id").Value.ToString()!));
         
-        return Result.Ok((accountId, roleId, statusId));
+        return Result.Ok((accountId, role, status));
     }
 
     public async Task<Result<Guid>> VerifyRefreshToken(string refreshToken)

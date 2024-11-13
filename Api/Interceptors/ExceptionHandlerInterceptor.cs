@@ -1,6 +1,7 @@
 using Domain.Exceptions;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+using Polly.CircuitBreaker;
 using ApplicationException = Application.Exceptions.ApplicationException;
 
 namespace API.Interceptors;
@@ -29,6 +30,20 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
 
             throw new RpcException(new Status(StatusCode.Internal,
                 "Internal server error"));
+        }
+        catch (IsolatedCircuitException ex)
+        {
+            logger.LogError("Db unavailable");
+
+            throw new RpcException(new Status(StatusCode.Unavailable,
+                "Db unavailable"));
+        }
+        catch (BrokenCircuitException ex)
+        {
+            logger.LogError("BrokenCircuitException");
+
+            throw new RpcException(new Status(StatusCode.Unavailable,
+                "Db error"));
         }
     }
 }

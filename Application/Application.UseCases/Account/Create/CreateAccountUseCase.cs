@@ -1,7 +1,6 @@
 using Application.Application.Interfaces;
 using Application.Infrastructure.Interfaces.PasswordHasher;
-using Application.Infrastructure.Interfaces.Repositories;
-using Domain.AccountAggregate;
+using Application.Infrastructure.Interfaces.Ports.Postgres;
 using FluentResults;
 
 namespace Application.Application.UseCases.Account.Create;
@@ -13,20 +12,21 @@ public class CreateAccountUseCase(
 {
     public async Task<Result<CreateAccountResponse>> Execute(CreateAccountRequest request)
     {
-        var factory = new AccountFactory();
-        var account = factory.CreateAccount( 
+        var account = new Domain.AccountAggregate.Account( 
             request.Role, 
-            Status.PendingConfirmation,
             request.Email, 
             request.Phone,
             hasher.GenerateHash(request.Password));
 
         var confirmationToken = Guid.NewGuid();
-        Console.BackgroundColor = ConsoleColor.Yellow;
-        Console.WriteLine($"Confirmation token: {confirmationToken}");
         var result = await accountRepository.AddAccountAndConfirmationToken(account, 
             confirmationTokenHash: hasher.GenerateHash(confirmationToken.ToString()));
         
+        { 
+            Console.BackgroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Confirmation token: {confirmationToken}");
+            Console.BackgroundColor = default;
+        }
         // send command to notification
 
         return result.IsSuccess 
