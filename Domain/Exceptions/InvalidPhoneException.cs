@@ -1,4 +1,4 @@
 namespace Domain.Exceptions;
 
-public class InvalidPhoneException(string description) 
-    : DomainException(description);
+public class InvalidPhoneException(string description, Exception? innerException = null) 
+    : DomainException(description, innerException);
