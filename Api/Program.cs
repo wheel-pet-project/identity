@@ -1,10 +1,10 @@
-using API.Extensions;
-using API.Interceptors;
-using API.Registrars;
+using Api.Adapters.Grpc;
+using Api.Interceptors;
+using Api.Registrars;
+using Api.Extensions;
 using Infrastructure.Settings;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
-namespace API;
+namespace Api;
 
 public class Program
 {
@@ -32,7 +32,7 @@ public class Program
         
         var app = builder.Build();
         
-        app.MapGrpcService<Services.IdentityV1>();
+        app.MapGrpcService<IdentityV1>();
         app.MapGrpcHealthChecksService();
         app.MapHealthChecks("health");
 

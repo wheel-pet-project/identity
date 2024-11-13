@@ -1,5 +1,5 @@
 using System.Data;
-using API.Settings;
+using Api.Settings;
 using Application.Application.Interfaces;
 using Application.Application.UseCases.Account.Authenticate;
 using Application.Application.UseCases.Account.Authorize;
@@ -11,16 +11,12 @@ using Application.Application.UseCases.Account.UpdatePassword;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.PasswordHasher;
 using Application.Infrastructure.Interfaces.Ports.Postgres;
-using Confluent.Kafka;
-using HealthChecks.Kafka;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using Infrastructure.Settings.Polly;
 using MassTransit;
-using MassTransit.Monitoring;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -30,7 +26,7 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using RetryPolicy = Infrastructure.Settings.Polly.RetryPolicy;
 
-namespace API.Extensions;
+namespace Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {

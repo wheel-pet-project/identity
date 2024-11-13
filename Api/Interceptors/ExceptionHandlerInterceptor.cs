@@ -4,7 +4,7 @@ using Grpc.Core.Interceptors;
 using Polly.CircuitBreaker;
 using ApplicationException = Application.Exceptions.ApplicationException;
 
-namespace API.Interceptors;
+namespace Api.Interceptors;
 
 public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> logger) 
     : Interceptor

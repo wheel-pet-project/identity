@@ -1,7 +1,7 @@
 using Proto.IdentityV1;
 using DomainStatus = Domain.AccountAggregate.Status;
 
-namespace API.Transformers;
+namespace Api.Transformers;
 
 public class StatusTransformer
 {

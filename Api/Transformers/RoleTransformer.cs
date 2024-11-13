@@ -1,7 +1,7 @@
 using Proto.IdentityV1;
 using DomainRole = Domain.AccountAggregate.Role;
 
-namespace API.Transformers;
+namespace Api.Transformers;
 
 public class RoleTransformer
 {

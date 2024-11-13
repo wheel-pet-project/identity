@@ -1,4 +1,4 @@
-namespace API.Settings;
+namespace Api.Settings;
 
 public class MongoSettings
 {

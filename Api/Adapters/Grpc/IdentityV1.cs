@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using API.Transformers;
+using Api.Transformers;
 using Application.Application.Interfaces;
 using Application.Application.UseCases.Account.Authenticate;
 using Application.Application.UseCases.Account.Authorize;
@@ -12,7 +12,7 @@ using Grpc.Core;
 using Proto.IdentityV1;
 using Status = Grpc.Core.Status;
 
-namespace API.Services;
+namespace Api.Adapters.Grpc;
 
 public class IdentityV1(
     ILogger<IdentityV1> logger,
