@@ -4,10 +4,12 @@ using Application.Infrastructure.Interfaces.Ports.Postgres;
 using Dapper;
 using FluentResults;
 using Infrastructure.Adapters.Postgres.DapperModels;
+using Infrastructure.Settings.Polly;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class PasswordResetTokenRepository(IDbConnection connection) : IPasswordResetTokenRepository
+public class PasswordResetTokenRepository(IDbConnection connection, IPostgresRetryPolicy retryPolicy) 
+    : IPasswordResetTokenRepository
 {
     public async Task<Result> AddPasswordResetToken(
         Guid accountId, string resetPasswordTokenHash, DateTime expiresIn)
@@ -17,7 +19,7 @@ INSERT INTO password_reset_token (account_id, reset_token, is_already_applied, e
 VALUES (@accountId, @resetPasswordTokenHash, false, @expiresIn);";
         
         var command = new CommandDefinition(sql, new { accountId, resetPasswordTokenHash, expiresIn });
-        var affectedRows = await connection.ExecuteAsync(command);
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
         
         return affectedRows > 0
             ? Result.Ok()
@@ -36,7 +38,8 @@ LIMIT 1";
         
         var command = new CommandDefinition(sql, new { accountId });
 
-        var result = await connection.QuerySingleOrDefaultAsync<PasswordResetTokenModel>(command);
+        var result = await retryPolicy.ExecuteAsync(() => 
+            connection.QuerySingleOrDefaultAsync<PasswordResetTokenModel>(command));
         
         return result is not null
             ? Result.Ok((result.reset_token, result.is_already_applied, result.expires_in))
@@ -52,7 +55,7 @@ WHERE account_id = @accountId";
         
         var command = new CommandDefinition(sql, new { accountId });
         
-        var affectedRows = await connection.ExecuteAsync(command);
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
         
         return affectedRows > 0
             ? Result.Ok()

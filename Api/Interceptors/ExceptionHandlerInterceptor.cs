@@ -1,6 +1,7 @@
 using Domain.Exceptions;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+using Npgsql;
 using Polly.CircuitBreaker;
 using ApplicationException = Application.Exceptions.ApplicationException;
 
@@ -20,30 +21,23 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
         }
         catch (ApplicationException ex)
         {
-            logger.LogError("Application Exception, description: {description}", ex.Description);
+            logger.LogError("ApplicationException,, name: {name}, description: {description}, inner exception: {innerException}", 
+                nameof(ex), ex.Description, ex.InnerException?.Message);
 
             throw new RpcException(new Status(StatusCode.DataLoss, ex.Title));
         }
         catch (DomainException ex)
         {
-            logger.LogError("Domain exception, description: {description}", ex.Description);
+            logger.LogError("DomainException, name: {name}, description: {description}, inner exception: {innerException}", 
+                nameof(ex), ex.Description, ex.InnerException?.Message);
 
-            throw new RpcException(new Status(StatusCode.Internal,
-                "Internal server error"));
+            throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
         }
-        catch (IsolatedCircuitException ex)
+        catch (NpgsqlException ex)
         {
-            logger.LogError("Db unavailable");
+            logger.LogError("NpgsqlException, name: {name}, exception message: {message}", nameof(ex), ex.Message);
 
-            throw new RpcException(new Status(StatusCode.Unavailable,
-                "Db unavailable"));
-        }
-        catch (BrokenCircuitException ex)
-        {
-            logger.LogError("BrokenCircuitException");
-
-            throw new RpcException(new Status(StatusCode.Unavailable,
-                "Db error"));
+            throw new RpcException(new Status(StatusCode.Unavailable, "Db unavailable, please try again later."));
         }
     }
 }

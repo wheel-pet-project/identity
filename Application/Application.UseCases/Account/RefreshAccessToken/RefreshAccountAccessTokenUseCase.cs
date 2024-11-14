@@ -1,4 +1,5 @@
 using Application.Application.Interfaces;
+using Application.Exceptions;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.Ports.Postgres;
 using FluentResults;
@@ -29,8 +30,8 @@ public class RefreshAccountAccessTokenUseCase(
         
         var gettingAccountResult = await accountRepository.GetById(tokenInfo.AccountId);
         if (gettingAccountResult.IsFailed)
-            throw new ApplicationException("Account not found", 
-                "Refresh token not revoked for deleted account");
+            throw new DataConsistencyViolationException("Data consistency violation", 
+                "Data consistency violation: refresh token not revoked for deleted account");
 
         var newRefreshTokenId = Guid.NewGuid();
         var account = gettingAccountResult.Value;

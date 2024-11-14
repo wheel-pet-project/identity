@@ -24,7 +24,6 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using RetryPolicy = Infrastructure.Settings.Polly.RetryPolicy;
 
 namespace Api.Extensions;
 
@@ -160,7 +159,7 @@ public static class ServiceCollectionExtensions
                     .SetResourceBuilder(ResourceBuilder.CreateDefault()
                         .AddService("Identity"))
                     .AddSource("Identity")
-                    // .AddSource("MassTransit") 
+                    .AddSource("MassTransit") 
                     .AddJaegerExporter();
             });
 
@@ -178,9 +177,9 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddRetryPolicy(this IServiceCollection services)
+    public static IServiceCollection AddRetryPolicies(this IServiceCollection services)
     {
-        services.AddTransient<IDapperRetryPolicy, RetryPolicy>();
+        services.AddTransient<IPostgresRetryPolicy, PostgresRetryPolicy>();
 
         return services;
     }

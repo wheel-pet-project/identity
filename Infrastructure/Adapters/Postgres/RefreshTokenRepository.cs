@@ -4,10 +4,12 @@ using Application.Infrastructure.Interfaces.Ports.Postgres;
 using Dapper;
 using FluentResults;
 using Infrastructure.Adapters.Postgres.DapperModels;
+using Infrastructure.Settings.Polly;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class RefreshTokenRepository(IDbConnection connection) : IRefreshTokenRepository
+public class RefreshTokenRepository(IDbConnection connection, IPostgresRetryPolicy retryPolicy) 
+    : IRefreshTokenRepository
 {
     public async Task<Result> AddRefreshTokenInfo(Guid refreshTokenId, Guid accountId)
     {
@@ -19,7 +21,7 @@ VALUES (@refreshTokenId, @accountId, false, @issueDate);";
         {
             accountId, refreshTokenId, issueDate = DateTime.UtcNow
         });
-        var affectedRows = await connection.ExecuteAsync(command);
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
         
         return affectedRows > 0
             ? Result.Ok()
@@ -35,8 +37,8 @@ WHERE id = @refreshTokenId
 LIMIT 1";
         
         var command = new CommandDefinition(sql, new { refreshTokenId });
-        var result = await connection
-            .QuerySingleOrDefaultAsync<RefreshTokenInfoModel>(command);
+        var result = await retryPolicy.ExecuteAsync(() => connection
+            .QuerySingleOrDefaultAsync<RefreshTokenInfoModel>(command));
 
         return result is not null
             ? Result.Ok((result.account_id, result.is_revoked))
@@ -52,7 +54,7 @@ WHERE id = @refreshTokenId";
         
         var command = new CommandDefinition(sql, new { isRevoked , refreshTokenId});
 
-        var affectedRows = await connection.ExecuteAsync(command);
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
 
         return affectedRows > 0
             ? Result.Ok()
@@ -72,28 +74,31 @@ WHERE id = @oldRefreshTokenId";
         var sqlForAdding = @"
 INSERT INTO refresh_token_info (id, account_id, is_revoked, issue_date)
 VALUES (@newRefreshTokenId, @accountId, false, @issueDate);";
-        
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        
-        var revokeCommand = new CommandDefinition(sqlForRevoking, new { oldRefreshTokenId }, transaction);
-        var addCommand = new CommandDefinition(sqlForAdding, new
+
+        await retryPolicy.ExecuteAsync(async () =>
         {
-            newRefreshTokenId, accountId, issueDate = DateTime.UtcNow
-        }, transaction);
-        
-        try
-        {
-            await connection.ExecuteAsync(revokeCommand);
-            await connection.ExecuteAsync(addCommand);
-            
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            isSuccess = false;
-        }
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var revokeCommand = new CommandDefinition(sqlForRevoking, new { oldRefreshTokenId }, transaction);
+            var addCommand = new CommandDefinition(sqlForAdding, new
+            {
+                newRefreshTokenId, accountId, issueDate = DateTime.UtcNow
+            }, transaction);
+
+            try
+            {
+                await connection.ExecuteAsync(revokeCommand);
+                await connection.ExecuteAsync(addCommand);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                isSuccess = false;
+            }
+        });
         
         return isSuccess 
             ? Result.Ok()

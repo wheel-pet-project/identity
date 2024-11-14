@@ -23,7 +23,7 @@ public class Program
             .ConfigureSerilog(builder.Configuration)
             .AddDbConnection(builder.Configuration)
             .AddHealthCheckV1(builder.Configuration)
-            .AddRetryPolicy()
+            .AddRetryPolicies()
             .AddPasswordHasher()
             .AddJwtProvider()
             .AddTelemetry()
@@ -34,7 +34,6 @@ public class Program
         
         app.MapGrpcService<IdentityV1>();
         app.MapGrpcHealthChecksService();
-        app.MapHealthChecks("health");
 
         app.Run();
     }

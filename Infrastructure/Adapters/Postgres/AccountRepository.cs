@@ -9,7 +9,7 @@ using Infrastructure.Settings.Polly;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class AccountRepository(IDbConnection connection, IDapperRetryPolicy retryPolicy) : IAccountRepository
+public class AccountRepository(IDbConnection connection, IPostgresRetryPolicy retryPolicy) : IAccountRepository
 {
     private readonly ActivitySource _activitySource = new("Identity");
 
@@ -26,17 +26,17 @@ LIMIT 1";
         
         var queryCommand = new CommandDefinition(sql, new { accountId }, 
             cancellationToken: cancellationToken);
-        
-        var accounts = await connection
-            .QueryAsync<Account, Role, Status, Account>(queryCommand,
+
+        var accounts = await retryPolicy.ExecuteAsync(() =>
+            connection.QueryAsync<Account, Role, Status, Account>(queryCommand,
                 (account, role, status) =>
                 {
                     account.SetRole(role);
                     account.SetStatus(status);
 
                     return account;
-                }, 
-                "role_id, status_id");
+                },
+                "role_id, status_id"));
         var accountList = accounts.ToList();
         
         return (accountList.Count != 0
@@ -58,8 +58,8 @@ LIMIT 1";
         var queryCommand = new CommandDefinition(sql, new { email = email }, 
             cancellationToken: cancellationToken);
 
-        var accounts = await retryPolicy.ExecuteAsync(async () => await connection
-            .QueryAsync<Account, Role, Status, Account>(queryCommand,
+        var accounts = await retryPolicy.ExecuteAsync(() => 
+            connection.QueryAsync<Account, Role, Status, Account>(queryCommand, 
                 (account, role, status) =>
                 {
                     account.SetRole(role);
@@ -89,35 +89,38 @@ VALUES (@id, @roleId, @email, @phone, @password, @statusId)";
         var sqlForCreateConfirmRecord = @"
 INSERT INTO pending_confirmation_token (account_id, confirmation_token)
 VALUES (@accountId, @confirmationTokenHash)";
+
+        await retryPolicy.ExecuteAsync(async () =>
+        {
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
         
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+            var createCommand = new CommandDefinition(sqlForCreateAccount,
+                new
+                {
+                    id = account.Id,
+                    roleId = account.Role.Id,
+                    account.Email,
+                    account.Phone,
+                    account.Password,
+                    statusId = account.Status.Id
+                }, transaction, 3);
+            var createConfirmRecordCommand = new CommandDefinition(sqlForCreateConfirmRecord,
+                new { accountId = account.Id, confirmationTokenHash }, transaction, 3);
         
-        var createCommand = new CommandDefinition(sqlForCreateAccount,
-            new
+            try
             {
-                id = account.Id,
-                roleId = account.Role.Id,
-                account.Email,
-                account.Phone,
-                account.Password,
-                statusId = account.Status.Id
-            }, transaction, 3);
-        var createConfirmRecordCommand = new CommandDefinition(sqlForCreateConfirmRecord,
-            new { accountId = account.Id, confirmationTokenHash }, transaction, 3);
-        
-        try
-        {
-            await connection.ExecuteAsync(createCommand);
-            await connection.ExecuteAsync(createConfirmRecordCommand);
+                await connection.ExecuteAsync(createCommand);
+                await connection.ExecuteAsync(createConfirmRecordCommand);
             
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            isSuccess = false;
-        }
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                isSuccess = false;
+            }
+        });
         
         return isSuccess
             ? Result.Ok()
@@ -131,12 +134,12 @@ UPDATE account
 SET password = @password 
 WHERE id = @id";
 
-        var affectedRows = await connection.ExecuteAsync(sql, 
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(sql, 
             new 
             {
                 id = account.Id,
                 account.Password
-            });
+            }));
         
         return affectedRows > 0 
             ? Result.Ok() 
@@ -150,12 +153,12 @@ UPDATE account
 SET status_id = @statusId 
 WHERE id = @id";
 
-        var affectedRows = await connection.ExecuteAsync(sql, 
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(sql, 
             new 
             {
                 id = account.Id,
                 statusId = account.Status.Id
-            });
+            }));
         
         return affectedRows > 0
             ? Result.Ok()
@@ -171,7 +174,7 @@ WHERE account_id = @accountId
 LIMIT 1";
 
         var command = new CommandDefinition(sql, new { accountId });
-        var result = await connection.QuerySingleOrDefaultAsync<string>(command);
+        var result = await retryPolicy.ExecuteAsync(() => connection.QuerySingleOrDefaultAsync<string>(command));
         
         return result is not null
             ? Result.Ok(result)
@@ -185,7 +188,7 @@ DELETE FROM pending_confirmation_token
 WHERE account_id = @accountId";
         
         var command = new CommandDefinition(sql, new { accountId, confirmationToken });
-        var affectedRows = await connection.ExecuteAsync(command);
+        var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
         
         return affectedRows > 0
             ? Result.Ok() 

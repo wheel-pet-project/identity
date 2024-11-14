@@ -1,5 +1,6 @@
 using Application.Application.Interfaces;
 using Application.Errors;
+using Application.Exceptions;
 using Application.Infrastructure.Interfaces.PasswordHasher;
 using Application.Infrastructure.Interfaces.Ports.Postgres;
 using Domain.AccountAggregate;
@@ -29,8 +30,8 @@ public class ConfirmAccountEmailUseCase(IAccountRepository accountRepository,
         var gettingAccountResult = await accountRepository.GetById(request.AccountId);
         
         if (gettingAccountResult.HasError(e => e is NotFound))
-            throw new ApplicationException("Failed to find account", 
-                "Account that couldn't be found has been confirmed");
+            throw new DataConsistencyViolationException("Data consistency violation", 
+                "Data consistency violation: account that couldn't be found has been confirmed");
         var account = gettingAccountResult.Value;
         account.SetStatus(Status.PendingApproval);
         var updatingStatusResult = await accountRepository.UpdateStatus(account);
