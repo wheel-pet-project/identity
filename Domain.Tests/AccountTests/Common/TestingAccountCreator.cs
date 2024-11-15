@@ -1,4 +1,3 @@
-using System;
 using Domain.AccountAggregate;
 
 namespace Domain.Tests.AccountTests.Common;

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Domain.AccountAggregate;
 using Xunit;
 

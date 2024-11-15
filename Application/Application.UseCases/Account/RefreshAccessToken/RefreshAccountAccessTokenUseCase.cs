@@ -3,7 +3,6 @@ using Application.Exceptions;
 using Application.Infrastructure.Interfaces.JwtProvider;
 using Application.Infrastructure.Interfaces.Ports.Postgres;
 using FluentResults;
-using ApplicationException = Application.Exceptions.ApplicationException;
 
 namespace Application.Application.UseCases.Account.RefreshAccessToken;
 

@@ -5,7 +5,6 @@ using Application.Infrastructure.Interfaces.PasswordHasher;
 using Application.Infrastructure.Interfaces.Ports.Postgres;
 using Domain.AccountAggregate;
 using FluentResults;
-using ApplicationException = Application.Exceptions.ApplicationException;
 
 namespace Application.Application.UseCases.Account.ConfirmEmail;
 

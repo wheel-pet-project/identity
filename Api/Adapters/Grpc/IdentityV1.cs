@@ -53,8 +53,7 @@ public class IdentityV1(
     {
         using var activity = _activitySource
             .StartActivity("Confirm email request received")
-            .SetTag("CorrelationId", request.CorId)
-            .SetTag("AccountId", request.AccId);
+            .SetTag("CorrelationId", request.CorId);
 
         var result = await confirmEmailUseCase.Execute(new ConfirmAccountEmailRequest(
             Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationTkn)));
@@ -70,8 +69,7 @@ public class IdentityV1(
     {
         using var activity = _activitySource
             .StartActivity("Authenticate account request received")
-            .SetTag("CorrelationId", request.CorId)
-            .SetTag("Account email", request.Email);
+            .SetTag("CorrelationId", request.CorId);
 
         var result = await authenticateUseCase.Execute(
             new AuthenticateAccountRequest(request.Email,

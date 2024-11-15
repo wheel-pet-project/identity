@@ -3,7 +3,6 @@ using Npgsql;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Retry;
-using Polly.Wrap;
 
 namespace Infrastructure.Settings.Polly;
 

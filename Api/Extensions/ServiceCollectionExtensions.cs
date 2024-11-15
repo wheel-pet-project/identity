@@ -91,14 +91,8 @@ public static class ServiceCollectionExtensions
             .WriteTo.MongoDBBson(settings!.ConnectionString,
                 "logs",
                 LogEventLevel.Verbose,
-                512,
-                TimeSpan.FromSeconds(20))
-            // todo: check this configuration
-            .WriteTo.MongoDBBson(settings.ConnectionString,
-                "errors",
-                LogEventLevel.Error,
-                64,
-                TimeSpan.FromSeconds(20))
+                50,
+                TimeSpan.FromSeconds(10))
             .CreateLogger();
         services.AddSerilog();
 
