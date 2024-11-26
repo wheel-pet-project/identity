@@ -1,25 +1,26 @@
 using System.Data;
-using Application.Errors;
-using Application.Infrastructure.Interfaces.Ports.Postgres;
+using Core.Domain.RefreshTokenAggregate;
+using Core.Domain.SharedKernel.Errors;
+using Core.Ports.Postgres;
 using Dapper;
 using FluentResults;
-using Infrastructure.Adapters.Postgres.DapperModels;
-using Infrastructure.Settings.Polly;
+using Infrastructure.Settings;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class RefreshTokenRepository(IDbConnection connection, IPostgresRetryPolicy retryPolicy) 
+public class RefreshTokenRepository(IDbConnection connection, PostgresRetryPolicy retryPolicy) 
     : IRefreshTokenRepository
 {
-    public async Task<Result> AddRefreshTokenInfo(Guid refreshTokenId, Guid accountId)
+    public async Task<Result> AddRefreshTokenInfo(RefreshToken refreshToken)
     {
         var sql = @"
-INSERT INTO refresh_token_info (id, account_id, is_revoked, issue_date)
-VALUES (@refreshTokenId, @accountId, false, @issueDate);";
+INSERT INTO refresh_token_info (id, account_id, is_revoked, issue_datetime, expires_at)
+VALUES (id, account_id, is_revoked, issue_datetime, expires_at);";
         
         var command = new CommandDefinition(sql, new
         {
-            accountId, refreshTokenId, issueDate = DateTime.UtcNow
+            id = refreshToken.Id, accountId = refreshToken.AccountId, isRevoked = refreshToken.IsRevoked,
+            issueDateTime = refreshToken.IssueDateTime, expires_at = refreshToken.ExpiresAt
         });
         var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(command));
         
@@ -28,20 +29,20 @@ VALUES (@refreshTokenId, @accountId, false, @issueDate);";
             : Result.Fail(new DbError("Saving refresh token info failed"));
     }
 
-    public async Task<Result<(Guid AccountId, bool IsRevoked)>> GetRefreshTokenInfo(Guid refreshTokenId)
+    public async Task<Result<RefreshToken>> GetRefreshTokenInfo(Guid refreshTokenId)
     {
         var sql = @"
-SELECT account_id, is_revoked
-FROM refresh_token_info
+SELECT id, account_id, is_revoked, issue_datetime, expires_at
+FROM refresh_token_info 
 WHERE id = @refreshTokenId
 LIMIT 1";
         
         var command = new CommandDefinition(sql, new { refreshTokenId });
         var result = await retryPolicy.ExecuteAsync(() => connection
-            .QuerySingleOrDefaultAsync<RefreshTokenInfoModel>(command));
+            .QuerySingleOrDefaultAsync<RefreshToken>(command));
 
         return result is not null
-            ? Result.Ok((result.account_id, result.is_revoked))
+            ? Result.Ok(result)
             : Result.Fail(new NotFound("Refresh token not found"));
     }
 
@@ -62,28 +63,29 @@ WHERE id = @refreshTokenId";
     }
 
     public async Task<Result> AddRefreshTokenInfoAndRevokeOldRefreshToken(
-        Guid newRefreshTokenId, Guid accountId, Guid oldRefreshTokenId)
+        RefreshToken newRefreshToken, RefreshToken oldRefreshToken)
     {
         var isSuccess = true;
         
         var sqlForRevoking = @"
 UPDATE refresh_token_info
 SET is_revoked = true
-WHERE id = @oldRefreshTokenId";
+WHERE id = @oldId";
 
         var sqlForAdding = @"
-INSERT INTO refresh_token_info (id, account_id, is_revoked, issue_date)
-VALUES (@newRefreshTokenId, @accountId, false, @issueDate);";
+INSERT INTO refresh_token_info (id, account_id, is_revoked, issue_datetime, expires_at)
+VALUES (@newId, @accountId, @isRevoked, @issueDateTime, @expiresAt);";
 
         await retryPolicy.ExecuteAsync(async () =>
         {
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
-            var revokeCommand = new CommandDefinition(sqlForRevoking, new { oldRefreshTokenId }, transaction);
+            var revokeCommand = new CommandDefinition(sqlForRevoking, new { oldId = oldRefreshToken.Id }, transaction);
             var addCommand = new CommandDefinition(sqlForAdding, new
             {
-                newRefreshTokenId, accountId, issueDate = DateTime.UtcNow
+                newId = newRefreshToken.Id, accountId = newRefreshToken.AccountId,
+                issueDate = newRefreshToken.IssueDateTime, expiresAt = newRefreshToken.ExpiresAt
             }, transaction);
 
             try

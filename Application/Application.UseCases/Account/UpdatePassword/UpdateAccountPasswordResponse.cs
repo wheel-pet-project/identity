@@ -1,3 +1,0 @@
-namespace Application.Application.UseCases.Account.UpdatePassword;
-
-public record UpdateAccountPasswordResponse;

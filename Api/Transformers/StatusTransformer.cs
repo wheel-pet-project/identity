@@ -1,17 +1,17 @@
 using Proto.IdentityV1;
-using DomainStatus = Domain.AccountAggregate.Status;
+using DomainStatus = Core.Domain.AccountAggregate.Status;
 
 namespace Api.Transformers;
 
 public class StatusTransformer
 {
-    public Status ToResponse(DomainStatus s) =>
+    public Status ToResponse(Core.Domain.AccountAggregate.Status s) =>
         s switch
         {
-            DomainStatus status when status == DomainStatus.Approved => Status.ApprovedUnspecified,
-            DomainStatus status when status == DomainStatus.PendingConfirmation => Status.PendingConfirmation,
-            DomainStatus status when status == DomainStatus.PendingApproval => Status.PendingApproval,
-            DomainStatus status when status == DomainStatus.Deactivated => Status.Deactivated,
+            var status when status == DomainStatus.Approved => Status.ApprovedUnspecified,
+            var status when status == DomainStatus.PendingConfirmation => Status.PendingConfirmation,
+            var status when status == DomainStatus.PendingApproval => Status.PendingApproval,
+            var status when status == DomainStatus.Deactivated => Status.Deactivated,
             _ => throw new ArgumentOutOfRangeException(nameof(s), s, "Unknown status")
         };
 }

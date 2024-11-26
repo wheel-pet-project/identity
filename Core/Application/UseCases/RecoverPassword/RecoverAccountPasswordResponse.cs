@@ -1,0 +1,3 @@
+namespace Core.Application.UseCases.RecoverPassword;
+
+public record RecoverAccountPasswordResponse;

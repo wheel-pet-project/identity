@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Application.Infrastructure.Interfaces.JwtProvider;
-using Domain.AccountAggregate;
+using Core.Domain.AccountAggregate;
+using Core.Infrastructure.Interfaces.JwtProvider;
 using FluentResults;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Options;
@@ -14,7 +14,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
     
-    public string GenerateAccessToken(Account account)
+    public string GenerateJwtAccessToken(Account account)
     {
         Claim[] claims =
         [
@@ -36,7 +36,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         return new JwtSecurityTokenHandler().WriteToken(accessToken);
     }
 
-    public string GenerateRefreshToken(Guid refreshTokenId)
+    public string GenerateJwtRefreshToken(Guid refreshTokenId)
     {
         Claim[] claims =
         [
@@ -56,7 +56,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         return new JwtSecurityTokenHandler().WriteToken(refreshToken);
     }
 
-    public async Task<Result<(Guid accountId, Role role, Status status)>> VerifyAccessToken(
+    public async Task<Result<(Guid accountId, Role role, Status status)>> VerifyJwtAccessToken(
         string accessToken)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -87,7 +87,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         return Result.Ok((accountId, role, status));
     }
 
-    public async Task<Result<Guid>> VerifyRefreshToken(string refreshToken)
+    public async Task<Result<Guid>> VerifyJwtRefreshToken(string refreshToken)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 

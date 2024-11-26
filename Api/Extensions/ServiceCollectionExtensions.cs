@@ -1,21 +1,20 @@
 using System.Data;
 using Api.Settings;
-using Application.Application.Interfaces;
-using Application.Application.UseCases.Account.Authenticate;
-using Application.Application.UseCases.Account.Authorize;
-using Application.Application.UseCases.Account.ConfirmEmail;
-using Application.Application.UseCases.Account.Create;
-using Application.Application.UseCases.Account.RecoverPassword;
-using Application.Application.UseCases.Account.RefreshAccessToken;
-using Application.Application.UseCases.Account.UpdatePassword;
-using Application.Infrastructure.Interfaces.JwtProvider;
-using Application.Infrastructure.Interfaces.PasswordHasher;
-using Application.Infrastructure.Interfaces.Ports.Postgres;
+using Core.Application.UseCases;
+using Core.Application.UseCases.Authenticate;
+using Core.Application.UseCases.Authorize;
+using Core.Application.UseCases.ConfirmEmail;
+using Core.Application.UseCases.Create;
+using Core.Application.UseCases.RecoverPassword;
+using Core.Application.UseCases.RefreshAccessToken;
+using Core.Application.UseCases.UpdatePassword;
+using Core.Infrastructure.Interfaces.JwtProvider;
+using Core.Infrastructure.Interfaces.PasswordHasher;
+using Core.Ports.Postgres;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
-using Infrastructure.Settings.Polly;
 using MassTransit;
 using Npgsql;
 using OpenTelemetry.Metrics;
@@ -29,7 +28,7 @@ namespace Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddDbConnection(this IServiceCollection services,
+    public static IServiceCollection AddPostgresConnection(this IServiceCollection services,
         IConfiguration configuration)
     {
         var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
@@ -61,7 +60,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddTransient<IAccountRepository, AccountRepository>();
-        services.AddTransient<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        services.AddTransient<IPasswordRecoverTokenRepository, PasswordRecoverTokenRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
 
         return services;
@@ -160,7 +159,8 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, 
+        IConfiguration configuration)
     {
         var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
 
@@ -173,7 +173,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddRetryPolicies(this IServiceCollection services)
     {
-        services.AddTransient<IPostgresRetryPolicy, PostgresRetryPolicy>();
+        services.AddTransient<PostgresRetryPolicy>();
 
         return services;
     }

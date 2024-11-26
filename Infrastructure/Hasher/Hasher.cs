@@ -1,5 +1,5 @@
-using Application.Infrastructure.Interfaces.PasswordHasher;
 
+using Core.Infrastructure.Interfaces.PasswordHasher;
 
 namespace Infrastructure.Hasher;
 

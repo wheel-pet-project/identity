@@ -1,3 +1,0 @@
-namespace Application.Application.UseCases.Account.RefreshAccessToken;
-
-public record RefreshAccountAccessTokenRequest(string RefreshToken);

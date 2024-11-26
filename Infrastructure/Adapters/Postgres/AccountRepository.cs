@@ -1,15 +1,16 @@
 using System.Data;
 using System.Diagnostics;
-using Application.Errors;
-using Application.Infrastructure.Interfaces.Ports.Postgres;
+using Core.Domain.AccountAggregate;
+using Core.Domain.SharedKernel.Errors;
+using Core.Ports.Postgres;
 using Dapper;
-using Domain.AccountAggregate;
 using FluentResults;
-using Infrastructure.Settings.Polly;
+using Infrastructure.Settings;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class AccountRepository(IDbConnection connection, IPostgresRetryPolicy retryPolicy) : IAccountRepository
+public class AccountRepository(IDbConnection connection, PostgresRetryPolicy retryPolicy) 
+    : IAccountRepository
 {
     private readonly ActivitySource _activitySource = new("Identity");
 
@@ -24,8 +25,7 @@ INNER JOIN status ON account.status_id = status.Id
 WHERE account.id = @accountId
 LIMIT 1";
         
-        var queryCommand = new CommandDefinition(sql, new { accountId }, 
-            cancellationToken: cancellationToken);
+        var queryCommand = new CommandDefinition(sql, new { accountId }, cancellationToken: cancellationToken);
 
         var accounts = await retryPolicy.ExecuteAsync(() =>
             connection.QueryAsync<Account, Role, Status, Account>(queryCommand,
@@ -55,8 +55,7 @@ INNER JOIN status ON account.status_id = status.Id
 WHERE email = @email
 LIMIT 1";
         
-        var queryCommand = new CommandDefinition(sql, new { email = email }, 
-            cancellationToken: cancellationToken);
+        var queryCommand = new CommandDefinition(sql, new { email }, cancellationToken: cancellationToken);
 
         var accounts = await retryPolicy.ExecuteAsync(() => 
             connection.QueryAsync<Account, Role, Status, Account>(queryCommand, 
@@ -102,7 +101,7 @@ VALUES (@accountId, @confirmationTokenHash)";
                     roleId = account.Role.Id,
                     account.Email,
                     account.Phone,
-                    account.Password,
+                    Password = account.PasswordHash,
                     statusId = account.Status.Id
                 }, transaction, 3);
             var createConfirmRecordCommand = new CommandDefinition(sqlForCreateConfirmRecord,
@@ -137,8 +136,7 @@ WHERE id = @id";
         var affectedRows = await retryPolicy.ExecuteAsync(() => connection.ExecuteAsync(sql, 
             new 
             {
-                id = account.Id,
-                account.Password
+                id = account.Id, Password = account.PasswordHash
             }));
         
         return affectedRows > 0 
