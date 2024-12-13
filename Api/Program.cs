@@ -13,20 +13,24 @@ public class Program
         var services = builder.Services;
         services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
         
-        services.AddGrpc(options => 
-            options.Interceptors.Add<ExceptionHandlerInterceptor>());
+        services.AddGrpc(options => options.Interceptors.Add<ExceptionHandlerInterceptor>());
         
         // Extensions
         services
+            .AddMediatrAndHandlers()
+            .AddPostgres(builder.Configuration)
             .ConfigureSerilog(builder.Configuration)
-            .AddPostgresConnection(builder.Configuration)
             .AddHealthCheckV1(builder.Configuration)
-            .AddRetryPolicies()
+            .AddValidators()
+            .AddUnitOfWork()
+            .AddRepositories()
+            .AddDomainService()
             .AddPasswordHasher()
             .AddJwtProvider()
-            .AddTelemetry()
-            .AddUseCases()
-            .AddRepositories();
+            .AddRetryPolicies()
+            .AddMapper()
+            .AddTelemetry();
+            
         
         var app = builder.Build();
         

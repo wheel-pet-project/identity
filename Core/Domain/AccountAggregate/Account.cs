@@ -33,20 +33,22 @@ public class Account
     public Status Status { get; private set; }
     
     
-    public void SetStatus(Status newStatus)
+    public void SetStatus(Status potentialStatus)
     {
-        if (!Status.All().Contains(newStatus)) throw new ValueOutOfRangeException("Unknown status or null");
-        if (!Status.CanBeChangedToThisStatus(newStatus)) 
+        if (!Status.All().Contains(potentialStatus)) throw new ValueOutOfRangeException("Unknown status or null");
+        if (!Status.CanBeChangedToThisStatus(potentialStatus)) 
             throw new DomainRulesViolationException("This status cannot be set to this account");
-        Status = newStatus;
+        
+        Status = potentialStatus;
     }
 
-    public void SetRole(Role newRole)
+    public void SetRole(Role potentialRole)
     {
-        if (!Role.All().Contains(newRole)) throw new ValueOutOfRangeException("Unknown role or null");
-        if (!Role.CanBeChangedToThisRole(newRole)) 
+        if (!Role.All().Contains(potentialRole)) throw new ValueOutOfRangeException("Unknown role or null");
+        if (!Role.CanBeChangedToThisRole(potentialRole)) 
             throw new DomainRulesViolationException("This role cannot be set to this account");
-        Role = newRole;
+        
+        Role = potentialRole;
     }
 
     public void SetEmail(string newEmail)
@@ -76,7 +78,7 @@ public class Account
             "Email is invalid or null, email must be this view: someemail@mail.com");
         if (!ValidatePhone(phone)) throw new ValueIsInvalidException(
             "Phone is invalid or null, phone must be this view: +79008007060, 79008007060 or 89008007060");
-        if (!ValidatePassword(passwordHash)) throw new ValueIsInvalidException(
+        if (!ValidatePassword(passwordHash)) throw new ValueOutOfRangeException(
             "Password hash is invalid, hash length must be 60");
         
         return new Account(role, email, phone, passwordHash);

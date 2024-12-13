@@ -19,6 +19,9 @@
         <PackageReference Include="Dapper" Version="2.1.35" />
         <PackageReference Include="FluentEmail.Core" Version="3.0.2" />
         <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
+        <PackageReference Include="FluentResults" Version="3.16.0" />
+        <PackageReference Include="FluentValidation" Version="11.11.0" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
         <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.66.0" />
         <PackageReference Include="Grpc.Tools" Version="2.67.0">
@@ -28,6 +31,7 @@
         <PackageReference Include="HealthChecks.PostgreSQL" Version="1.1.0" />
         <PackageReference Include="MassTransit" Version="8.2.5" />
         <PackageReference Include="MassTransit.Kafka" Version="8.2.5" />
+        <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Npgsql.OpenTelemetry" Version="8.0.4" />
         <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0-beta.1" />
         <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.6.0-rc.1" />

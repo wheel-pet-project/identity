@@ -1,3 +1,5 @@
+using Core.Domain.SharedKernel.Exceptions.DataConsistencyViolationException;
+using FluentValidation;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Npgsql;
@@ -18,15 +20,29 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
         }
         catch (NpgsqlException ex)
         {
-            logger.LogError("NpgsqlException, name: {name}, exception: {exception}", nameof(ex), ex);
+            logger.LogError("[EXCEPTION] NpgsqlException: {exception}", ex);
 
             throw new RpcException(new Status(StatusCode.Unavailable, "Db unavailable, please try again later."));
         }
-        catch (Exception ex)
+        catch (ValidationException ex)
         {
-            logger.LogCritical("Exception, name: {name}, message: {description}, inner exception: {@innerException}", 
-                nameof(ex), ex.Message, ex.InnerException);
+            logger.LogWarning("[EXCEPTION] ValidationException handled");
 
+            throw new RpcException(new Status(StatusCode.InvalidArgument,
+                string.Join(' ', ex.Errors.Select(x => x.ErrorMessage))));
+        }
+        catch (DataConsistencyViolationException ex)
+        {
+            logger.LogCritical("[EXCEPTION] DataConsistencyViolationException: {exception}", ex);
+
+            throw new RpcException(new Status(StatusCode.Internal, "Entity invariant violation"));
+        }
+        catch (Exception ex) when(ex is not RpcException)
+        {
+            logger.LogCritical(
+                "[EXCEPTION] type: {type}, message: {description}, exception: {@exception}, inner exception: {@innerException}",
+                ex.GetType().Name, ex.Message, ex, ex.InnerException);
+            
             throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
         }
     }

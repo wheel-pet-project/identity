@@ -1,0 +1,56 @@
+using Core.Application.UseCases.Authorize;
+using Core.Infrastructure.Interfaces.JwtProvider;
+using FluentResults;
+using Moq;
+using Xunit;
+
+namespace UnitTests.Core.Application.UseCases;
+
+public class AuthorizeUseCaseShould
+{
+    private readonly AuthorizeAccountRequest _request = new(Guid.NewGuid(), "jwt_access_token");
+    
+    [Fact]
+    public async Task CanReturnSuccessResultForCorrectRequest()
+    {
+        // Arrange
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureJwtProvider(verifyJwtAccessTokenShouldReturn: Result.Ok());
+        var useCase = useCaseBuilder.Build();
+        
+        // Act
+        var result = await useCase.Handle(_request, default);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+    }
+    
+    [Fact]
+    public async Task CanReturnCorrectErrorIfAccessTokenIsInvalid()
+    {
+        // Arrange
+        var expectedError = new Error("expected error");
+        
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureJwtProvider(verifyJwtAccessTokenShouldReturn: Result.Fail(expectedError));
+        var useCase = useCaseBuilder.Build();
+        
+        // Act
+        var result = await useCase.Handle(_request, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+        Assert.Equivalent(expectedError, result.Errors.First());
+    }
+    
+    private class UseCaseBuilder
+    {
+        private readonly Mock<IJwtProvider> _jwtProviderMock = new();
+
+        public AuthorizeAccountHandler Build() => new(_jwtProviderMock.Object);
+        
+        public void ConfigureJwtProvider(Result verifyJwtAccessTokenShouldReturn) =>
+            _jwtProviderMock.Setup(x => x.VerifyJwtAccessToken(It.IsAny<string>()))
+                .ReturnsAsync(verifyJwtAccessTokenShouldReturn);
+    }
+}

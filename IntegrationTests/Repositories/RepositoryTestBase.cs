@@ -1,0 +1,90 @@
+using Dapper;
+using Npgsql;
+using Testcontainers.PostgreSql;
+using Xunit;
+
+namespace IntegrationTests.Repositories;
+
+public class RepositoryTestBase : IAsyncLifetime
+{
+    protected readonly PostgreSqlContainer PostgreSqlContainer = new PostgreSqlBuilder()
+        .WithImage("postgres:latest")
+        .WithDatabase("identity")
+        .WithUsername("postgres")
+        .WithPassword("password")
+        .WithCleanUp(true)
+        .Build();
+    
+    public async Task InitializeAsync()
+    {
+        await PostgreSqlContainer.StartAsync();
+
+        var sqlScript = @"
+BEGIN;
+CREATE TABLE status(
+    id int PRIMARY KEY,
+    name varchar NOT NULL
+);
+
+CREATE TABLE role (
+    id int PRIMARY KEY,
+    name varchar NOT NULL
+);
+
+CREATE TABLE account (
+    id uuid PRIMARY KEY,
+    email varchar NOT NULL, -- Create this unique
+    phone varchar NOT NULL,
+    password_hash varchar NOT NULL,
+    role_id int NOT NULL REFERENCES role,
+    status_id int NOT NULL REFERENCES status 
+);
+
+CREATE TABLE pending_confirmation_token(
+    account_id uuid PRIMARY KEY REFERENCES account ON DELETE CASCADE,
+    confirmation_token_hash varchar NOT NULL 
+);
+
+CREATE TABLE refresh_token_info(
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES account ON DELETE CASCADE,
+    is_revoked bool NOT NULL,
+    issue_datetime timestamp with time zone NOT NULL,
+    expires_at timestamp with time zone NOT NULL
+);
+
+CREATE TABLE password_recover_token(
+    id uuid PRIMARY KEY,
+    account_id uuid REFERENCES account ON DELETE CASCADE,
+    recover_token_hash varchar NOT NULL,
+    is_already_applied boolean NOT NULL,
+    expires_at timestamp with time zone NOT NULL 
+);
+
+INSERT INTO role (id, name) 
+VALUES (1, 'customer'),
+       (2, 'admin'),
+       (3, 'support'),
+       (4, 'maintenance'),
+       (5, 'hr');
+
+INSERT INTO status (id, name)
+VALUES (1, 'approved'),
+       (2, 'pending confirmation'),
+       (3, 'pending approval'),
+       (4, 'deactivated'),
+       (5, 'deleted');
+COMMIT;
+";
+        var connection = new NpgsqlConnection(PostgreSqlContainer.GetConnectionString());
+
+        await connection.OpenAsync();
+        var command = new CommandDefinition(sqlScript);
+        await connection.ExecuteAsync(command);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await PostgreSqlContainer.DisposeAsync();
+    }
+}

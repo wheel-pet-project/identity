@@ -1,21 +1,28 @@
 using System.Data;
+using System.Reflection;
+using Api.PipelineBehaviours;
 using Api.Settings;
-using Core.Application.UseCases;
 using Core.Application.UseCases.Authenticate;
 using Core.Application.UseCases.Authorize;
 using Core.Application.UseCases.ConfirmEmail;
-using Core.Application.UseCases.Create;
+using Core.Application.UseCases.CreateAccount;
 using Core.Application.UseCases.RecoverPassword;
 using Core.Application.UseCases.RefreshAccessToken;
 using Core.Application.UseCases.UpdatePassword;
+using Core.Domain.Services;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
+using Core.Ports.Postgres.Repositories;
+using FluentResults;
+using FluentValidation;
 using Infrastructure.Adapters.Postgres;
+using Infrastructure.Adapters.Postgres.Repositories;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using MassTransit;
+using MediatR;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -28,32 +35,61 @@ namespace Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPostgresConnection(this IServiceCollection services,
+    public static IServiceCollection AddPostgres(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
-        services.AddScoped<IDbConnection>(_ => new NpgsqlConnection(dbSettings!.ConnectionString));
-
+        var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
+        services.AddScoped<IDbConnection>(_ =>
+        {
+            var sourceBuilder = new NpgsqlDataSourceBuilder
+            {
+                ConnectionStringBuilder =
+                {
+                    ApplicationName = "Identity",
+                    Host = dbSettings!.Host,
+                    Port = dbSettings.Port,
+                    Database = dbSettings.Database,
+                    Username = dbSettings.Username,
+                    Password = dbSettings.Password
+                }
+            };
+            var dataSource = sourceBuilder.Build();
+            
+            return dataSource.CreateConnection();
+        });
+        services.AddScoped<DbSession>();
+        services.AddTransient<IUnitOfWork, UnitOfWork>();
+        
         return services;
     }
 
-    public static IServiceCollection AddUseCases(this IServiceCollection services)
+    public static IServiceCollection AddUnitOfWork(this IServiceCollection services)
     {
-        services.AddScoped<IUseCase<CreateAccountRequest, CreateAccountResponse>,
-            CreateAccountUseCase>();
-        services.AddScoped<IUseCase<AuthenticateAccountRequest, AuthenticateAccountResponse>,
-            AuthenticateAccountUseCase>();
-        services.AddScoped<IUseCase<AuthorizeAccountRequest, AuthorizeAccountResponse>,
-            AuthorizeAccountUseCase>();
-        services.AddScoped<IUseCase<ConfirmAccountEmailRequest, ConfirmAccountEmailResponse>,
-            ConfirmAccountEmailUseCase>();
-        services.AddScoped<IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse>,
-            RefreshAccountAccessTokenUseCase>();
-        services.AddScoped<IUseCase<RecoverAccountPasswordRequest, RecoverAccountPasswordResponse>,
-            RecoverAccountPasswordUseCase>();
-        services.AddScoped<IUseCase<UpdateAccountPasswordRequest, UpdateAccountPasswordResponse>,
-            UpdateAccountPasswordUseCase>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        return services;
+    }
 
+    public static IServiceCollection AddMediatrAndHandlers(this IServiceCollection services)
+    {
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly))
+            .AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>))
+            .AddScoped(typeof(IPipelineBehavior<,>), typeof(TracingPipelineBehaviour<,>))
+            .AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehaviour<,>));
+        
+        return services;
+    }
+
+    public static IServiceCollection AddValidators(this IServiceCollection services)
+    {
+        services.AddValidatorsFromAssembly(typeof(CreateAccountRequestValidator).Assembly);
+        
+        return services;
+    }
+
+    public static IServiceCollection AddMapper(this IServiceCollection services)
+    {
+        services.AddScoped<Mapper.Mapper>();
+        
         return services;
     }
 
@@ -62,7 +98,15 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IPasswordRecoverTokenRepository, PasswordRecoverTokenRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddTransient<IConfirmationTokenRepository, ConfirmationTokenRepository>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddDomainService(this IServiceCollection services)
+    {
+        services.AddTransient<ICreateAccountService, CreateAccountService>();
+        
         return services;
     }
 
@@ -162,10 +206,27 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, 
         IConfiguration configuration)
     {
-        var dbSettings = configuration.GetSection("ConnectionStrings").Get<DbConnectionSettings>();
+        var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
 
+        var getConnectionString = () => 
+        {
+            var sourceBuilder = new NpgsqlDataSourceBuilder
+            {
+                ConnectionStringBuilder =
+                {
+                    ApplicationName = "Identity",
+                    Host = dbSettings!.Host,
+                    Port = dbSettings.Port,
+                    Database = dbSettings.Database,
+                    Username = dbSettings.Username,
+                    Password = dbSettings.Password
+                }
+            };
+            return sourceBuilder.ConnectionStringBuilder.ConnectionString;
+        };
+        
         services.AddGrpcHealthChecks()
-            .AddNpgSql(dbSettings!.ConnectionString, timeout: TimeSpan.FromSeconds(10))
+            .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
             .AddKafka(cfg => cfg.BootstrapServers = "localhost:9092", timeout: TimeSpan.FromSeconds(10));
         
         return services;

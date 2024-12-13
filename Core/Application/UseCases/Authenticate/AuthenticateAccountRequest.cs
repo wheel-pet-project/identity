@@ -1,5 +1,10 @@
+using FluentResults;
+using MediatR;
+
 namespace Core.Application.UseCases.Authenticate;
 
 public record AuthenticateAccountRequest(
-    string Email, 
-    string Password);
+    Guid CorrelationId,
+    string Email,
+    string Password)
+    : BaseRequest(CorrelationId), IRequest<Result<AuthenticateAccountResponse>>;

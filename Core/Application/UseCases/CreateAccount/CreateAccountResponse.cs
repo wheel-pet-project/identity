@@ -1,3 +1,3 @@
-namespace Core.Application.UseCases.Create;
+namespace Core.Application.UseCases.CreateAccount;
 
 public record CreateAccountResponse(Guid AccountId);

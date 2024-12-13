@@ -9,12 +9,14 @@ public class PasswordRecoverToken
 
     private PasswordRecoverToken(string recoverTokenHash, Account account) : this()
     {
+        Id = Guid.NewGuid();
         RecoverTokenHash = recoverTokenHash;
         AccountId = account.Id;
         ExpiresAt = DateTime.UtcNow.AddMinutes(15);
         IsAlreadyApplied = false;
     }
     
+    public Guid Id { get; private set; }
     
     public Guid AccountId { get; private set; }
     
@@ -26,12 +28,21 @@ public class PasswordRecoverToken
     
     public bool IsValid() => ExpiresAt > DateTime.UtcNow && IsAlreadyApplied == false;
     
-    public static PasswordRecoverToken Create(string recoverTokenHash, Account account)
+    public void Apply() => IsAlreadyApplied = true; // todo: add tests
+    
+    public static PasswordRecoverToken Create(Account account, string recoverTokenHash)
     {
-        if (string.IsNullOrEmpty(recoverTokenHash) || recoverTokenHash.Length != 60) 
-            throw new ValueOutOfRangeException("Recover token hash is invalid or null");
+        if (!ValidatePasswordRecoverToken(recoverTokenHash)) 
+            throw new ValueOutOfRangeException("Recover token hash is invalid");
         if (account == null) throw new ValueIsRequiredException("Account is null");
         
         return new PasswordRecoverToken(recoverTokenHash, account);
+    }
+
+    private static bool ValidatePasswordRecoverToken(string recoverTokenHash)
+    {
+        const int hashLength = 60;
+        if (recoverTokenHash == null) throw new ValueIsRequiredException("Recover token hash is null");
+        return recoverTokenHash.Length == hashLength;
     }
 }

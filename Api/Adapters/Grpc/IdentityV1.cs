@@ -1,160 +1,145 @@
-using System.Diagnostics;
-using Api.Transformers;
-using Core.Application.UseCases;
 using Core.Application.UseCases.Authenticate;
 using Core.Application.UseCases.Authorize;
 using Core.Application.UseCases.ConfirmEmail;
-using Core.Application.UseCases.Create;
+using Core.Application.UseCases.CreateAccount;
 using Core.Application.UseCases.RecoverPassword;
 using Core.Application.UseCases.RefreshAccessToken;
 using Core.Application.UseCases.UpdatePassword;
+using Core.Domain.SharedKernel.Errors;
+using FluentResults;
 using Grpc.Core;
+using MediatR;
 using Proto.IdentityV1;
 using Status = Grpc.Core.Status;
 
 namespace Api.Adapters.Grpc;
 
-public class IdentityV1(
-    ILogger<IdentityV1> logger,
-    IUseCase<CreateAccountRequest, CreateAccountResponse> createQueryUseCase,
-    IUseCase<AuthenticateAccountRequest, AuthenticateAccountResponse> authenticateUseCase,
-    IUseCase<AuthorizeAccountRequest, AuthorizeAccountResponse> authorizeUseCase,
-    IUseCase<ConfirmAccountEmailRequest, ConfirmAccountEmailResponse> confirmEmailUseCase,
-    IUseCase<RefreshAccountAccessTokenRequest, RefreshAccountAccessTokenResponse> refreshAccessTokenUseCase,
-    IUseCase<RecoverAccountPasswordRequest, RecoverAccountPasswordResponse> recoverPasswordUseCase,
-    IUseCase<UpdateAccountPasswordRequest, UpdateAccountPasswordResponse> updatePasswordUseCase)
-    : Proto.IdentityV1.Identity.IdentityBase
+public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
+    : Identity.IdentityBase
 {
-    private readonly ActivitySource _activitySource = new("Identity");
+    // private readonly ActivitySource _activitySource = new("Identity");
 
     public override async Task<CreateResponse> CreateAccount(
         CreateRequest request, ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Create account request received")
-            .SetTag("CorrelationId", request.CorId);
+        var createAccountRequest = new CreateAccountRequest(
+            Guid.Parse(request.CorId),
+            mapper.RoleFromRequest(request.Role),
+            request.Email,
+            request.Phone,
+            request.Pass);
 
-        var transformer = new RoleTransformer();
-        var result = await createQueryUseCase.Execute(
-            new CreateAccountRequest(Guid.Parse(request.CorId),
-                transformer.FromRequest(request.Role),
-                request.Email,
-                request.Phone,
-                request.Pass));
+        var result = await mediator.Send(createAccountRequest);
 
         return result.IsSuccess
             ? new CreateResponse { AccId = result.Value.AccountId.ToString() }
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<CreateResponse>(result.Errors);
     }
-    
+
     public override async Task<ConfirmEmailResponse> ConfirmEmail(ConfirmEmailRequest request,
         ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Confirm email request received")
-            .SetTag("CorrelationId", request.CorId);
+        var confirmEmailRequest = new ConfirmAccountEmailRequest(
+            Guid.Parse(request.CorId),
+            Guid.Parse(request.AccId),
+            Guid.Parse(request.ConfirmationTkn));
 
-        var result = await confirmEmailUseCase.Execute(new ConfirmAccountEmailRequest(
-            Guid.Parse(request.AccId), Guid.Parse(request.ConfirmationTkn)));
+        var result = await mediator.Send(confirmEmailRequest);
 
         return result.IsSuccess
             ? new ConfirmEmailResponse()
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<ConfirmEmailResponse>(result.Errors);
     }
 
     public override async Task<AuthenticateResponse> Authenticate(
         AuthenticateRequest request, ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Authenticate account request received")
-            .SetTag("CorrelationId", request.CorId);
+        var authenticateRequest = new AuthenticateAccountRequest(
+            Guid.Parse(request.CorId),
+            request.Email,
+            request.Pass);
 
-        var result = await authenticateUseCase.Execute(
-            new AuthenticateAccountRequest(request.Email,
-                request.Pass));
+        var result = await mediator.Send(authenticateRequest);
 
         return result.IsSuccess
-            ? new AuthenticateResponse 
-                { Tkn = result.Value.AccessToken, RefreshTkn = result.Value.RefreshToken }
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            ? new AuthenticateResponse { Tkn = result.Value.AccessToken, RefreshTkn = result.Value.RefreshToken }
+            : ParseErrorToRpcException<AuthenticateResponse>(result.Errors);
     }
 
     public override async Task<AuthorizeResponse> Authorize(
         AuthorizeRequest request, ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Authorize account request received")
-            .SetTag("CorrelationId", request.CorId);
+        var authorizeRequest = new AuthorizeAccountRequest(Guid.Parse(request.CorId), request.Tkn);
 
-        var roleTransformer = new RoleTransformer();
-        var statusTransformer = new StatusTransformer();
-
-        var result = await authorizeUseCase.Execute(
-            new AuthorizeAccountRequest(request.Tkn));
+        var result = await mediator.Send(authorizeRequest);
 
         return result.IsSuccess
             ? new AuthorizeResponse
             {
-                AccId = result.Value.AccountId.ToString(), 
-                Role = roleTransformer.ToResponse(result.Value.Role),
-                Status = statusTransformer.ToResponse(result.Value.Status)
+                AccId = result.Value.AccountId.ToString(),
+                Role = mapper.RoleToResponse(result.Value.Role),
+                Status = mapper.StatusToResponse(result.Value.Status)
             }
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<AuthorizeResponse>(result.Errors);
     }
 
     public override async Task<RefreshAccessTokenResponse> RefreshAccessToken(
         RefreshAccessTokenRequest request, ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Refresh access token request received")
-            .SetTag("CorrelationId", request.CorId);
+        var refreshAccessTokenRequest =
+            new RefreshAccountAccessTokenRequest(Guid.Parse(request.CorId), request.RefreshTkn);
 
-        var result = await refreshAccessTokenUseCase.Execute(
-            new RefreshAccountAccessTokenRequest(request.RefreshTkn));
-        
+        var result = await mediator.Send(refreshAccessTokenRequest);
+
         return result.IsSuccess
             ? new RefreshAccessTokenResponse
             {
                 Tkn = result.Value.AccessToken,
                 RefreshTkn = result.Value.RefreshToken
             }
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<RefreshAccessTokenResponse>(result.Errors);
     }
 
-    public override async Task<RecoverPasswordResponse> RecoverPassword(RecoverPasswordRequest request, 
+    public override async Task<RecoverPasswordResponse> RecoverPassword(RecoverPasswordRequest request,
         ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Recover password request received")
-            .SetTag("CorrelationId", request.CorId);
+        var recoverPasswordRequest = new RecoverAccountPasswordRequest(Guid.Parse(request.CorId), request.Email);
 
-        var result = await recoverPasswordUseCase.Execute(
-            new RecoverAccountPasswordRequest(request.Email));
-        
+        var result = await mediator.Send(recoverPasswordRequest);
+
         return result.IsSuccess
             ? new RecoverPasswordResponse()
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<RecoverPasswordResponse>(result.Errors);
     }
 
-    public override async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordRequest request, 
+    public override async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordRequest request,
         ServerCallContext context)
     {
-        using var activity = _activitySource
-            .StartActivity("Update password request received")
-            .SetTag("CorrelationId", request.CorId);
+        var updatePasswordRequest = new UpdateAccountPasswordRequest(
+            Guid.Parse(request.CorId),
+            request.NewPass,
+            request.Email,
+            Guid.Parse(request.ResetTkn));
 
-        var result = await updatePasswordUseCase.Execute(new UpdateAccountPasswordRequest(
-            request.NewPass, request.Email, Guid.Parse(request.ResetTkn)));
-        
+        var result = await mediator.Send(updatePasswordRequest);
+
         return result.IsSuccess
             ? new UpdatePasswordResponse()
-            : throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', result.Errors.Select(x => x.Message))));
+            : ParseErrorToRpcException<UpdatePasswordResponse>(result.Errors);
+    }
+
+    private T ParseErrorToRpcException<T>(List<IError> errors)
+    {
+        if (errors.Exists(x => x is NotFound))
+            throw new RpcException(new Status(StatusCode.NotFound, string.Join(' ', errors.Select(x => x.Message))));
+
+        if (errors.Exists(x => x is TransactionFail))
+            throw new RpcException(new Status(StatusCode.Aborted, string.Join(' ', errors.Select(x => x.Message))));
+
+        if (errors.Exists(x => x is AlreadyExists))
+            throw new RpcException(new Status(StatusCode.InvalidArgument,
+                string.Join(' ', errors.Select(x => x.Message))));
+        
+        throw new RpcException(new Status(StatusCode.Aborted, string.Join(' ', errors.Select(x => x.Message))));
     }
 }

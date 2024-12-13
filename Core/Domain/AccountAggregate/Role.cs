@@ -19,7 +19,6 @@ public class Role : Entity<int>
         Name = name;
     }
     
-    
     public string Name { get; private set; }
     
     public bool CanBeChangedToThisRole(Role potentialRole) =>
@@ -67,5 +66,5 @@ public class Role : Entity<int>
         return a.Id == b.Id;
     }
 
-    public static bool operator != (Role a, Role b) => !(a == b);
+    public static bool operator != (Role? a, Role? b) => !(a == b);
 }
