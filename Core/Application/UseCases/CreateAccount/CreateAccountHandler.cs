@@ -13,6 +13,7 @@ public class CreateAccountHandler(
     IAccountRepository accountRepository,
     ICreateAccountService createAccountService,
     IUnitOfWork unitOfWork,
+    // IOutbox outbox,
     IHasher hasher) 
     : IRequestHandler<CreateAccountRequest, Result<CreateAccountResponse>>
 {
@@ -31,6 +32,7 @@ public class CreateAccountHandler(
         await unitOfWork.BeginTransaction();
         await accountRepository.Add(account);
         await confirmationTokenRepository.Add(confirmationToken);
+        // await outbox.PublishDomainEvents(confirmationToken);
         var transactionResult = await unitOfWork.Commit();
         
         // send command to notification

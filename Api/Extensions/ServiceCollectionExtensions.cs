@@ -1,23 +1,16 @@
 using System.Data;
-using System.Reflection;
 using Api.PipelineBehaviours;
 using Api.Settings;
-using Core.Application.UseCases.Authenticate;
-using Core.Application.UseCases.Authorize;
-using Core.Application.UseCases.ConfirmEmail;
 using Core.Application.UseCases.CreateAccount;
-using Core.Application.UseCases.RecoverPassword;
-using Core.Application.UseCases.RefreshAccessToken;
-using Core.Application.UseCases.UpdatePassword;
 using Core.Domain.Services;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
-using FluentResults;
 using FluentValidation;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Repositories;
+using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
@@ -225,6 +218,7 @@ public static class ServiceCollectionExtensions
             return sourceBuilder.ConnectionStringBuilder.ConnectionString;
         };
         
+        // todo: change strong typing connection string to kafka
         services.AddGrpcHealthChecks()
             .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
             .AddKafka(cfg => cfg.BootstrapServers = "localhost:9092", timeout: TimeSpan.FromSeconds(10));

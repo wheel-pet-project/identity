@@ -24,6 +24,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task CanReturnSuccessForCorrectRequest()
     {
         // Arrange
+        _account.SetStatus(Status.PendingApproval);
         var refreshToken = RefreshToken.Create(_account);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -46,6 +47,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task CanReturnCorrectErrorIfVerifyingJwtRefreshTokenFails()
     {
         // Arrange
+        _account.SetStatus(Status.PendingApproval);
         var expectedError = new Error("expected error");
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -64,6 +66,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task CanReturnFailedResultIfGetRefreshTokenReturnsNull()
     {
         // Arrange
+        _account.SetStatus(Status.PendingApproval);
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
         useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: null);
@@ -80,6 +83,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task CanThrowsDataConsistencyViolationExceptionIfGetByIdReturnNotFoundError()
     {
         // Arrange
+        _account.SetStatus(Status.PendingApproval);
         var refreshToken = RefreshToken.Create(_account);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -95,11 +99,33 @@ public class RefreshAccessTokenUseCaseShould
         // Assert
         await Assert.ThrowsAsync<DataConsistencyViolationException>(Act);
     }
+
+    [Fact]
+    public async Task CanReturnFailedResultIfAccountCannotBeAuthenticated()
+    {
+        // Arrange
+        var refreshToken = RefreshToken.Create(_account);
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_request, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+    
     
     [Fact]
     public async Task CanReturnCorrectErrorIfTransactionFails()
     {
         // Arrange
+        _account.SetStatus(Status.PendingApproval);
         var expectedError = new Error("expected error");
         var refreshToken = RefreshToken.Create(_account);
 

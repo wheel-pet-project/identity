@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Core.Domain.AccountAggregate;
 using Core.Ports.Postgres.Repositories;
 using Dapper;
@@ -7,10 +6,9 @@ using Infrastructure.Settings;
 namespace Infrastructure.Adapters.Postgres.Repositories;
 
 public class AccountRepository(
-    DbSession session, PostgresRetryPolicy retryPolicy) : IAccountRepository
+    DbSession session, 
+    PostgresRetryPolicy retryPolicy) : IAccountRepository
 {
-    private readonly ActivitySource _activitySource = new("Identity");
-
     public async Task<Account?> GetById(Guid accountId, CancellationToken cancellationToken = default)
     {
         var sql = @"

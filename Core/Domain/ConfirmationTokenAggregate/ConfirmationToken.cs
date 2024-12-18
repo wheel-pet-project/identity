@@ -1,8 +1,10 @@
+using Core.Domain.ConfirmationTokenAggregate.DomainEvents;
+using Core.Domain.SharedKernel;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 
 namespace Core.Domain.ConfirmationTokenAggregate;
 
-public class ConfirmationToken
+public class ConfirmationToken : Aggregate
 {
     private ConfirmationToken(){}
 
@@ -12,14 +14,17 @@ public class ConfirmationToken
         ConfirmationTokenHash = confirmationTokenHash;
     }
     
-    
     public Guid AccountId { get; private set; }
     
     public string ConfirmationTokenHash { get; private set; }
 
+    // todo: add tests
+    public void AddCreatedDomainEvent(Guid confirmationToken) => 
+        AddDomainEvent(new ConfirmationTokenCreatedDomainEvent(confirmationToken));
+
     public static ConfirmationToken Create(Guid accountId, string confirmationTokenHash)
     {
-        if (accountId == Guid.Empty) throw new ValueIsRequiredException("AccountId is empty");
+        if (accountId == Guid.Empty) throw new ValueIsRequiredException("Account id is empty");
         if (!ValidateConfirmationTokenHash(confirmationTokenHash))
             throw new ValueOutOfRangeException("Confirmation token hash is invalid, hash length must be 60");
         

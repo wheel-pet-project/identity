@@ -23,12 +23,11 @@
         <PackageReference Include="FluentValidation" Version="11.11.0" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
-        <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.66.0" />
+        <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.67.0" />
         <PackageReference Include="Grpc.Tools" Version="2.67.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="HealthChecks.PostgreSQL" Version="1.1.0" />
         <PackageReference Include="MassTransit" Version="8.2.5" />
         <PackageReference Include="MassTransit.Kafka" Version="8.2.5" />
         <PackageReference Include="MediatR" Version="12.4.1" />
@@ -41,6 +40,8 @@
         <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.9.0-beta.1" />
         <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.9.0-beta.1" />
         <PackageReference Include="Polly" Version="8.4.2" />
+        <PackageReference Include="Quartz" Version="3.13.1" />
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1" />
         <PackageReference Include="Serilog" Version="4.1.0-dev-02238" />
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />

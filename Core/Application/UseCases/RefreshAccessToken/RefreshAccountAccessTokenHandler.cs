@@ -31,6 +31,7 @@ public class RefreshAccountAccessTokenHandler(
         var account = await accountRepository.GetById(refreshToken.AccountId);
         if (account is null) throw new DataConsistencyViolationException(
                 "Data consistency violation: refresh token not revoked for deleted account");
+        if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
 
         var newRefreshToken = RefreshToken.Create(account);
 

@@ -22,7 +22,7 @@ public class AuthenticateAccountHandler(
         var account = await accountRepository.GetByEmail(request.Email);
         if (account is null) return Result.Fail("Account does not found");
         
-        if (!account.Status.CanBeAuthorize()) return Result.Fail("Account is not be authenticated");
+        if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
         if (!hasher.VerifyHash(request.Password, account.PasswordHash)) return Result.Fail("Password is incorrect");
         
         var refreshToken = RefreshToken.Create(account);

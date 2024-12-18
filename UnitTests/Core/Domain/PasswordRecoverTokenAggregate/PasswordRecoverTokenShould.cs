@@ -67,7 +67,20 @@ public class PasswordRecoverTokenShould
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
     }
-    
+
+    [Fact]
+    public void CanAddDomainEvent()
+    {
+        // Arrange
+        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        
+        // Act
+        passwordRecoverToken.AddCreatedDomainEvent(Guid.NewGuid());
+
+        // Assert
+        Assert.True(passwordRecoverToken.DomainEvents.Any());
+    }
 
     [Fact]
     public void IsValidForNewPasswordRecoverTokenMustReturnTrue()
@@ -81,5 +94,20 @@ public class PasswordRecoverTokenShould
 
         // Assert
         Assert.True(result);
+    }
+
+    [Fact]
+    public void ApplyMustMakeTokenApplied()
+    {
+        // Arrange
+        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        
+        // Act
+        passwordRecoverToken.Apply();
+
+        // Assert
+        var result = passwordRecoverToken.IsValid();
+        Assert.False(result);
     }
 }

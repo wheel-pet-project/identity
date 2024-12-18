@@ -4,6 +4,7 @@ using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Repositories;
+using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace IntegrationTests.Repositories;
 
-public class AccountRepositoryShould : RepositoryTestBase
+public class AccountRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));

@@ -1,9 +1,11 @@
 using Core.Domain.AccountAggregate;
+using Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
+using Core.Domain.SharedKernel;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 
 namespace Core.Domain.PasswordRecoverTokenAggregate;
 
-public class PasswordRecoverToken
+public class PasswordRecoverToken : Aggregate
 {
     private PasswordRecoverToken(){}
 
@@ -15,6 +17,7 @@ public class PasswordRecoverToken
         ExpiresAt = DateTime.UtcNow.AddMinutes(15);
         IsAlreadyApplied = false;
     }
+    
     
     public Guid Id { get; private set; }
     
@@ -28,8 +31,12 @@ public class PasswordRecoverToken
     
     public bool IsValid() => ExpiresAt > DateTime.UtcNow && IsAlreadyApplied == false;
     
-    public void Apply() => IsAlreadyApplied = true; // todo: add tests
-    
+    public void Apply() => IsAlreadyApplied = true;
+
+    // todo: add tests
+    public void AddCreatedDomainEvent(Guid recoverToken) => 
+        AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(recoverToken));
+
     public static PasswordRecoverToken Create(Account account, string recoverTokenHash)
     {
         if (!ValidatePasswordRecoverToken(recoverTokenHash)) 

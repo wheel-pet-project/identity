@@ -22,6 +22,21 @@ public class ConfirmationTokenShould
     }
 
     [Fact]
+    public void CanAddDomainEvent()
+    {
+        // Arrange
+        var hash = new string('*', 60);
+        var accountId = Guid.NewGuid();
+        var confirmationToken = ConfirmationToken.Create(accountId, hash);
+
+        // Act
+        confirmationToken.AddCreatedDomainEvent(Guid.NewGuid());
+
+        // Assert
+        Assert.True(confirmationToken.DomainEvents.Any());
+    }
+
+    [Fact]
     public void CreateConfirmationTokenWhenTokenHashIsInvalidMustThrowsValueOutOfRangeException()
     {
         // Arrange

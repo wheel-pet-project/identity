@@ -3,9 +3,12 @@ using Core.Ports.Postgres;
 using FluentResults;
 using Infrastructure.Settings;
 
-namespace Infrastructure.Adapters.Postgres;
+namespace Infrastructure.Adapters.Postgres.UnitOfWork;
 
-public class UnitOfWork(DbSession session, PostgresRetryPolicy retryPolicy) : IUnitOfWork
+public class UnitOfWork(
+    DbSession session, 
+    PostgresRetryPolicy retryPolicy) 
+    : IUnitOfWork
 {
     public async Task BeginTransaction() =>
         await retryPolicy.ExecuteAsync(() => session.Transaction = session.Connection.BeginTransaction());
