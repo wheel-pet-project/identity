@@ -1,0 +1,29 @@
+image: mcr.microsoft.com/dotnet/sdk:8.0
+
+stages:
+    - build
+    - test
+
+build:
+    stage: build
+    script:
+        
+        - dotnet nuget add source "${CI_API_V4_URL}/groups/${CI_PROJECT_NAMESPACE_ID}/-/packages/nuget/index.json" --name gitlab --username nikitaberezhko --password ${PACKAGE_REGISTRY_PAT} --store-password-in-clear-text
+        - dotnet restore
+        - dotnet build --no-restore
+        - dotnet build
+    artifacts:
+        untracked: true
+        when: on_success
+        access: all
+        expire_in: 10 mins
+        paths:
+            - "artifacts"
+
+test:
+    stage: test
+    script: dotnet test --no-build --verbosity normal
+    needs:
+        - [build]
+    dependencies:
+        - "build"
