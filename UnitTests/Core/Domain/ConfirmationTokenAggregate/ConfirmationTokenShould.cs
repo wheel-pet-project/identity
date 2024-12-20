@@ -30,7 +30,7 @@ public class ConfirmationTokenShould
         var confirmationToken = ConfirmationToken.Create(accountId, hash);
 
         // Act
-        confirmationToken.AddCreatedDomainEvent(Guid.NewGuid());
+        confirmationToken.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
 
         // Assert
         Assert.True(confirmationToken.DomainEvents.Any());

@@ -76,7 +76,7 @@ public class PasswordRecoverTokenShould
         var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
         
         // Act
-        passwordRecoverToken.AddCreatedDomainEvent(Guid.NewGuid());
+        passwordRecoverToken.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
 
         // Assert
         Assert.True(passwordRecoverToken.DomainEvents.Any());

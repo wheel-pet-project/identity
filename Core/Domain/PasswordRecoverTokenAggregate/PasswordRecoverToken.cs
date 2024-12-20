@@ -32,10 +32,9 @@ public class PasswordRecoverToken : Aggregate
     public bool IsValid() => ExpiresAt > DateTime.UtcNow && IsAlreadyApplied == false;
     
     public void Apply() => IsAlreadyApplied = true;
-
-    // todo: add tests
-    public void AddCreatedDomainEvent(Guid recoverToken) => 
-        AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(recoverToken));
+    
+    public void AddCreatedDomainEvent(Guid recoverToken, string email) => 
+        AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(recoverToken, email));
 
     public static PasswordRecoverToken Create(Account account, string recoverTokenHash)
     {

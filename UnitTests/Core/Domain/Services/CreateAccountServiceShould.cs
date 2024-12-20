@@ -1,7 +1,6 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.Services;
 using Core.Ports.Postgres.Repositories;
-using FluentResults;
 using Moq;
 using Xunit;
 

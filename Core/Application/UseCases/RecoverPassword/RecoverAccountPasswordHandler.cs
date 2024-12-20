@@ -12,6 +12,7 @@ public class RecoverAccountPasswordHandler(
     IPasswordRecoverTokenRepository passwordRecoverTokenRepository,
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
+    IOutbox outbox,
     IHasher hasher)
     : IRequestHandler<RecoverAccountPasswordRequest, Result>
 {
@@ -22,14 +23,11 @@ public class RecoverAccountPasswordHandler(
 
         var recoverToken = Guid.NewGuid();
         var passwordRecoverToken = PasswordRecoverToken.Create(account, hasher.GenerateHash(recoverToken.ToString()));
-        
-        // send token in notification
-        {
-            Console.WriteLine(recoverToken.ToString());
-        }
+        passwordRecoverToken.AddCreatedDomainEvent(recoverToken, account.Email);
         
         await unitOfWork.BeginTransaction();
         await passwordRecoverTokenRepository.Add(passwordRecoverToken);
+        await outbox.PublishDomainEvents(passwordRecoverToken);
         
         return await unitOfWork.Commit();
     }

@@ -21,6 +21,10 @@ public class Program
             .AddPostgres(builder.Configuration)
             .ConfigureSerilog(builder.Configuration)
             .AddHealthCheckV1(builder.Configuration)
+            .AddOutboxBackgroundJob()
+            .AddOutbox()
+            .ConfigureMassTransit()
+            .AddMessageBus()
             .AddValidators()
             .AddUnitOfWork()
             .AddRepositories()
@@ -30,7 +34,7 @@ public class Program
             .AddRetryPolicies()
             .AddMapper()
             .AddTelemetry();
-            
+        
         
         var app = builder.Build();
         

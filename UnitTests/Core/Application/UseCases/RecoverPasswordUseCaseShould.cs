@@ -22,7 +22,6 @@ public class RecoverPasswordUseCaseShould
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
-        useCaseBuilder.ConfigurePasswordRecoverRepository();
         useCaseBuilder.ConfigureHasherShouldReturn(generateHashShouldReturn: new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
@@ -59,7 +58,6 @@ public class RecoverPasswordUseCaseShould
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
         useCaseBuilder.ConfigureHasherShouldReturn(generateHashShouldReturn: new string('*', 60));
-        useCaseBuilder.ConfigurePasswordRecoverRepository();
         useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
 
@@ -76,19 +74,20 @@ public class RecoverPasswordUseCaseShould
         private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
         private readonly Mock<IPasswordRecoverTokenRepository> _passwordRecoverTokenRepositoryMock = new();
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<IOutbox> _outboxMock = new();
         private readonly Mock<IHasher> _hasher = new();
 
         public RecoverAccountPasswordHandler Build() =>
-            new(_passwordRecoverTokenRepositoryMock.Object, _accountRepositoryMock.Object, _unitOfWorkMock.Object,
-                _hasher.Object);
+            new(_passwordRecoverTokenRepositoryMock.Object, _accountRepositoryMock.Object, _unitOfWorkMock.Object, 
+                _outboxMock.Object, _hasher.Object);
         
         public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))
                 .ReturnsAsync(getByEmailShouldReturn);
 
-        public void ConfigurePasswordRecoverRepository() =>
-            _passwordRecoverTokenRepositoryMock
-                .Setup(x => x.Add(It.IsAny<PasswordRecoverToken>()));
+        // public void ConfigurePasswordRecoverRepository() =>
+        //     _passwordRecoverTokenRepositoryMock
+        //         .Setup(x => x.Add(It.IsAny<PasswordRecoverToken>()));
 
         public void ConfigureUnitOfWork(Result commitShouldReturn) =>
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);

@@ -17,10 +17,9 @@ public class ConfirmationToken : Aggregate
     public Guid AccountId { get; private set; }
     
     public string ConfirmationTokenHash { get; private set; }
-
-    // todo: add tests
-    public void AddCreatedDomainEvent(Guid confirmationToken) => 
-        AddDomainEvent(new ConfirmationTokenCreatedDomainEvent(confirmationToken));
+    
+    public void AddCreatedDomainEvent(Guid confirmationToken, string email) => 
+        AddDomainEvent(new ConfirmationTokenCreatedDomainEvent(confirmationToken, email));
 
     public static ConfirmationToken Create(Guid accountId, string confirmationTokenHash)
     {

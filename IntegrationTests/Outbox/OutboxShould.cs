@@ -1,5 +1,4 @@
 using System.Data;
-using System.Net.Http.Json;
 using Core.Domain.ConfirmationTokenAggregate;
 using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
@@ -29,7 +28,7 @@ FROM outbox";
         var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
         
         var aggregate = ConfirmationToken.Create(accountId: Guid.NewGuid(), new string('*', 60));
-        aggregate.AddCreatedDomainEvent(Guid.NewGuid());
+        aggregate.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
         var expectedEventId = aggregate.DomainEvents.First().EventId;
         
         var unitOfWorkAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();

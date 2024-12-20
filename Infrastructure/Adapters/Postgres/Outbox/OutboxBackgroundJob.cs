@@ -13,36 +13,37 @@ public class OutboxBackgroundJob(
     public async Task Execute(IJobExecutionContext context)
     {
         var querySql = @"
-SELECT event_id, type, content, occurred_on_utc, processed_on_utc
-FROM outbox
-LIMIT 50";
+        SELECT event_id AS EventId, type AS Type, content AS Content, occurred_on_utc AS OccurredOnUtc, 
+               processed_on_utc AS ProcessedOnUtc
+        FROM outbox
+        WHERE processed_on_utc IS NULL
+        LIMIT 50";
 
         var markAsProcessedSql = @"
-UPDATE outbox
-SET processed_on_utc = @ProcessedOnUtc
-WHERE event_id = @EventId";
+        UPDATE outbox
+        SET processed_on_utc = @ProcessedOnUtc
+        WHERE event_id = @EventId";
         
         var outboxEventsModels = await session.Connection.QueryAsync<OutboxEventModel>(querySql);
-
+        
         var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
         
         var eventModels = outboxEventsModels.ToList();
         if (eventModels.Any())
         {
-            foreach (var @event in eventModels)
+            session.Transaction = session.Connection.BeginTransaction();
+            foreach (var domainEvent in eventModels.Select(ev => 
+                         JsonConvert.DeserializeObject<DomainEvent>(ev.Content, jsonSettings)).OfType<DomainEvent>())
             {
-                var domainEvent = JsonConvert.DeserializeObject<DomainEvent>(@event.Content, jsonSettings);
-                if (domainEvent is not null)
-                {
-                    await mediator.Publish(domainEvent, context.CancellationToken);
-
-                    var command = new CommandDefinition(markAsProcessedSql,
-                        new { ProcessedOnUtc = DateTime.UtcNow, @event.EventId }, 
-                        session.Transaction);
-                
-                    await session.Connection.ExecuteAsync(command);
-                }
+                await mediator.Publish(domainEvent, context.CancellationToken);
+                    
+                var command = new CommandDefinition(markAsProcessedSql,
+                    new { ProcessedOnUtc = DateTime.UtcNow, domainEvent.EventId }, 
+                    session.Transaction);
+                    
+                await session.Connection.ExecuteAsync(command);
             }
+            session.Transaction.Commit();
         }
         
         session.Dispose();

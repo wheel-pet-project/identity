@@ -22,7 +22,6 @@ public class CreateAccountUseCaseShould
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository();
         useCaseBuilder.ConfigureCreateAccountService(_account);
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         useCaseBuilder.ConfigureHasher(generateHashShouldReturn: new string('*', 60));
@@ -42,7 +41,6 @@ public class CreateAccountUseCaseShould
         var expectedError = new Error("expected error");
         
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository();
         useCaseBuilder.ConfigureCreateAccountService(expectedError);
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         useCaseBuilder.ConfigureHasher(generateHashShouldReturn: new string('*', 60));
@@ -63,7 +61,6 @@ public class CreateAccountUseCaseShould
         var expectedError = new Error("expected error");
         
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository();
         useCaseBuilder.ConfigureCreateAccountService(_account);
         useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         useCaseBuilder.ConfigureHasher(generateHashShouldReturn: new string('*', 60));
@@ -80,18 +77,19 @@ public class CreateAccountUseCaseShould
     private class UseCaseBuilder
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<IOutbox> _outboxMock = new();
         private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
         private readonly Mock<IConfirmationTokenRepository> _confirmationTokenRepositoryMock = new();
         private readonly Mock<ICreateAccountService> _createAccountServiceMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
 
         public CreateAccountHandler Build() =>
-            new(_confirmationTokenRepositoryMock.Object, _accountRepositoryMock.Object,
-                _createAccountServiceMock.Object, _unitOfWorkMock.Object,
-                _hasherMock.Object);
+            new(_confirmationTokenRepositoryMock.Object,
+                _createAccountServiceMock.Object, _accountRepositoryMock.Object, _unitOfWorkMock.Object,
+                _outboxMock.Object, _hasherMock.Object);
         
-        public void ConfigureAccountRepository() =>
-            _accountRepositoryMock.Setup(x => x.Add(It.IsAny<Account>()));
+        // public void ConfigureAccountRepository() =>
+        //     _accountRepositoryMock.Setup(x => x.Add(It.IsAny<Account>()));
 
         public void ConfigureCreateAccountService(Result<Account> createAccountShouldReturn) =>
             _createAccountServiceMock

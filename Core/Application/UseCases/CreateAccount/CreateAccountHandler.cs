@@ -10,10 +10,10 @@ namespace Core.Application.UseCases.CreateAccount;
 
 public class CreateAccountHandler(
     IConfirmationTokenRepository confirmationTokenRepository,
-    IAccountRepository accountRepository,
     ICreateAccountService createAccountService,
+    IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
-    // IOutbox outbox,
+    IOutbox outbox,
     IHasher hasher) 
     : IRequestHandler<CreateAccountRequest, Result<CreateAccountResponse>>
 {
@@ -28,17 +28,14 @@ public class CreateAccountHandler(
         var confirmationTokenGuid = Guid.NewGuid();
         var confirmationToken = ConfirmationToken.Create(account.Id,
             confirmationTokenHash: hasher.GenerateHash(confirmationTokenGuid.ToString()));
+        confirmationToken.AddCreatedDomainEvent(confirmationTokenGuid, account.Email);
         
         await unitOfWork.BeginTransaction();
         await accountRepository.Add(account);
         await confirmationTokenRepository.Add(confirmationToken);
-        // await outbox.PublishDomainEvents(confirmationToken);
-        var transactionResult = await unitOfWork.Commit();
+        await outbox.PublishDomainEvents(confirmationToken);
         
-        // send command to notification
-        { 
-            Console.WriteLine($"Confirmation token: {confirmationTokenGuid.ToString()}");
-        }
+        var transactionResult = await unitOfWork.Commit();
 
         return transactionResult.IsSuccess
             ? new CreateAccountResponse(account.Id)

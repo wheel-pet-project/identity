@@ -1,6 +1,4 @@
 
-using Core.Domain.SharedKernel.Exceptions;
-
 namespace Core.Domain.SharedKernel;
 
 public abstract class Aggregate : IAggregate

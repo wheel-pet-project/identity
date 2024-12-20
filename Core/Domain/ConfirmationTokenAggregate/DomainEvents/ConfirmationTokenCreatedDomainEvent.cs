@@ -2,4 +2,4 @@ using Core.Domain.SharedKernel;
 
 namespace Core.Domain.ConfirmationTokenAggregate.DomainEvents;
 
-public record ConfirmationTokenCreatedDomainEvent(Guid ConfirmationToken) : DomainEvent;
+public record ConfirmationTokenCreatedDomainEvent(Guid ConfirmationToken, string Email) : DomainEvent;

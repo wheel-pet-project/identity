@@ -5,10 +5,13 @@ using Core.Application.UseCases.CreateAccount;
 using Core.Domain.Services;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Infrastructure.Interfaces.PasswordHasher;
+using Core.Ports.Kafka;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using FluentValidation;
+using Infrastructure.Adapters.Kafka;
 using Infrastructure.Adapters.Postgres;
+using Infrastructure.Adapters.Postgres.Outbox;
 using Infrastructure.Adapters.Postgres.Repositories;
 using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Hasher;
@@ -16,10 +19,12 @@ using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using MassTransit;
 using MediatR;
+using NotificationKafkaMessages;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Quartz;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -59,6 +64,30 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddUnitOfWork(this IServiceCollection services)
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        
+        return services;
+    }
+
+    public static IServiceCollection AddOutbox(this IServiceCollection services)
+    {
+        services.AddTransient<IOutbox, Outbox>();
+        
+        return services;
+    }
+
+    public static IServiceCollection AddOutboxBackgroundJob(this IServiceCollection services)
+    {
+        services.AddQuartz(configure =>
+        {
+            var jobKey = new JobKey(nameof(OutboxBackgroundJob));
+            configure
+                .AddJob<OutboxBackgroundJob>(j => j.WithIdentity(jobKey))
+                .AddTrigger(trigger => trigger.ForJob(jobKey)
+                    .WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(3).RepeatForever()));
+        });
+
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+        
         return services;
     }
 
@@ -116,7 +145,7 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-
+    
     public static IServiceCollection ConfigureSerilog(this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -135,7 +164,6 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-
     public static IServiceCollection ConfigureMassTransit(this IServiceCollection services)
     {
         services.AddMassTransit(x =>
@@ -144,22 +172,23 @@ public static class ServiceCollectionExtensions
 
             x.AddRider(rider =>
             {
-                // rider.AddConsumer<KafkaMessageConsumer>();
+                rider.AddProducer<string, SendConfirmationEmailCommand>("send-confirmation-email-topic");
+                rider.AddProducer<string, SendRecoverPasswordEmailCommand>("send-recover-password-email-topic");
 
-                rider.UsingKafka((context, k) =>
-                {
-                    k.Host("localhost:9092");
-
-                    // k.TopicEndpoint<KafkaMessage>("topic-name", "consumer-group-name", e =>
-                    // {
-                    //     e.ConfigureConsumer<KafkaMessageConsumer>(context);
-                    // });
-                });
+                rider.UsingKafka((_, k) => { k.Host("localhost:9092"); });
             });
         });
 
         return services;
     }
+
+    public static IServiceCollection AddMessageBus(this IServiceCollection services)
+    {
+        services.AddTransient<IMessageBus, KafkaProducer>();
+        
+        return services;
+    }
+    
 
     public static IServiceCollection AddTelemetry(this IServiceCollection services)
     {
