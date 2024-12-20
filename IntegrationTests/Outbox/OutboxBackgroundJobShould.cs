@@ -84,13 +84,13 @@ FROM outbox";
     
     private class OutboxBackgroundJobBuilder
     {
-        private DbSession _session = null!;
+        private IDbConnection _connection = null!;
         private readonly Mock<IMediator> _mediatorMock = new();
         
-        public OutboxBackgroundJob Build() => new(_session, _mediatorMock.Object);
+        public OutboxBackgroundJob Build() => new(_connection, _mediatorMock.Object);
 
         public void ConfigureConnection(string connectionString) =>
-            _session = new DbSession(new NpgsqlConnection(connectionString));
+            _connection = new NpgsqlConnection(connectionString);
 
         public bool VerifyMediatorPublishMethod(int times)
         {
