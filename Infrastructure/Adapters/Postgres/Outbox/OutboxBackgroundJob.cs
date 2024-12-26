@@ -1,11 +1,9 @@
 using System.Data;
-using System.Reflection;
 using Core.Domain.SharedKernel;
 using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Quartz;
 
 namespace Infrastructure.Adapters.Postgres.Outbox;

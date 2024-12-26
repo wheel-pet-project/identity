@@ -1,6 +1,5 @@
 using Core.Application.UseCases.RecoverPassword;
 using Core.Domain.AccountAggregate;
-using Core.Domain.PasswordRecoverTokenAggregate;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
