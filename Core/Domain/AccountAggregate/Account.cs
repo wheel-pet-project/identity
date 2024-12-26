@@ -30,9 +30,9 @@ public class Account
 
     public string PasswordHash { get; private set; } = null!;
 
-    public Status Status { get; private set; }
-    
-    
+    public Status Status { get; private set; } = null!;
+
+
     public void SetStatus(Status potentialStatus)
     {
         if (!Status.All().Contains(potentialStatus)) throw new ValueOutOfRangeException("Unknown status or null");

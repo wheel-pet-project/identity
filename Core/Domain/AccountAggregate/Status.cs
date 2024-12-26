@@ -20,8 +20,8 @@ public class Status : Entity<int>
     }
     
     
-    public string Name { get; private set; }
-    
+    public string Name { get; private set; } = null!;
+
     public bool CanBeChangedToThisStatus(Status potentialStatus) =>
         potentialStatus switch
         {

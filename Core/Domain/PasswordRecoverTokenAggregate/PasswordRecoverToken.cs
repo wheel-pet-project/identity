@@ -23,8 +23,8 @@ public class PasswordRecoverToken : Aggregate
     
     public Guid AccountId { get; private set; }
     
-    public string RecoverTokenHash { get; private set; }
-    
+    public string RecoverTokenHash { get; private set; } = null!;
+
     public DateTime ExpiresAt { get; private set; }
     
     public bool IsAlreadyApplied { get; private set; }

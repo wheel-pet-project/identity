@@ -19,8 +19,9 @@ public class Role : Entity<int>
         Name = name;
     }
     
-    public string Name { get; private set; }
     
+    public string Name { get; private set; } = null!;
+
     public bool CanBeChangedToThisRole(Role potentialRole) =>
         potentialRole switch
         {

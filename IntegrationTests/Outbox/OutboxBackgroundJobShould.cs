@@ -18,7 +18,7 @@ namespace IntegrationTests.Outbox;
 
 public class OutboxBackgroundJobShould : IntegrationTestBase
 {
-    private const string query = @"SELECT event_id AS EventId, type AS Type, content AS Content, 
+    private const string Query = @"SELECT event_id AS EventId, type AS Type, content AS Content, 
        occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
 FROM outbox";
     
@@ -76,10 +76,10 @@ FROM outbox";
         // Arrange
         unitOfWorkAndOutboxBuilder.Reset();
         var (session, _, _) = unitOfWorkAndOutboxBuilder.Build();
-        var outboxEvents = await session.Connection.QueryAsync<OutboxEventModel>(query);
+        var outboxEvents = await session.Connection.QueryAsync<OutboxEventModel>(Query);
         var eventModels = outboxEvents.ToList();
         
-        Assert.True(eventModels.All(x => x.ProcessedOnUtc != default)); ;
+        Assert.True(eventModels.All(x => x.ProcessedOnUtc != null)); ;
     }
     
     private class OutboxBackgroundJobBuilder

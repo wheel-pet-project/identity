@@ -7,6 +7,7 @@ using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Outbox;
 using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Settings;
+using JsonNet.ContractResolvers;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ namespace IntegrationTests.Outbox;
 
 public class OutboxShould : IntegrationTestBase
 {
-    private const string query = @"SELECT event_id AS EventId, type AS Type, content AS Content, 
+    private const string Query = @"SELECT event_id AS EventId, type AS Type, content AS Content, 
        occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
 FROM outbox";
     
@@ -25,7 +26,11 @@ FROM outbox";
     public async Task CanAddOutboxEvents()
     {
         // Arrange
-        var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+        var jsonSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.All,
+            ContractResolver = new PrivateSetterContractResolver()
+        };
         
         var aggregate = ConfirmationToken.Create(accountId: Guid.NewGuid(), new string('*', 60));
         aggregate.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
@@ -43,10 +48,11 @@ FROM outbox";
         // Assert
         unitOfWorkAndOutboxBuilder.Reset();
         var (session, _, _) = unitOfWorkAndOutboxBuilder.Build();
-        var outboxEvents = await session.Connection.QueryAsync<OutboxEventModel>(query);
+        var outboxEvents = await session.Connection.QueryAsync<OutboxEventModel>(Query);
         var eventModels = outboxEvents.ToList();
         
         Assert.True(eventModels.Any());
+        Assert.Equal(expectedEventId, eventModels.First().EventId);
         var @event = JsonConvert.DeserializeObject<DomainEvent>(eventModels.FirstOrDefault()!.Content, jsonSettings);
         Assert.Equivalent(expectedEventId, @event!.EventId);
     }

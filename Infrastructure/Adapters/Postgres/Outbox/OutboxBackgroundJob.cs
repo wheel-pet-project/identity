@@ -1,8 +1,11 @@
 using System.Data;
+using System.Reflection;
 using Core.Domain.SharedKernel;
 using Dapper;
+using JsonNet.ContractResolvers;
 using MediatR;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Quartz;
 
 namespace Infrastructure.Adapters.Postgres.Outbox;
@@ -25,15 +28,20 @@ public class OutboxBackgroundJob(
     
     public async Task Execute(IJobExecutionContext context)
     {
-        connection.Open();
-        var outboxEventsModels = await connection.QueryAsync<OutboxEventModel>(QuerySql);
+        using var session = new DbSession(connection);
         
-        var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+        var outboxEventsModels = await session.Connection.QueryAsync<OutboxEventModel>(QuerySql);
+        
+        var jsonSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.All,
+            ContractResolver = new PrivateSetterContractResolver()
+        };
         
         var eventModels = outboxEventsModels.ToList();
         if (eventModels.Any())
         {
-            var transaction = connection.BeginTransaction();
+            session.Transaction = session.Connection.BeginTransaction();
             try
             {
                 foreach (var domainEvent in eventModels.Select(ev => JsonConvert
@@ -43,19 +51,17 @@ public class OutboxBackgroundJob(
                     
                     var command = new CommandDefinition(MarkAsProcessedSql,
                         new { ProcessedOnUtc = DateTime.UtcNow, domainEvent.EventId }, 
-                        transaction);
+                        session.Transaction);
                     
-                    await connection.ExecuteAsync(command);
+                    await session.Connection.ExecuteAsync(command);
                 }
                 
-                transaction.Commit();
+                session.Transaction.Commit();
             }
             catch
             {
-                transaction.Rollback();
+                session.Transaction.Rollback();
             }
         }
-        
-        connection.Dispose();
     }
 }

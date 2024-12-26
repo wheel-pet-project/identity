@@ -14,10 +14,11 @@ public class ConfirmationToken : Aggregate
         ConfirmationTokenHash = confirmationTokenHash;
     }
     
+    
     public Guid AccountId { get; private set; }
     
-    public string ConfirmationTokenHash { get; private set; }
-    
+    public string ConfirmationTokenHash { get; private set; } = null!;
+
     public void AddCreatedDomainEvent(Guid confirmationToken, string email) => 
         AddDomainEvent(new ConfirmationTokenCreatedDomainEvent(confirmationToken, email));
 

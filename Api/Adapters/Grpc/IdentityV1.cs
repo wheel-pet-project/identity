@@ -17,8 +17,6 @@ namespace Api.Adapters.Grpc;
 public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     : Identity.IdentityBase
 {
-    // private readonly ActivitySource _activitySource = new("Identity");
-
     public override async Task<CreateResponse> CreateAccount(
         CreateRequest request, ServerCallContext context)
     {
@@ -29,7 +27,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             request.Phone,
             request.Pass);
 
-        var result = await mediator.Send(createAccountRequest);
+        var result = await mediator.Send(createAccountRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new CreateResponse { AccId = result.Value.AccountId.ToString() }
@@ -44,7 +42,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             Guid.Parse(request.AccId),
             Guid.Parse(request.ConfirmationTkn));
 
-        var result = await mediator.Send(confirmEmailRequest);
+        var result = await mediator.Send(confirmEmailRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new ConfirmEmailResponse()
@@ -59,7 +57,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             request.Email,
             request.Pass);
 
-        var result = await mediator.Send(authenticateRequest);
+        var result = await mediator.Send(authenticateRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new AuthenticateResponse { Tkn = result.Value.AccessToken, RefreshTkn = result.Value.RefreshToken }
@@ -71,7 +69,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     {
         var authorizeRequest = new AuthorizeAccountRequest(Guid.Parse(request.CorId), request.Tkn);
 
-        var result = await mediator.Send(authorizeRequest);
+        var result = await mediator.Send(authorizeRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new AuthorizeResponse
@@ -89,7 +87,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         var refreshAccessTokenRequest =
             new RefreshAccountAccessTokenRequest(Guid.Parse(request.CorId), request.RefreshTkn);
 
-        var result = await mediator.Send(refreshAccessTokenRequest);
+        var result = await mediator.Send(refreshAccessTokenRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new RefreshAccessTokenResponse
@@ -105,7 +103,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     {
         var recoverPasswordRequest = new RecoverAccountPasswordRequest(Guid.Parse(request.CorId), request.Email);
 
-        var result = await mediator.Send(recoverPasswordRequest);
+        var result = await mediator.Send(recoverPasswordRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new RecoverPasswordResponse()
@@ -121,7 +119,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             request.Email,
             Guid.Parse(request.ResetTkn));
 
-        var result = await mediator.Send(updatePasswordRequest);
+        var result = await mediator.Send(updatePasswordRequest, context.CancellationToken);
 
         return result.IsSuccess
             ? new UpdatePasswordResponse()

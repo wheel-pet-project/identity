@@ -172,8 +172,8 @@ public static class ServiceCollectionExtensions
 
             x.AddRider(rider =>
             {
-                rider.AddProducer<string, SendConfirmationEmailCommand>("send-confirmation-email-topic");
-                rider.AddProducer<string, SendRecoverPasswordEmailCommand>("send-recover-password-email-topic");
+                rider.AddProducer<string, SendConfirmationEmailMessage>("send-confirmation-email-topic");
+                rider.AddProducer<string, SendRecoverPasswordEmailMessage>("send-recover-password-email-topic");
 
                 rider.UsingKafka((_, k) => { k.Host("localhost:9092"); });
             });
