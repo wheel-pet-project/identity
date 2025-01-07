@@ -19,8 +19,6 @@ build:
         expire_in: 10 mins
         paths:
             - "artifacts"
-    tags:
-    - build_image
 
 unit_test:
     stage: unit_test
@@ -29,8 +27,6 @@ unit_test:
         - [build]
     dependencies:
         - "build"
-    tags:
-    - build_image
 
 build_image:
   stage: build_image
@@ -49,5 +45,3 @@ build_image:
     - [build]
   dependencies:
     - "build"
-  tags:
-  - build_image
