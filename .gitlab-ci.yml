@@ -43,5 +43,9 @@ build_image:
     - docker build --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" --tag "$CI_REGISTRY_IMAGE:latest" --build-arg EXECUTABLE=Api.dll .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$CI_REGISTRY_IMAGE:latest"
+  needs:
+    - [build]
+  dependencies:
+    - "build"
   tags:
   - docker
