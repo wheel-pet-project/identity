@@ -11,14 +11,15 @@ build:
         - dotnet nuget add source "${CI_API_V4_URL}/groups/${CI_PROJECT_NAMESPACE_ID}/-/packages/nuget/index.json" --name gitlab --username nikitaberezhko --password ${PACKAGE_REGISTRY_PAT} --store-password-in-clear-text
         - dotnet restore
         - dotnet build --no-restore
-        - dotnet build
+        - dotnet build --configuration Release
+        - dotnet publish --configuration Release --output ../../artifacts/
     artifacts:
         untracked: true
         when: on_success
         access: all
         expire_in: 10 mins
         paths:
-            - "artifacts"
+            - /artifacts/*
 
 unit_test:
     stage: unit_test
@@ -42,6 +43,6 @@ build_image:
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$CI_REGISTRY_IMAGE:latest"
   needs:
-    - [build]
+    - [build, unit_test]
   dependencies:
     - "build"
