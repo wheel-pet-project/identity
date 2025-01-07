@@ -17,6 +17,8 @@ CREATE TABLE account(
     status_id int NOT NULL REFERENCES status
 );
 
+CREATE INDEX email_index ON account (email);
+
 CREATE TABLE pending_confirmation_token(
    account_id uuid PRIMARY KEY REFERENCES account ON DELETE CASCADE,
    confirmation_token_hash varchar NOT NULL
@@ -38,6 +40,14 @@ CREATE TABLE password_recover_token(
    expires_at timestamp with time zone NOT NULL
 );
 
+CREATE TABLE outbox(
+   event_id uuid PRIMARY KEY,
+   type text NOT NULL,
+   content text NOT NULL,
+   occurred_on_utc timestamp with time zone NOT NULL,
+   processed_on_utc timestamp with time zone
+);
+
 INSERT INTO role (id, name)
 VALUES (1, 'customer'),
        (2, 'admin'),
@@ -51,12 +61,3 @@ VALUES (1, 'approved'),
        (3, 'pending approval'),
        (4, 'deactivated'),
        (5, 'deleted');
-
-
-CREATE TABLE outbox(
-   event_id uuid PRIMARY KEY,
-   type text NOT NULL,
-   content text NOT NULL,
-   occurred_on_utc timestamp with time zone NOT NULL,
-   processed_on_utc timestamp with time zone
-);

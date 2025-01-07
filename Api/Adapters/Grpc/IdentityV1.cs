@@ -138,6 +138,6 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             throw new RpcException(new Status(StatusCode.InvalidArgument,
                 string.Join(' ', errors.Select(x => x.Message))));
         
-        throw new RpcException(new Status(StatusCode.Aborted, string.Join(' ', errors.Select(x => x.Message))));
+        throw new RpcException(new Status(StatusCode.InvalidArgument, string.Join(' ', errors.Select(x => x.Message))));
     }
 }

@@ -15,7 +15,7 @@ public class DbSession : IDisposable
     
     public IDbConnection Connection { get; }
     
-    public IDbTransaction Transaction { get; set; } = null!;
+    public IDbTransaction? Transaction { get; set; }
 
     
     public void Dispose() => Connection.Dispose();

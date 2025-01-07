@@ -19,7 +19,7 @@ using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using MassTransit;
 using MediatR;
-using NotificationKafkaMessages;
+using NotificationKafkaEvents;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -172,8 +172,8 @@ public static class ServiceCollectionExtensions
 
             x.AddRider(rider =>
             {
-                rider.AddProducer<string, SendConfirmationEmailMessage>("send-confirmation-email-topic");
-                rider.AddProducer<string, SendRecoverPasswordEmailMessage>("send-recover-password-email-topic");
+                rider.AddProducer<string, ConfirmationTokenCreated>("send-confirmation-email-topic");
+                rider.AddProducer<string, PasswordRecoverTokenCreated>("send-recover-password-email-topic");
 
                 rider.UsingKafka((_, k) => { k.Host("localhost:9092"); });
             });

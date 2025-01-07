@@ -18,11 +18,11 @@ public class UnitOfWork(
         var result = Result.Ok();
         try
         {
-            await retryPolicy.ExecuteAsync(() => session.Transaction.Commit());
+            await retryPolicy.ExecuteAsync(() => session.Transaction!.Commit());
         }
         catch
         {
-            await retryPolicy.ExecuteAsync(() => session.Transaction.Rollback());
+            await retryPolicy.ExecuteAsync(() => session.Transaction!.Rollback());
             result = Result.Fail(new TransactionFail("Transaction failed"));
         }
         finally
@@ -33,5 +33,5 @@ public class UnitOfWork(
         return result;
     }
 
-    public void Dispose() => session.Transaction.Dispose();
+    public void Dispose() => session.Transaction?.Dispose();
 }
