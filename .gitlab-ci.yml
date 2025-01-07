@@ -7,7 +7,6 @@ stages:
 build:
     stage: build
     script:
-        
         - dotnet nuget add source "${CI_API_V4_URL}/groups/${CI_PROJECT_NAMESPACE_ID}/-/packages/nuget/index.json" --name gitlab --username nikitaberezhko --password ${PACKAGE_REGISTRY_PAT} --store-password-in-clear-text
         - dotnet restore
         - dotnet build --no-restore
@@ -22,7 +21,7 @@ build:
 
 test:
     stage: test
-    script: dotnet test --no-build --verbosity normal
+    script: dotnet test UnitTests --no-build --verbosity normal
     needs:
         - [build]
     dependencies:
