@@ -39,10 +39,10 @@ build_image:
     DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" $CI_REGISTRY
-    - cd /Api
-    - docker build --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" --tag "$CI_REGISTRY_IMAGE:latest" --build-arg EXECUTABLE=Api/Api.dll .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
-    - docker push "$CI_REGISTRY_IMAGE:latest"
+    - docker build -t $REGISTRY_PATH:1
+    # - docker build --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" --tag "$CI_REGISTRY_IMAGE:latest" --build-arg EXECUTABLE=Api/Api.dll .
+    # - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    # - docker push "$CI_REGISTRY_IMAGE:latest"
   needs:
     - [build, unit_test]
   dependencies:
