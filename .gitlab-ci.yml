@@ -2,7 +2,8 @@ image: mcr.microsoft.com/dotnet/sdk:8.0
 
 stages:
     - build
-    - test
+    - unit_test
+    - build_image
 
 build:
     stage: build
@@ -10,19 +11,39 @@ build:
         - dotnet nuget add source "${CI_API_V4_URL}/groups/${CI_PROJECT_NAMESPACE_ID}/-/packages/nuget/index.json" --name gitlab --username nikitaberezhko --password ${PACKAGE_REGISTRY_PAT} --store-password-in-clear-text
         - dotnet restore
         - dotnet build --no-restore
-        - dotnet build
+        - dotnet build --configuration Release
+        - dotnet publish --configuration Release --output ../../artifacts/
     artifacts:
         untracked: true
         when: on_success
         access: all
         expire_in: 10 mins
         paths:
-            - "artifacts"
+            - /artifacts/*
 
-test:
-    stage: test
+unit_test:
+    stage: unit_test
     script: dotnet test UnitTests --no-build --verbosity normal
     needs:
         - [build]
     dependencies:
         - "build"
+
+build_image:
+  stage: build_image
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker login -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" $CI_REGISTRY
+    - docker build -t $REGISTRY_PATH/Api
+    # - docker build --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" --tag "$CI_REGISTRY_IMAGE:latest" --build-arg EXECUTABLE=Api/Api.dll .
+    # - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    # - docker push "$CI_REGISTRY_IMAGE:latest"
+  needs:
+    - [build, unit_test]
+  dependencies:
+    - "build"
