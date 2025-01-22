@@ -1,10 +1,12 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace UnitTests.Core.Domain.AccountAggregate;
 
+[TestSubject(typeof(Account))]
 public class AccountShould
 {
     [Fact]
@@ -371,7 +373,7 @@ public class AccountShould
     }
 
     [Fact]
-    public void SetPasswordMustSetNewAccountPassword()
+    public void SetPasswordMustSetNewAccountPasswordHash()
     {
         // Arrange
         var role = Role.Customer;
@@ -393,7 +395,7 @@ public class AccountShould
     [InlineData("$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2Wn")] // 59 symbols, must be 60
     [InlineData("")]
     [InlineData(" ")]
-    public void SetPasswordWhenNewPasswordIsInvalidMustThrowsValueOutOfRangeException(string invalidPassword)
+    public void SetPasswordWhenNewPasswordHashIsInvalidMustThrowsValueOutOfRangeException(string invalidPassword)
     {
         // Arrange
         var role = Role.Customer;
@@ -410,7 +412,7 @@ public class AccountShould
     }
     
     [Fact]
-    public void SetPasswordWhenNewPasswordIsNullMustThrowsValueIsRequiredException()
+    public void SetPasswordWhenNewPasswordHashIsNullMustThrowsValueIsRequiredException()
     {
         // Arrange
         var role = Role.Customer;
@@ -424,5 +426,34 @@ public class AccountShould
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
+    }
+
+    [Theory]
+    [InlineData("password")]
+    [InlineData("666666")] // min password length - 6 symbols
+    [InlineData("303030303030303030303030303030")] // max password length - 30 symbols
+    public void ValidateNotHashedPasswordMustReturnTrueIfNotHashedPasswordCorrect(string password)
+    {
+        // Arrange
+
+        // Act
+        var actual = Account.ValidateNotHashedPassword(password);
+
+        // Assert
+        Assert.True(actual);
+    }
+
+    [Theory]
+    [InlineData("55555")] // less than 6 symbols
+    [InlineData("3131313131313131313131313131313")] // greater than 30 symbols
+    public void ValidateNotHashedPasswordMustReturnFalseIfNotHashedPasswordInvalid(string invalidPassword)
+    {
+        // Arrange
+        
+        // Act
+        var actual = Account.ValidateNotHashedPassword(invalidPassword);
+
+        // Assert
+        Assert.False(actual);
     }
 }

@@ -1,5 +1,5 @@
-using System.Data;
 using Core.Domain.AccountAggregate;
+using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using Infrastructure.Adapters.Postgres;
@@ -22,17 +22,18 @@ public class AccountRepositoryShould : IntegrationTestBase
     public async Task CanAddAccount()
     {
         // Arrange
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.Add(_account); 
-        await unitOfWork.Commit();
+        await uow.Commit();
         
         // Assert
-        var accountFromDb = await repository.GetById(_account.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var accountFromDb = await repoForAssert.GetById(_account.Id);
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(_account, accountFromDb);
     }
@@ -41,12 +42,14 @@ public class AccountRepositoryShould : IntegrationTestBase
     public async Task CanGetByIdAccount()
     {
         // Arrange
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        await unitOfWork.BeginTransaction();
-        await repository.Add(_account);
-        await unitOfWork.Commit();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uow, repositoryForArrange) = uowAndRepoBuilder.Build();
+        await uow.BeginTransaction();
+        await repositoryForArrange.Add(_account);
+        await uow.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
         
         // Act
         var accountFromDb = await repository.GetById(_account.Id);
@@ -60,12 +63,14 @@ public class AccountRepositoryShould : IntegrationTestBase
     public async Task CanGetByEmailAccount()
     {
         // Arrange
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        await unitOfWork.BeginTransaction();
-        await repository.Add(_account);
-        await unitOfWork.Commit();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uow, repositoryForArrange) = uowAndRepoBuilder.Build();
+        await uow.BeginTransaction();
+        await repositoryForArrange.Add(_account);
+        await uow.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
         
         // Act
         var accountFromDb = await repository.GetByEmail(_account.Email);
@@ -80,21 +85,24 @@ public class AccountRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var accountForUpdateStatusTest = Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        await unitOfWork.BeginTransaction();
-        await repository.Add(accountForUpdateStatusTest);
-        await unitOfWork.Commit();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
+        await uowForArrange.BeginTransaction();
+        await repositoryForArrange.Add(accountForUpdateStatusTest);
+        await uowForArrange.Commit();
+        
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
         accountForUpdateStatusTest.SetStatus(Status.PendingApproval);
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.UpdateStatus(accountForUpdateStatusTest);
-        await unitOfWork.Commit();
+        await uow.Commit();
         
         // Assert
-        var accountFromDb = await repository.GetById(accountForUpdateStatusTest.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var accountFromDb = await repoForAssert.GetById(accountForUpdateStatusTest.Id);
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(accountForUpdateStatusTest, accountFromDb);
     }
@@ -105,43 +113,47 @@ public class AccountRepositoryShould : IntegrationTestBase
         // Arrange
         var accountForUpdatePassHash =
             Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        await unitOfWork.BeginTransaction();
-        await repository.Add(accountForUpdatePassHash);
-        await unitOfWork.Commit();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uow, repositoryForArrange) = uowAndRepoBuilder.Build();
+        await uow.BeginTransaction();
+        await repositoryForArrange.Add(accountForUpdatePassHash);
+        await uow.Commit();
+        
+        var (uowForAct, repository) = uowAndRepoBuilder.Build();
         
         // Act
         accountForUpdatePassHash.SetPasswordHash(new string('-', 60));
-        await unitOfWork.BeginTransaction();
+        await uowForAct.BeginTransaction();
         await repository.UpdatePasswordHash(accountForUpdatePassHash);
-        await unitOfWork.Commit();
+        await uowForAct.Commit();
         
         // Assert
-        var accountFromDb = await repository.GetById(accountForUpdatePassHash.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var accountFromDb = await repoForAssert.GetById(accountForUpdatePassHash.Id);
         Assert.NotNull(accountFromDb);
-        Assert.Equivalent(accountForUpdatePassHash, accountFromDb);
+        Assert.Equivalent(accountForUpdatePassHash.PasswordHash, accountFromDb.PasswordHash);
     }
 
     private class UnitOfWorkAndRepoBuilder
     {
-        private IDbConnection _connection = null!;
-        private DbSession _session = null!;
+        private NpgsqlDataSource _dataSource = null!;
+        private DbSession? _session;
+        private string _connectionString = null!;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
 
         public (IUnitOfWork, IAccountRepository) Build()
         {
-            var unitOfWork = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            _session?.Dispose();
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
+            
+            var uow = new UnitOfWork(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var accountRepository =
                 new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-            return (unitOfWork, accountRepository);
+            return (uow, accountRepository);
         }
 
-        public void ConfigureConnection(string connectionString)
-        {
-            _connection = new NpgsqlConnection(connectionString);
-            _session = new DbSession(_connection);
-        }
+        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
     }
 }

@@ -7,9 +7,9 @@ namespace Core.Application.DomainEventHandlers;
 public class ConfirmationTokenCreatedHandler(IMessageBus messageBus) 
     : INotificationHandler<ConfirmationTokenCreatedDomainEvent>
 {
-    public async Task Handle(ConfirmationTokenCreatedDomainEvent notification, 
+    public async Task Handle(ConfirmationTokenCreatedDomainEvent @event, 
         CancellationToken cancellationToken)
     {
-        await messageBus.Publish(notification, cancellationToken);
+        await messageBus.Publish(@event, cancellationToken);
     }
 }

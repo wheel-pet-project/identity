@@ -1,10 +1,12 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.RefreshTokenAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace UnitTests.Core.Domain.RefreshTokenAggregate;
 
+[TestSubject(typeof(RefreshToken))]
 public class RefreshTokenShould
 {
     private const string PasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";

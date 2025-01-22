@@ -1,4 +1,3 @@
-using System.Data;
 using Core.Domain.AccountAggregate;
 using Core.Domain.ConfirmationTokenAggregate;
 using Core.Ports.Postgres;
@@ -24,19 +23,20 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('h', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uow, repository) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
         
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await accountRepository.Add(_account);
         await repository.Add(confirmationToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
     
         // Assert
-        var confirmationTokenFromDb = await repository.Get(_account.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var confirmationTokenFromDb = await repoForAssert.Get(_account.Id);
         Assert.NotNull(confirmationTokenFromDb);
         Assert.Equivalent(confirmationToken, confirmationTokenFromDb);
     }
@@ -46,15 +46,17 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('h', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
         
-        await unitOfWork.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await repository.Add(confirmationToken);
-        await unitOfWork.Commit();
+        await repositoryForArrange.Add(confirmationToken);
+        await uowForArrange.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
         
         // Act
         var confirmationTokenFromDb = await repository.Get(_account.Id);
@@ -69,66 +71,51 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('h', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, repositoryForAct) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepositoryForAct = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
         
-        await unitOfWorkForAct.BeginTransaction();
-        await accountRepositoryForAct.Add(_account);
-        await repositoryForAct.Add(confirmationToken);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.BeginTransaction();
+        await accountRepository.Add(_account);
+        await repositoryForArrange.Add(confirmationToken);
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.Delete(confirmationToken.AccountId);
-        await unitOfWork.Commit();
+        await uow.Commit();
     
         // Assert
-        var confirmationTokenFromDb = await repository.Get(_account.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var confirmationTokenFromDb = await repoForAssert.Get(_account.Id);
         Assert.Null(confirmationTokenFromDb);
     }
     
     private class UnitOfWorkAndRepoBuilder
     {
         private string _connectionString = null!;
-        private IDbConnection _connection = null!;
-        private DbSession _session = null!;
+        private NpgsqlDataSource _dataSource = null!;
+        private DbSession? _session;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
-
-        /// <summary>
-        /// Создает экземпляры unitOfWork и сonfirmationTokenRepository из сессии созданной из подключения к БД
-        /// </summary>
-        /// <returns></returns>
+        
         public (IUnitOfWork, IConfirmationTokenRepository) Build()
         {
-            var unitOfWork = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            _session?.Dispose();
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
+            
+            var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var confirmationTokenRepository = new ConfirmationTokenRepository(_session,
                 new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-            return (unitOfWork, confirmationTokenRepository);
+            return (uow, confirmationTokenRepository);
         }
 
-        public void ConfigureConnection(string connectionString)
-        {
-            _connectionString = connectionString;
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
-        }
-        
+        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+
         public IAccountRepository BuildAccountRepository() => 
-            new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-
-        /// <summary>
-        /// Вызывает Dispose у подключения к БД и сессии и обновляет их
-        /// </summary>
-        public void Reset()
-        {
-            _session.Dispose();
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
-        }
+            new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
     }
 }

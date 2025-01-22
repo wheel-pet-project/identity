@@ -1,10 +1,12 @@
 using Core.Application.UseCases.UpdatePassword;
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate;
+using Core.Domain.Services.UpdateAccountPasswordService;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using FluentResults;
+using MediatR;
 using Moq;
 using Xunit;
 
@@ -124,14 +126,30 @@ public class UpdatePasswordUseCaseShould
 
     private class UseCaseBuilder
     {
+        private readonly Mock<IUpdateAccountPasswordService> _updateAccountPasswordServiceMock = new();
         private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
         private readonly Mock<IPasswordRecoverTokenRepository> _passwordRecoverTokenRepositoryMock = new();
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
+        private readonly Mock<IMediator> _mediatorMock = new();
 
-        public UpdateAccountPasswordHandler Build() => new(_passwordRecoverTokenRepositoryMock.Object,
-            _accountRepositoryMock.Object, _unitOfWorkMock.Object, _hasherMock.Object);
+        public UpdateAccountPasswordHandler Build()
+        {
+            ConfigureUpdateAccountPasswordService(Result.Ok());
+            
+            return new UpdateAccountPasswordHandler(
+                _updateAccountPasswordServiceMock.Object,
+                _passwordRecoverTokenRepositoryMock.Object,
+                _accountRepositoryMock.Object,
+                _unitOfWorkMock.Object,
+                _hasherMock.Object,
+                _mediatorMock.Object);
+        }
 
+        public void ConfigureUpdateAccountPasswordService(Result updateAccountPasswordShouldReturn) =>
+            _updateAccountPasswordServiceMock.Setup(x => x.UpdatePassword(It.IsAny<Account>(), It.IsAny<string>()))
+                .Returns(Result.Ok);
+        
         public void ConfigureAccountRepository(Account getByEmailShouldReturn)
         {
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))

@@ -33,5 +33,9 @@ public class UnitOfWork(
         return result;
     }
 
-    public void Dispose() => session.Transaction?.Dispose();
+    public void Dispose()
+    {
+        session.Transaction?.Dispose();
+        session.Dispose();
+    }
 }

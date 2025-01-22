@@ -1,4 +1,3 @@
-using System.Data;
 using Core.Domain.AccountAggregate;
 using Core.Domain.RefreshTokenAggregate;
 using Core.Ports.Postgres;
@@ -24,25 +23,25 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var refreshToken = RefreshToken.Create(_account);
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, _) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.Add(refreshToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
 
         // Assert
-        var refreshTokenFromDb = await repository.GetNotRevokedToken(refreshToken.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var refreshTokenFromDb = await repoForAssert.GetNotRevokedToken(refreshToken.Id);
         Assert.NotNull(refreshTokenFromDb);
         Assert.Equivalent(refreshToken, refreshTokenFromDb);
     }
@@ -52,32 +51,31 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var refreshToken = RefreshToken.Create(_account);
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, _) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWorkForAdd, repositoryForAdd) = unitOfWorkAndRepoBuilder.Build();
+        var (unitOfWorkForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
         await unitOfWorkForAdd.BeginTransaction();
         await repositoryForAdd.Add(refreshToken);
         await unitOfWorkForAdd.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
         refreshToken.Revoke();
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.UpdateRevokeStatus(refreshToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
 
         // Assert
-        var refreshTokenFromDb = await repository.GetNotRevokedToken(refreshToken.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var refreshTokenFromDb = await repoForAssert.GetNotRevokedToken(refreshToken.Id);
         Assert.Null(refreshTokenFromDb);
     }
 
@@ -86,21 +84,22 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var refreshToken = RefreshToken.Create(_account);
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, _) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uowForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
         
-        await unitOfWork.BeginTransaction();
-        await repository.Add(refreshToken);
-        await unitOfWork.Commit();
+        await uowForAdd.BeginTransaction();
+        await repositoryForAdd.Add(refreshToken);
+        await uowForAdd.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
         
         // Act
         var refreshTokenFromDb = await repository.GetNotRevokedToken(refreshToken.Id);
@@ -109,6 +108,37 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         Assert.NotNull(refreshTokenFromDb);
         Assert.Equivalent(refreshToken, refreshTokenFromDb);
     }
+    
+    [Fact]
+    public async Task CanGetNotRevokedRefreshTokens()
+    {
+        // Arrange
+        var refreshToken = RefreshToken.Create(_account);
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
+
+        await uowForArrange.BeginTransaction();
+        await accountRepository.Add(_account);
+        await uowForArrange.Commit();
+        
+        var (uowForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
+        
+        await uowForAdd.BeginTransaction();
+        await repositoryForAdd.Add(refreshToken);
+        await uowForAdd.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
+        
+        // Act
+        var refreshTokensFromDb = await repository.GetNotRevokedTokensByAccountId(_account.Id);
+
+        // Assert
+        Assert.NotEmpty(refreshTokensFromDb);
+        Assert.Equivalent(refreshToken, refreshTokensFromDb[0]);
+    }
+    
 
     [Fact]
     public async Task CanAddTokenAndRevokeOldToken()
@@ -116,27 +146,27 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         // Arrange
         var refreshToken = RefreshToken.Create(_account);
         var newRefreshToken = RefreshToken.Create(_account);
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, repositoryForAct) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, repositoryForAct) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await repositoryForAct.Add(refreshToken);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
 
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.AddTokenAndRevokeOldToken(newRefreshToken, refreshToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
 
         // Assert
-        var oldRefreshTokenFromDb = await repository.GetNotRevokedToken(refreshToken.Id);
-        var newRefreshTokenFromDb = await repository.GetNotRevokedToken(newRefreshToken.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var oldRefreshTokenFromDb = await repoForAssert.GetNotRevokedToken(refreshToken.Id);
+        var newRefreshTokenFromDb = await repoForAssert.GetNotRevokedToken(newRefreshToken.Id);
         Assert.Null(oldRefreshTokenFromDb);
         Assert.NotNull(newRefreshTokenFromDb);
         Assert.Equivalent(newRefreshToken, newRefreshTokenFromDb);
@@ -145,26 +175,25 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     private class UnitOfWorkAndRepoBuilder
     {
         private string _connectionString = null!;
-        private IDbConnection _connection = null!;
-        private DbSession _session = null!;
+        private NpgsqlDataSource _dataSource = null!;
+        private DbSession? _session;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
 
         public (IUnitOfWork, IRefreshTokenRepository) Build()
         {
-            var unitOfWork = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            _session?.Dispose();
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
+            
+            var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var refreshTokenRepository =
                 new RefreshTokenRepository(_session,
                     new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-            return (unitOfWork, refreshTokenRepository);
+            return (uow, refreshTokenRepository);
         }
 
-        public void ConfigureConnection(string connectionString)
-        {
-            _connectionString = connectionString;
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
-        }
-        
+        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+
         public IAccountRepository BuildAccountRepository() => 
             new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
 
@@ -174,8 +203,8 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         public void Reset()
         {
             _session.Dispose();
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
         }
     }
 }

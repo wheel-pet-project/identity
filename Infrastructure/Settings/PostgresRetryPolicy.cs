@@ -14,7 +14,7 @@ public class PostgresRetryPolicy(ILogger<PostgresRetryPolicy> logger)
                 retryCount: 3, 
                 fastFirst: true), 
             onRetry: (_, time, retryCount, _) => logger.LogWarning(
-                "Retrying to db after: {time}, reattempt number: {attemptCount}", time, retryCount));
+                "Retrying connection to db after: {time}, reattempt number: {attemptCount}", time, retryCount));
     
     public async Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> action) => 
         await Policy.ExecuteAsync(action.Invoke);

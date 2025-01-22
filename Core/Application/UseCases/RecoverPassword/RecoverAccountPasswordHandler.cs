@@ -19,7 +19,7 @@ public class RecoverAccountPasswordHandler(
     public async Task<Result> Handle(RecoverAccountPasswordRequest request, CancellationToken _)
     {
         var account = await accountRepository.GetByEmail(request.Email);
-        if (account == null) return Result.Fail(new NotFound("Account not found"));
+        if (account == null) return Result.Fail(new NotFound($"account with this {nameof(request.Email)} not found"));
 
         var recoverToken = Guid.NewGuid();
         var passwordRecoverToken = PasswordRecoverToken.Create(account, hasher.GenerateHash(recoverToken.ToString()));

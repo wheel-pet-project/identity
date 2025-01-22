@@ -38,9 +38,9 @@ public class PasswordRecoverToken : Aggregate
 
     public static PasswordRecoverToken Create(Account account, string recoverTokenHash)
     {
+        if (account == null) throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
         if (!ValidatePasswordRecoverToken(recoverTokenHash)) 
-            throw new ValueOutOfRangeException("Recover token hash is invalid");
-        if (account == null) throw new ValueIsRequiredException("Account is null");
+            throw new ValueOutOfRangeException($"{recoverTokenHash} cannot be invalid");
         
         return new PasswordRecoverToken(recoverTokenHash, account);
     }
@@ -48,7 +48,7 @@ public class PasswordRecoverToken : Aggregate
     private static bool ValidatePasswordRecoverToken(string recoverTokenHash)
     {
         const int hashLength = 60;
-        if (recoverTokenHash == null) throw new ValueIsRequiredException("Recover token hash is null");
+        if (recoverTokenHash == null) throw new ValueIsRequiredException($"{recoverTokenHash} cannot be null");
         return recoverTokenHash.Length == hashLength;
     }
 }

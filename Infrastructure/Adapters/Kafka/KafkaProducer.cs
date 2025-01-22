@@ -13,15 +13,19 @@ public class KafkaProducer(
 {
     public async Task Publish(ConfirmationTokenCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        await sendConfirmationEmailProducer.Produce(key: domainEvent.EventId.ToString(),
-            new ConfirmationTokenCreated(domainEvent.Email, "someurl:" + domainEvent.ConfirmationToken),
-            cancellationToken);
+        await sendConfirmationEmailProducer.Produce(domainEvent.EventId.ToString(), 
+            new ConfirmationTokenCreated(domainEvent.EventId, domainEvent.Email, 
+                "someurl:" + domainEvent.ConfirmationToken),
+            Pipe.Execute<KafkaSendContext<string, ConfirmationTokenCreated>>(ctx =>
+                ctx.MessageId = domainEvent.EventId), cancellationToken);
     }
 
     public async Task Publish(PasswordRecoverTokenCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         await passwordRecoverTokenCreatedProducer.Produce(key: domainEvent.EventId.ToString(),
-            new PasswordRecoverTokenCreated(domainEvent.Email, "someurl:" + domainEvent.RecoverToken),
-            cancellationToken);
+            new PasswordRecoverTokenCreated(domainEvent.EventId, domainEvent.Email,
+                "someurl:" + domainEvent.RecoverToken),
+            Pipe.Execute<KafkaSendContext<string, PasswordRecoverTokenCreated>>(ctx =>
+                ctx.MessageId = domainEvent.EventId), cancellationToken);
     }
 }

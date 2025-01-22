@@ -35,7 +35,7 @@ public class RefreshToken
 
     public static RefreshToken Create(Account account)
     {
-        if (account == null) throw new ValueIsRequiredException("Account is null");
+        if (account == null) throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
 
         return new RefreshToken(account);
     }

@@ -25,7 +25,7 @@ public class Status : Entity<int>
     public bool CanBeChangedToThisStatus(Status potentialStatus) =>
         potentialStatus switch
         {
-            null => throw new ValueIsRequiredException("Status is null"),
+            null => throw new ValueIsRequiredException($"{nameof(potentialStatus)} cannot be null"),
             _ when this == potentialStatus => false,
             _ when this == PendingConfirmation && potentialStatus == PendingApproval => true,
             _ when this == PendingApproval && potentialStatus == Approved => true,
@@ -51,14 +51,14 @@ public class Status : Entity<int>
     {
         var status = All()
             .SingleOrDefault(s => string.Equals(s.Name, name, StringComparison.CurrentCultureIgnoreCase));
-        if (status == null) throw new ValueOutOfRangeException("Unknown status name or null");
+        if (status == null) throw new ValueOutOfRangeException($"{nameof(name)} unknown or null");
         return status;
     }
 
     public static Status FromId(int id)
     {
         var status = All().SingleOrDefault(s => s.Id == id);
-        if (status == null) throw new ValueOutOfRangeException("Unknown status id");
+        if (status == null) throw new ValueOutOfRangeException($"{nameof(id)} unknown or null");
         return status;
     }
 

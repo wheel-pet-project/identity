@@ -1,3 +1,4 @@
+using Core.Domain.Services.UpdateAccountPasswordService;
 using Core.Domain.SharedKernel.Errors;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
@@ -8,10 +9,12 @@ using MediatR;
 namespace Core.Application.UseCases.UpdatePassword;
 
 public class UpdateAccountPasswordHandler(
+    IUpdateAccountPasswordService updateAccountPasswordService,
     IPasswordRecoverTokenRepository passwordRecoverTokenRepository,
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
-    IHasher hasher) 
+    IHasher hasher,
+    IMediator mediator) 
     : IRequestHandler<UpdateAccountPasswordRequest, Result>
 {
     public async Task<Result> Handle(UpdateAccountPasswordRequest request, CancellationToken _)
@@ -22,12 +25,13 @@ public class UpdateAccountPasswordHandler(
         var passwordRecoverToken = await passwordRecoverTokenRepository.Get(account.Id);
         if (passwordRecoverToken == null) return Result.Fail(new NotFound("Password recover token not found"));
         
-        if (!passwordRecoverToken.IsValid()) return Result.Fail("Password reset token has expired or already applied");
+        if (!passwordRecoverToken.IsValid()) return Result.Fail("Password recver token has expired or already applied");
         if (!hasher.VerifyHash(request.RecoverToken.ToString(), passwordRecoverToken.RecoverTokenHash)) 
             return Result.Fail("Invalid reset password token");
         
         passwordRecoverToken.Apply();
-        account.SetPasswordHash(hasher.GenerateHash(request.NewPassword));
+        updateAccountPasswordService.UpdatePassword(account, request.NewPassword);
+        foreach (var @event in account.DomainEvents) await mediator.Publish(@event, _);
         
         await unitOfWork.BeginTransaction();
         await accountRepository.UpdatePasswordHash(account);

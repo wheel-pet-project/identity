@@ -1,6 +1,6 @@
 namespace Infrastructure.Adapters.Postgres.Outbox;
 
-public class OutboxEventModel
+public class OutboxEvent
 {
     public required Guid EventId { get; init; }
     

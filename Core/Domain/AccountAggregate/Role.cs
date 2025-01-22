@@ -25,7 +25,7 @@ public class Role : Entity<int>
     public bool CanBeChangedToThisRole(Role potentialRole) =>
         potentialRole switch
         {
-            null => throw new ValueIsRequiredException("New role is null"),
+            null => throw new ValueIsRequiredException($"{nameof(potentialRole)} cannot be null"),
             _ when potentialRole == this => false,
             _ when this == Customer => false,
             _ when this != Customer && potentialRole != Customer => true,
@@ -45,14 +45,14 @@ public class Role : Entity<int>
     {
         var role = All()
             .SingleOrDefault(s => string.Equals(s.Name, name, StringComparison.CurrentCultureIgnoreCase));
-        if (role == null) throw new ValueOutOfRangeException("Unknown role name or null");
+        if (role == null) throw new ValueOutOfRangeException($"{nameof(name)} unknown or null");
         return role;
     }
 
     public static Role FromId(int id)
     {
         var role = All().SingleOrDefault(r => r.Id == id);
-        if (role == null) throw new ValueOutOfRangeException("Unknown role id or null");
+        if (role == null) throw new ValueOutOfRangeException($"{nameof(id)} unknown or null");
         return role;
     }
     

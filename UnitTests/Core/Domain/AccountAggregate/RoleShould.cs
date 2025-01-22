@@ -1,9 +1,11 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace UnitTests.Core.Domain.AccountAggregate;
 
+[TestSubject(typeof(Role))]
 public class RoleShould
 {
     [Fact]

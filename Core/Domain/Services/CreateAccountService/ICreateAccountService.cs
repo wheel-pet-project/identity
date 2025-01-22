@@ -1,7 +1,7 @@
 using Core.Domain.AccountAggregate;
 using FluentResults;
 
-namespace Core.Domain.Services;
+namespace Core.Domain.Services.CreateAccountService;
 
 public interface ICreateAccountService
 {

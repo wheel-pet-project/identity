@@ -1,4 +1,5 @@
-using System.Data;
+using System.Collections.Immutable;
+using System.Data.Common;
 using Core.Domain.SharedKernel;
 using Dapper;
 using JsonNet.ContractResolvers;
@@ -8,58 +9,65 @@ using Quartz;
 
 namespace Infrastructure.Adapters.Postgres.Outbox;
 
+[DisallowConcurrentExecution]
 public class OutboxBackgroundJob(
-    IDbConnection connection,
-    IMediator mediator) : IJob
+    DbDataSource dataSource, 
+    IMediator mediator) 
+    : IJob
 {
-    private const string QuerySql = @"
-    SELECT event_id AS EventId, type AS Type, content AS Content, occurred_on_utc AS OccurredOnUtc, 
-        processed_on_utc AS ProcessedOnUtc
-    FROM outbox
-    WHERE processed_on_utc IS NULL
-    LIMIT 50";
-
-    private const string MarkAsProcessedSql = @"
-    UPDATE outbox
-    SET processed_on_utc = @ProcessedOnUtc
-    WHERE event_id = @EventId";
+    private readonly JsonSerializerSettings _jsonSerializerSettings = new()
+    {
+        TypeNameHandling = TypeNameHandling.All,
+        ContractResolver = new PrivateSetterContractResolver()
+    };
     
     public async Task Execute(IJobExecutionContext context)
     {
-        using var session = new DbSession(connection);
+        await using var connection = await dataSource.OpenConnectionAsync();
         
-        var outboxEventsModels = await session.Connection.QueryAsync<OutboxEventModel>(QuerySql);
-        
-        var jsonSettings = new JsonSerializerSettings
+        var outboxEventsSequence = await connection.QueryAsync<OutboxEvent>(_querySql);
+    
+        var events = outboxEventsSequence.AsList().AsReadOnly();
+        if (events.Count > 0)
         {
-            TypeNameHandling = TypeNameHandling.All,
-            ContractResolver = new PrivateSetterContractResolver()
-        };
-        
-        var eventModels = outboxEventsModels.ToList();
-        if (eventModels.Any())
-        {
-            session.Transaction = session.Connection.BeginTransaction();
+            await using var transaction = await connection.BeginTransactionAsync();
             try
             {
-                foreach (var domainEvent in eventModels.Select(ev => JsonConvert
-                                 .DeserializeObject<DomainEvent>(ev.Content, jsonSettings)).OfType<DomainEvent>())
+                foreach (var domainEvent in events.Select(ev =>
+                                 JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
+                             .OfType<DomainEvent>().AsList().AsReadOnly())
                 {
                     await mediator.Publish(domainEvent, context.CancellationToken);
-                    
-                    var command = new CommandDefinition(MarkAsProcessedSql,
-                        new { ProcessedOnUtc = DateTime.UtcNow, domainEvent.EventId }, 
-                        session.Transaction);
-                    
-                    await session.Connection.ExecuteAsync(command);
+
+                    var command = new CommandDefinition(_markAsProcessedSql,
+                        new { ProcessedOnUtc = DateTime.UtcNow, domainEvent.EventId },
+                        transaction);
+
+                    await connection.ExecuteAsync(command);
                 }
-                
-                session.Transaction.Commit();
+
+                await transaction.CommitAsync();
             }
             catch
             {
-                session.Transaction.Rollback();
+                await transaction.RollbackAsync();
             }
         }
     }
+    
+    private readonly string _querySql =
+        """
+        SELECT event_id AS EventId, type AS Type, content AS Content, 
+               occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
+        FROM outbox
+        WHERE processed_on_utc IS NULL
+        LIMIT 50
+        """;
+
+    private readonly string _markAsProcessedSql =
+        """
+        UPDATE outbox
+        SET processed_on_utc = @ProcessedOnUtc
+        WHERE event_id = @EventId
+        """;
 }

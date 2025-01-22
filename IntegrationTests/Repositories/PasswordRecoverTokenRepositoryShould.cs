@@ -1,4 +1,3 @@
-using System.Data;
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate;
 using Core.Ports.Postgres;
@@ -24,25 +23,25 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, _) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
 
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.Add(passwordRecoverToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
         
         // Assert
-        var recoverTokenFromDb = await repository.Get(_account.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var recoverTokenFromDb = await repoForAssert.Get(_account.Id);
         Assert.NotNull(recoverTokenFromDb);
         Assert.Equivalent(passwordRecoverToken, recoverTokenFromDb);
     }
@@ -52,20 +51,21 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, _) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, _) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
 
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await unitOfWorkForAct.Commit();
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
-        await unitOfWork.BeginTransaction();
-        await repository.Add(passwordRecoverToken);
-        await unitOfWork.Commit();
+        var (uow, repositoryForAdd) = uowAndRepoBuilder.Build();
+        await uow.BeginTransaction();
+        await repositoryForAdd.Add(passwordRecoverToken);
+        await uow.Commit();
+        
+        var (_, repository) = uowAndRepoBuilder.Build();
 
         // Act
         var recoverTokenFromDb = await repository.Get(_account.Id);
@@ -79,9 +79,9 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     public async Task CanDeleteRecoverToken()
     {
         // Arrange
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (_, repository) = unitOfWorkAndRepoBuilder.Build();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (_, repository) = uowAndRepoBuilder.Build();
 
         // Act
         var recoverTokenFromDb = await repository.Get(_account.Id);
@@ -96,27 +96,27 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
         
-        var unitOfWorkAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
-        unitOfWorkAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (unitOfWorkForAct, repositoryForAct) = unitOfWorkAndRepoBuilder.Build();
-        var accountRepository = unitOfWorkAndRepoBuilder.BuildAccountRepository();
+        var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
+        uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
+        var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
         
-        await unitOfWorkForAct.BeginTransaction();
+        await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
-        await repositoryForAct.Add(passwordRecoverToken);
-        await unitOfWorkForAct.Commit();
+        await repositoryForArrange.Add(passwordRecoverToken);
+        await uowForArrange.Commit();
         
-        unitOfWorkAndRepoBuilder.Reset();
-        var (unitOfWork, repository) = unitOfWorkAndRepoBuilder.Build();
+        var (uow, repository) = uowAndRepoBuilder.Build();
         
         // Act
         passwordRecoverToken.Apply();
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await repository.UpdateAppliedStatus(passwordRecoverToken);
-        await unitOfWork.Commit();
+        await uow.Commit();
 
         // Assert
-        var recoverTokenFromDb = await repository.Get(_account.Id);
+        var (_, repoForAssert) = uowAndRepoBuilder.Build();
+        var recoverTokenFromDb = await repoForAssert.Get(_account.Id);
         Assert.NotNull(recoverTokenFromDb);
         Assert.Equivalent(passwordRecoverToken, recoverTokenFromDb);
     }
@@ -124,37 +124,26 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     private class UnitOfWorkAndRepoBuilder
     {
         private string _connectionString = null!;
-        private IDbConnection _connection = null!;
-        private DbSession _session = null!;
+        private NpgsqlDataSource _dataSource = null!;
+        private DbSession? _session;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
 
         public (IUnitOfWork, IPasswordRecoverTokenRepository) Build()
         {
-            var unitOfWork = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            _session?.Dispose();
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
+            
+            var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var passwordRecoverTokenRepository =
                 new PasswordRecoverTokenRepository(_session,
                     new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-            return (unitOfWork, passwordRecoverTokenRepository);
+            return (uow, passwordRecoverTokenRepository);
         }
 
-        public void ConfigureConnection(string connectionString)
-        {
-            _connectionString = connectionString;
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
-        }
-        
+        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+
         public IAccountRepository BuildAccountRepository() => 
-            new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
-
-        /// <summary>
-        /// Вызывает Dispose у подключения к БД и сессии и обновляет их
-        /// </summary>
-        public void Reset()
-        {
-            _session.Dispose();
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
-        }
+            new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
     }
 }

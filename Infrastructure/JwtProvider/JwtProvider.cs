@@ -38,10 +38,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
 
     public string GenerateJwtRefreshToken(Guid refreshTokenId)
     {
-        Claim[] claims =
-        [
-            new("token_id", refreshTokenId.ToString())
-        ];
+        Claim[] claims = [ new("token_id", refreshTokenId.ToString()) ];
         
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)),

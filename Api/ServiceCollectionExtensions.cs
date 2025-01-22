@@ -1,14 +1,15 @@
-using System.Data;
+using System.Data.Common;
 using Api.PipelineBehaviours;
 using Api.Settings;
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.Services;
+using Core.Domain.Services.CreateAccountService;
+using Core.Domain.Services.UpdateAccountPasswordService;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Kafka;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
-using FluentValidation;
 using Infrastructure.Adapters.Kafka;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Outbox;
@@ -29,15 +30,15 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
-namespace Api.Extensions;
+namespace Api;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPostgres(this IServiceCollection services,
+    public static IServiceCollection AddPostgresDataSource(this IServiceCollection services,
         IConfiguration configuration)
     {
         var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
-        services.AddScoped<IDbConnection>(_ =>
+        services.AddTransient<DbDataSource, NpgsqlDataSource>(_ =>
         {
             var sourceBuilder = new NpgsqlDataSourceBuilder
             {
@@ -51,23 +52,21 @@ public static class ServiceCollectionExtensions
                     Password = dbSettings.Password
                 }
             };
-            var dataSource = sourceBuilder.Build();
             
-            return dataSource.CreateConnection();
+            return sourceBuilder.Build();
         });
+        
+        return services;
+    }
+
+    public static IServiceCollection AddUnitOfWorkAndDbSession(this IServiceCollection services)
+    {
         services.AddScoped<DbSession>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         
         return services;
     }
-
-    public static IServiceCollection AddUnitOfWork(this IServiceCollection services)
-    {
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        
-        return services;
-    }
-
+    
     public static IServiceCollection AddOutbox(this IServiceCollection services)
     {
         services.AddTransient<IOutbox, Outbox>();
@@ -85,49 +84,43 @@ public static class ServiceCollectionExtensions
                 .AddTrigger(trigger => trigger.ForJob(jobKey)
                     .WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(3).RepeatForever()));
         });
-
+        
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+        
         
         return services;
     }
 
-    public static IServiceCollection AddMediatrAndHandlers(this IServiceCollection services)
+    public static IServiceCollection AddMediatrAndPipelines(this IServiceCollection services)
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly))
             .AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>))
-            .AddScoped(typeof(IPipelineBehavior<,>), typeof(TracingPipelineBehaviour<,>))
-            .AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehaviour<,>));
+            .AddScoped(typeof(IPipelineBehavior<,>), typeof(TracingPipelineBehaviour<,>));
         
         return services;
     }
-
-    public static IServiceCollection AddValidators(this IServiceCollection services)
-    {
-        services.AddValidatorsFromAssembly(typeof(CreateAccountRequestValidator).Assembly);
-        
-        return services;
-    }
-
+    
     public static IServiceCollection AddMapper(this IServiceCollection services)
     {
         services.AddScoped<Mapper.Mapper>();
         
         return services;
     }
-
+    
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IPasswordRecoverTokenRepository, PasswordRecoverTokenRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddTransient<IConfirmationTokenRepository, ConfirmationTokenRepository>();
-
+    
         return services;
     }
 
-    public static IServiceCollection AddDomainService(this IServiceCollection services)
+    public static IServiceCollection AddDomainServices(this IServiceCollection services)
     {
         services.AddTransient<ICreateAccountService, CreateAccountService>();
+        services.AddTransient<IUpdateAccountPasswordService, UpdateAccountPasswordService>();
         
         return services;
     }
@@ -139,8 +132,9 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddJwtProvider(this IServiceCollection services)
+    public static IServiceCollection AddJwtProvider(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
         services.AddScoped<IJwtProvider, JwtProvider>();
 
         return services;
@@ -164,18 +158,21 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection ConfigureMassTransit(this IServiceCollection services)
+    public static IServiceCollection ConfigureMassTransit(this IServiceCollection services, 
+        IConfiguration configuration)
     {
+        var kafkaSettings = configuration.GetSection("KafkaSettings").Get<KafkaSettings>();
+        
         services.AddMassTransit(x =>
         {
             x.UsingInMemory();
 
             x.AddRider(rider =>
             {
-                rider.AddProducer<string, ConfirmationTokenCreated>("send-confirmation-email-topic");
-                rider.AddProducer<string, PasswordRecoverTokenCreated>("send-recover-password-email-topic");
+                rider.AddProducer<string, ConfirmationTokenCreated>("confirmation-token-created-topic");
+                rider.AddProducer<string, PasswordRecoverTokenCreated>("password-recover-token-created-topic");
 
-                rider.UsingKafka((_, k) => { k.Host("localhost:9092"); });
+                rider.UsingKafka((_, k) => k.Host(kafkaSettings!.BootstrapServers));
             });
         });
 
@@ -247,7 +244,7 @@ public static class ServiceCollectionExtensions
             return sourceBuilder.ConnectionStringBuilder.ConnectionString;
         };
         
-        // todo: change strong typing connection string to kafka
+        // todo: change hard code connection string to kafka
         services.AddGrpcHealthChecks()
             .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
             .AddKafka(cfg => cfg.BootstrapServers = "localhost:9092", timeout: TimeSpan.FromSeconds(10));

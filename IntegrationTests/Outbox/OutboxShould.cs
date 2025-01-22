@@ -1,4 +1,3 @@
-using System.Data;
 using Core.Domain.ConfirmationTokenAggregate;
 using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
@@ -36,20 +35,20 @@ FROM outbox";
         aggregate.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
         var expectedEventId = aggregate.DomainEvents.First().EventId;
         
-        var unitOfWorkAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
-        unitOfWorkAndOutboxBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
-        var (_, unitOfWork, outbox) = unitOfWorkAndOutboxBuilder.Build();
+        var uowAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
+        uowAndOutboxBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
+        var (_, uow, outbox) = uowAndOutboxBuilder.Build();
 
         // Act
-        await unitOfWork.BeginTransaction();
+        await uow.BeginTransaction();
         await outbox.PublishDomainEvents(aggregate);
-        await unitOfWork.Commit();
+        await uow.Commit();
         
         // Assert
-        unitOfWorkAndOutboxBuilder.Reset();
-        var (session, _, _) = unitOfWorkAndOutboxBuilder.Build();
-        var outboxEvents = await session.Connection.QueryAsync<OutboxEventModel>(Query);
-        var eventModels = outboxEvents.ToList();
+        uowAndOutboxBuilder.Reset();
+        var (session, _, _) = uowAndOutboxBuilder.Build();
+        var outboxEvents = await session.Connection.QueryAsync<OutboxEvent>(Query);
+        var eventModels = outboxEvents.AsList();
         
         Assert.True(eventModels.Any());
         Assert.Equal(expectedEventId, eventModels.First().EventId);
@@ -60,29 +59,29 @@ FROM outbox";
     private class UnitOfWorkAndOutboxBuilder
     {
         private string _connectionString = null!;
-        private IDbConnection _connection = null!;
+        private NpgsqlDataSource _dataSource = null!;
         private DbSession _session = null!;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
 
         public (DbSession ,IUnitOfWork, IOutbox) Build()
         {
-            var unitOfWork = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var outbox = new Infrastructure.Adapters.Postgres.Outbox.Outbox(_session);
-            return (_session, unitOfWork, outbox);
+            return (_session, uow, outbox);
         }
 
         public void ConfigureConnection(string connectionString)
         {
             _connectionString = connectionString;
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
         }
 
         public void Reset()
         {
             _session.Dispose();
-            _connection = new NpgsqlConnection(_connectionString);
-            _session = new DbSession(_connection);
+            _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
+            _session = new DbSession(_dataSource);
         }
     }
 }

@@ -1,5 +1,6 @@
 using Core.Domain.ConfirmationTokenAggregate;
 using Core.Domain.Services;
+using Core.Domain.Services.CreateAccountService;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
@@ -19,10 +20,9 @@ public class CreateAccountHandler(
 {
     public async Task<Result<CreateAccountResponse>> Handle(CreateAccountRequest request, CancellationToken _)
     {
-        var creatingAccountResult = await createAccountService.CreateUser(request.Role, request.Email, request.Phone,
-            hasher.GenerateHash(request.Password));
-        if (creatingAccountResult.IsFailed)
-            return Result.Fail(creatingAccountResult.Errors);
+        var creatingAccountResult =
+            await createAccountService.CreateUser(request.Role, request.Email, request.Phone, request.Password);
+        if (creatingAccountResult.IsFailed) return Result.Fail(creatingAccountResult.Errors);
         var account = creatingAccountResult.Value;
         
         var confirmationTokenGuid = Guid.NewGuid();

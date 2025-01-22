@@ -1,6 +1,7 @@
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.AccountAggregate;
 using Core.Domain.Services;
+using Core.Domain.Services.CreateAccountService;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;

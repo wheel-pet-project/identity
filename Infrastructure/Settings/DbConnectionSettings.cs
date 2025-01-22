@@ -2,13 +2,13 @@ namespace Infrastructure.Settings;
 
 public class DbConnectionSettings
 {
-    public string Host { get; init; } = null!;
+    public required string Host { get; init; }
 
-    public int Port { get; init; }
+    public required  int Port { get; init; }
     
-    public string Database { get; init; } = null!;
+    public required string Database { get; init; }
     
-    public string Username { get; init; } = null!;
+    public required string Username { get; init; }
     
-    public string Password { get; init; } = null!;
+    public required string Password { get; init; }
 }

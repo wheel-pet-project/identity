@@ -24,9 +24,9 @@ public class ConfirmationToken : Aggregate
 
     public static ConfirmationToken Create(Guid accountId, string confirmationTokenHash)
     {
-        if (accountId == Guid.Empty) throw new ValueIsRequiredException("Account id is empty");
+        if (accountId == Guid.Empty) throw new ValueIsRequiredException($"{nameof(accountId)} cannot empty");
         if (!ValidateConfirmationTokenHash(confirmationTokenHash))
-            throw new ValueOutOfRangeException("Confirmation token hash is invalid, hash length must be 60");
+            throw new ValueOutOfRangeException($"{nameof(confirmationTokenHash)} is invalid, hash length must be 60");
         
         return new ConfirmationToken(accountId, confirmationTokenHash);
     }
@@ -34,7 +34,7 @@ public class ConfirmationToken : Aggregate
     private static bool ValidateConfirmationTokenHash(string tokenHash)
     {
         const int hashLength = 60;
-        if (tokenHash == null) throw new ValueIsRequiredException("Confirmation token hash is null");
+        if (tokenHash == null) throw new ValueIsRequiredException($"{nameof(tokenHash)} cannot be null");
         return tokenHash.Length == hashLength;
     }
 }

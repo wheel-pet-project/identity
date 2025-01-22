@@ -1,10 +1,12 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace UnitTests.Core.Domain.PasswordRecoverTokenAggregate;
 
+[TestSubject(typeof(PasswordRecoverToken))]
 public class PasswordRecoverTokenShould
 {
     private const string PasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";

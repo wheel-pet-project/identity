@@ -9,13 +9,10 @@ public class ConfirmationTokenRepository(
     DbSession session,
     PostgresRetryPolicy retryPolicy) : IConfirmationTokenRepository
 {
+    
     public async Task Add(ConfirmationToken confirmationToken)
     {
-        var sql = @"
-INSERT INTO pending_confirmation_token (account_id, confirmation_token_hash)
-VALUES (@accountId, @confirmationTokenHash)";
-
-        var createConfirmRecordCommand = new CommandDefinition(sql,
+        var createConfirmRecordCommand = new CommandDefinition(_addSql,
             new { confirmationToken.AccountId, confirmationToken.ConfirmationTokenHash }, session.Transaction);
         
         await session.Connection.ExecuteAsync(createConfirmRecordCommand);
@@ -23,11 +20,7 @@ VALUES (@accountId, @confirmationTokenHash)";
 
     public async Task<ConfirmationToken?> Get(Guid accountId)
     {
-        var sql = @"SELECT account_id as accountId, confirmation_token_hash as confirmationTokenHash
-FROM pending_confirmation_token
-WHERE account_id = @accountId";
-        
-        var command = new CommandDefinition(sql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(_getSql, new { accountId }, session.Transaction);
 
         return await retryPolicy.ExecuteAsync(() =>
             session.Connection.QuerySingleOrDefaultAsync<ConfirmationToken>(command)); 
@@ -35,11 +28,26 @@ WHERE account_id = @accountId";
 
     public async Task Delete(Guid accountId)
     {
-        var sql = @"
-DELETE FROM pending_confirmation_token
-WHERE account_id = @accountId";
-
-        var command = new CommandDefinition(sql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(_deleteSql, new { accountId }, session.Transaction);
         await session.Connection.ExecuteAsync(command);
     }
+
+    private readonly string _addSql =
+        """
+        INSERT INTO pending_confirmation_token (account_id, confirmation_token_hash)
+        VALUES (@accountId, @confirmationTokenHash)
+        """;
+
+    private readonly string _getSql =
+        """
+        SELECT account_id as accountId, confirmation_token_hash as confirmationTokenHash
+        FROM pending_confirmation_token
+        WHERE account_id = @accountId
+        """;
+
+    private readonly string _deleteSql =
+        """
+        DELETE FROM pending_confirmation_token
+        WHERE account_id = @accountId
+        """;
 }

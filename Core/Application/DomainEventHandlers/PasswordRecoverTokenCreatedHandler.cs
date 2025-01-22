@@ -7,7 +7,7 @@ namespace Core.Application.DomainEventHandlers;
 public class PasswordRecoverTokenCreatedHandler(IMessageBus messageBus) 
     : INotificationHandler<PasswordRecoverTokenCreatedDomainEvent>
 {
-    public async Task Handle(PasswordRecoverTokenCreatedDomainEvent notification, 
+    public async Task Handle(PasswordRecoverTokenCreatedDomainEvent @event, 
         CancellationToken cancellationToken) => 
-        await messageBus.Publish(notification, cancellationToken);
+        await messageBus.Publish(@event, cancellationToken);
 }
