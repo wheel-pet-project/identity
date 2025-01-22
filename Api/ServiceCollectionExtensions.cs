@@ -226,6 +226,7 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration)
     {
         var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
+        var kafkaSettings = configuration.GetSection("KafkaSettings").Get<KafkaSettings>();
 
         var getConnectionString = () => 
         {
@@ -244,10 +245,10 @@ public static class ServiceCollectionExtensions
             return sourceBuilder.ConnectionStringBuilder.ConnectionString;
         };
         
-        // todo: change hard code connection string to kafka
         services.AddGrpcHealthChecks()
             .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
-            .AddKafka(cfg => cfg.BootstrapServers = "localhost:9092", timeout: TimeSpan.FromSeconds(10));
+            .AddKafka(cfg => cfg.BootstrapServers = kafkaSettings!.BootstrapServers[0],
+                timeout: TimeSpan.FromSeconds(10));
         
         return services;
     }
