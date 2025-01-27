@@ -4,7 +4,6 @@ using Core.Ports.Postgres;
 using Dapper;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Outbox;
-using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Settings;
 using MediatR;
 using Microsoft.Extensions.Logging;

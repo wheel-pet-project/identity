@@ -27,7 +27,7 @@ public class ConfirmationTokenCreatedDomainEventShould
     }
 
     [Fact]
-    public void CanThrowValueIsRequiredWhenEventIdIsEmpty()
+    public void ThrowValueIsRequiredWhenEventIdIsEmpty()
     {
         // Arrange
         var eventId = Guid.Empty;
@@ -46,7 +46,7 @@ public class ConfirmationTokenCreatedDomainEventShould
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public void CanThrowValueIsRequiredWhenEmailIsInvalid(string email)
+    public void ThrowValueIsRequiredWhenEmailIsInvalid(string email)
     {
         // Arrange
         var eventId = Guid.NewGuid();

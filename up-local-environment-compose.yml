@@ -9,9 +9,9 @@
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: identity_db
-      PGPORT: 5434
+      PGPORT: 5410
     ports:
-      - "5434:5434"
+      - "5410:5410"
   
 # Kafka
   zookeeper:

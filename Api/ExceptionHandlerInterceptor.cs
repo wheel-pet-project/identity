@@ -14,22 +14,16 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
         ServerCallContext context,
-        UnaryServerMethod<TRequest, TResponse> continuation)
+        UnaryServerMethod<TRequest, TResponse> next)
     {
         try
         {
-            return await continuation(request, context);
+            return await next(request, context);
         }
         catch (NpgsqlException ex)
         {
             logger.LogError("NpgsqlException handled: {exception}", ex);
             throw new RpcException(new Status(StatusCode.Unavailable, "Db unavailable, please try again later."));
-        }
-        catch (ValidationException ex)
-        {
-            logger.LogWarning("ValidationException handled");
-            throw new RpcException(new Status(StatusCode.InvalidArgument,
-                string.Join(' ', ex.Errors.Select(x => x.ErrorMessage))));
         }
         catch (ArgumentException ex)
         {

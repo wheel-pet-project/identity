@@ -21,7 +21,7 @@ public class ConfirmEmailUseCaseShould
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
     
     [Fact]
-    public async Task CanReturnSuccessResultForCorrectRequest()
+    public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
@@ -41,7 +41,7 @@ public class ConfirmEmailUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnFailedResultIfGetConfirmationTokenReturnsNull()
+    public async Task ReturnFailedResultIfGetConfirmationTokenReturnsNull()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
@@ -61,7 +61,7 @@ public class ConfirmEmailUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnFailedResultIfVerifyHashReturnsFalse()
+    public async Task ReturnFailedResultIfVerifyHashReturnsFalse()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(accountId: _account.Id, confirmationTokenHash: new string(c: '*', count: 60));
@@ -81,7 +81,7 @@ public class ConfirmEmailUseCaseShould
     }
     
     [Fact]
-    public async Task CanThrowsDataConsistencyViolationExceptionIfGetByIdReturnsNull()
+    public async Task ThrowsDataConsistencyViolationExceptionIfGetByIdReturnsNull()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
@@ -101,7 +101,7 @@ public class ConfirmEmailUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnCorrectErrorResultIfTransactionFails()
+    public async Task ReturnCorrectErrorResultIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error");

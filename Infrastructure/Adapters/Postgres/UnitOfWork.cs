@@ -3,7 +3,7 @@ using Core.Ports.Postgres;
 using FluentResults;
 using Infrastructure.Settings;
 
-namespace Infrastructure.Adapters.Postgres.UnitOfWork;
+namespace Infrastructure.Adapters.Postgres;
 
 public class UnitOfWork(
     DbSession session, 
@@ -37,5 +37,6 @@ public class UnitOfWork(
     {
         session.Transaction?.Dispose();
         session.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

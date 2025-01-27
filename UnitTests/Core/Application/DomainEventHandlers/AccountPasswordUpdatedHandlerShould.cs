@@ -15,7 +15,7 @@ public class AccountPasswordUpdatedHandlerShould
         Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60));
     
     [Fact]
-    public async Task CanChangeTokensStateToRevoke()
+    public async Task ChangeTokensStateToRevoke()
     {
         // Arrange
         var refreshToken = RefreshToken.Create(_account);

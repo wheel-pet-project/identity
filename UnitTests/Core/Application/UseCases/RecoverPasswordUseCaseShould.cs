@@ -14,7 +14,7 @@ public class RecoverPasswordUseCaseShould
     private readonly RecoverAccountPasswordRequest _request = new(Guid.NewGuid(), "email@email.com");
     
     [Fact]
-    public async Task CanReturnSuccessResultForCorrectRequest()
+    public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
@@ -33,7 +33,7 @@ public class RecoverPasswordUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfGetByEmailFails()
+    public async Task ReturnFailedResultIfGetByEmailFails()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
@@ -48,7 +48,7 @@ public class RecoverPasswordUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnCorrectErrorIfTransactionFails()
+    public async Task ReturnCorrectErrorIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error message");

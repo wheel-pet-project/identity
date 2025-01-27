@@ -37,7 +37,9 @@ public class Account : Aggregate
 
     public void SetStatus(Status potentialStatus)
     {
-        if (!Status.All().Contains(potentialStatus)) throw new ValueOutOfRangeException($"{nameof(potentialStatus)} cannot be null");
+        if (!Status.All().Contains(potentialStatus)) 
+            throw new ValueOutOfRangeException($"{nameof(potentialStatus)} cannot unsupported be null");
+        // TODO: вынести проверку сверху в метод CanBeChangedToThisStatus
         if (!Status.CanBeChangedToThisStatus(potentialStatus)) 
             throw new DomainRulesViolationException($"{nameof(potentialStatus)} cannot be set to this account");
         
@@ -46,7 +48,8 @@ public class Account : Aggregate
 
     public void SetRole(Role potentialRole)
     {
-        if (!Role.All().Contains(potentialRole)) throw new ValueOutOfRangeException($"{nameof(potentialRole)} cannot be unknown or null");
+        if (!Role.All().Contains(potentialRole)) 
+            throw new ValueOutOfRangeException($"{nameof(potentialRole)} cannot be unsupported or null");
         if (!Role.CanBeChangedToThisRole(potentialRole)) 
             throw new DomainRulesViolationException($"{nameof(potentialRole)} cannot be set to this account");
         
@@ -91,6 +94,7 @@ public class Account : Aggregate
 
     public static bool ValidateNotHashedPassword(string password)
     {
+        if (string.IsNullOrWhiteSpace(password)) return false;
         return password is not { Length: < 6 or > 30 };
     }
     

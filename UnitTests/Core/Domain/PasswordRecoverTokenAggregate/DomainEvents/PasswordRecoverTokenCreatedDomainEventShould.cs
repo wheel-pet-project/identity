@@ -30,7 +30,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
     }
 
     [Fact]
-    public void CanThrowValueIsRequiredWhenEventIdIsEmpty()
+    public void ThrowValueIsRequiredWhenEventIdIsEmpty()
     {
         // Arrange
         var eventId = Guid.Empty;

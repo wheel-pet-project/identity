@@ -11,5 +11,9 @@ public class DbSession(DbDataSource dataSource) : IDisposable
 
     public IDbTransaction? Transaction { get; set; }
     
-    public void Dispose() => Connection.Dispose();
+    public void Dispose()
+    {
+        Connection.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }

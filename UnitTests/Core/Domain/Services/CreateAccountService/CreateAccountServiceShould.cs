@@ -18,7 +18,7 @@ public class CreateAccountServiceShould
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
     
     [Fact]
-    public async Task CanCreateAccountIfEmailNotExistsAndPasswordCorrect()
+    public async Task CreateAccountIfEmailNotExistsAndPasswordCorrect()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
@@ -35,7 +35,7 @@ public class CreateAccountServiceShould
     }
 
     [Fact]
-    public async Task CanReturnFailureIfEmailAlreadyExists()
+    public async Task ReturnFailureIfEmailAlreadyExists()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
@@ -54,7 +54,7 @@ public class CreateAccountServiceShould
     [Theory]
     [InlineData("55555")] // password must be greater than 6 symbols
     [InlineData("30303030303030303030303030303030330303030")] // password must be less than 30 symbols
-    public async Task CanThrowValueOutOfRangeExceptionIfPasswordInvalid(string invalidPassword)
+    public async Task ThrowValueOutOfRangeExceptionIfPasswordInvalid(string invalidPassword)
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();

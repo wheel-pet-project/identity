@@ -121,7 +121,7 @@ public class RoleShould
     }
 
     [Fact]
-    public void CanBeChangedToThisRoleWhenEmployeeRoleChangesToAnotherEmployeeRoleMustReturnTrue()
+    public void BeChangedToThisRoleWhenEmployeeRoleChangesToAnotherEmployeeRoleMustReturnTrue()
     {
         // Arrange
         var role = Role.Support;
@@ -134,7 +134,7 @@ public class RoleShould
     }
 
     [Fact]
-    public void CanBeChangedToThisRoleWhenEmployeeRoleChangesToCustomerRoleMustReturnFalse()
+    public void BeChangedToThisRoleWhenEmployeeRoleChangesToCustomerRoleMustReturnFalse()
     {
         // Arrange
         var role = Role.Support;
@@ -147,7 +147,7 @@ public class RoleShould
     }
 
     [Fact]
-    public void CanBeChangedToThisRoleWhenCustomerRoleChangesToEmployeeRoleMustReturnFalse()
+    public void BeChangedToThisRoleWhenCustomerRoleChangesToEmployeeRoleMustReturnFalse()
     {
         // Arrange
         var role = Role.Customer;
@@ -160,7 +160,7 @@ public class RoleShould
     }
     
     [Fact]
-    public void CanBeChangedToThisRoleWhenPotentialRoleIsNullMustThrowValueIsRequiredException()
+    public void BeChangedToThisRoleWhenPotentialRoleIsNullMustThrowValueIsRequiredException()
     {
         // Arrange
         var role = Role.Support;

@@ -2,7 +2,6 @@ using System.Data.Common;
 using Api.PipelineBehaviours;
 using Api.Settings;
 using Core.Application.UseCases.CreateAccount;
-using Core.Domain.Services;
 using Core.Domain.Services.CreateAccountService;
 using Core.Domain.Services.UpdateAccountPasswordService;
 using Core.Infrastructure.Interfaces.JwtProvider;
@@ -14,7 +13,6 @@ using Infrastructure.Adapters.Kafka;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Outbox;
 using Infrastructure.Adapters.Postgres.Repositories;
-using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
@@ -37,19 +35,18 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddPostgresDataSource(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
         services.AddTransient<DbDataSource, NpgsqlDataSource>(_ =>
         {
             var sourceBuilder = new NpgsqlDataSourceBuilder
             {
                 ConnectionStringBuilder =
                 {
-                    ApplicationName = "Identity",
-                    Host = dbSettings!.Host,
-                    Port = dbSettings.Port,
-                    Database = dbSettings.Database,
-                    Username = dbSettings.Username,
-                    Password = dbSettings.Password
+                    ApplicationName = "Identity" + Environment.MachineName,
+                    Host = Environment.GetEnvironmentVariable("POSTGRES_HOST"),
+                    Port = int.Parse(Environment.GetEnvironmentVariable("POSTGRES_PORT")!),
+                    Database = Environment.GetEnvironmentVariable("POSTGRES_DB")!,
+                    Username = Environment.GetEnvironmentVariable("POSTGRES_USER"),
+                    Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")!,
                 }
             };
             
@@ -134,7 +131,15 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddJwtProvider(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
+        services.Configure<JwtOptions>(options =>
+        {
+            options.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!;
+            options.Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER")!;
+            options.AccessTokenExpirationMinutes =
+                int.Parse(Environment.GetEnvironmentVariable("JWT_ACCESS_EXPIRATION_MINUTES")!);
+            options.RefreshTokenExpirationDays =
+                int.Parse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRATION_DAYS")!);
+        });
         services.AddScoped<IJwtProvider, JwtProvider>();
 
         return services;
@@ -143,11 +148,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureSerilog(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settings = configuration.GetSection("MongoSettings").Get<MongoSettings>();
-
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen)
-            .WriteTo.MongoDBBson(settings!.ConnectionString,
+            .WriteTo.MongoDBBson(Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING")!,
                 "logs",
                 LogEventLevel.Verbose,
                 50,
@@ -161,8 +164,6 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureMassTransit(this IServiceCollection services, 
         IConfiguration configuration)
     {
-        var kafkaSettings = configuration.GetSection("KafkaSettings").Get<KafkaSettings>();
-        
         services.AddMassTransit(x =>
         {
             x.UsingInMemory();
@@ -172,7 +173,8 @@ public static class ServiceCollectionExtensions
                 rider.AddProducer<string, ConfirmationTokenCreated>("confirmation-token-created-topic");
                 rider.AddProducer<string, PasswordRecoverTokenCreated>("password-recover-token-created-topic");
 
-                rider.UsingKafka((_, k) => k.Host(kafkaSettings!.BootstrapServers));
+                rider.UsingKafka((_, k) =>
+                    k.Host(Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS")!.Split("__")));
             });
         });
 

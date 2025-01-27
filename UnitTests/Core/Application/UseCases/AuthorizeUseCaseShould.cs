@@ -11,7 +11,7 @@ public class AuthorizeUseCaseShould
     private readonly AuthorizeAccountRequest _request = new(Guid.NewGuid(), "jwt_access_token");
     
     [Fact]
-    public async Task CanReturnSuccessResultForCorrectRequest()
+    public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
@@ -26,7 +26,7 @@ public class AuthorizeUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnCorrectErrorIfAccessTokenIsInvalid()
+    public async Task ReturnCorrectErrorIfAccessTokenIsInvalid()
     {
         // Arrange
         var expectedError = new Error("expected error");

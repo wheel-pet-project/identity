@@ -20,7 +20,7 @@ public class UpdatePasswordUseCaseShould
         Guid.NewGuid());
     
     [Fact]
-    public async Task CanReturnSuccessForCorrectRequest()
+    public async Task ReturnSuccessForCorrectRequest()
     {
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
@@ -41,7 +41,7 @@ public class UpdatePasswordUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnCorrectErrorIfGetPasswordRecoverTokenReturnsNull()
+    public async Task ReturnCorrectErrorIfGetPasswordRecoverTokenReturnsNull()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
@@ -60,7 +60,7 @@ public class UpdatePasswordUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnFailedResultErrorIfGetByEmailReturnsNull()
+    public async Task ReturnFailedResultErrorIfGetByEmailReturnsNull()
     {
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
@@ -81,7 +81,7 @@ public class UpdatePasswordUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultErrorIfVerifyHashReturnsFalse()
+    public async Task ReturnFailedResultErrorIfVerifyHashReturnsFalse()
     {
         // Arrange
         var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
@@ -102,7 +102,7 @@ public class UpdatePasswordUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnCorrectErrorIfTransactionFails()
+    public async Task ReturnCorrectErrorIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error");

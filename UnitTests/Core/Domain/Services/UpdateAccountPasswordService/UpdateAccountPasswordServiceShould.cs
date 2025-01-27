@@ -15,7 +15,7 @@ public class UpdateAccountPasswordServiceShould
     private readonly Mock<Account> _accountMock = new();
     
     [Fact]
-    public void CanReturnSuccessWhenValidationReturnSuccess()
+    public void ReturnSuccessWhenValidationReturnSuccess()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
@@ -30,7 +30,7 @@ public class UpdateAccountPasswordServiceShould
     }
     
     [Fact]
-    public void CanChangeAccountStateWithSetNewPasswordHash()
+    public void ChangeAccountStateWithSetNewPasswordHash()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
@@ -49,7 +49,7 @@ public class UpdateAccountPasswordServiceShould
     [Theory]
     [InlineData("55555")] // less than 6 symbols
     [InlineData("3131313131313131313131313131313")] // greater than 30 symbols
-    public void CanThrowValueOutOfRangeExceptionIfPasswordIsInvalid(string invalidPassword)
+    public void ThrowValueOutOfRangeExceptionIfPasswordIsInvalid(string invalidPassword)
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();

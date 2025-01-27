@@ -9,7 +9,7 @@ namespace UnitTests.Core.Domain.AccountAggregate.DomainEvents;
 public class AccountPasswordUpdatedDomainEventShould
 {
     [Fact]
-    public void CanCreateAccountPasswordUpdatedEventWithCorrectValues()
+    public void CreateAccountPasswordUpdatedEventWithCorrectValues()
     {
         // Arrange
         var accountId = Guid.NewGuid();
@@ -22,7 +22,7 @@ public class AccountPasswordUpdatedDomainEventShould
     }
 
     [Fact]
-    public void CanThrowValueIsRequiredExceptionWhenAccountIdIsEmpty()
+    public void ThrowValueIsRequiredExceptionWhenAccountIdIsEmpty()
     {
         // Arrange
         var accountId = Guid.Empty;

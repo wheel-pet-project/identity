@@ -71,7 +71,7 @@ public class PasswordRecoverTokenShould
     }
 
     [Fact]
-    public void CanAddDomainEvent()
+    public void AddDomainEvent()
     {
         // Arrange
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);

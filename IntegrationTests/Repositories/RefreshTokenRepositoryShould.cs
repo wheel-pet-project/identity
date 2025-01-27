@@ -4,7 +4,6 @@ using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Repositories;
-using Infrastructure.Adapters.Postgres.UnitOfWork;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using Moq;

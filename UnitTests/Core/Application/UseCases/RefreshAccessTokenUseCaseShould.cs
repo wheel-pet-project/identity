@@ -21,7 +21,7 @@ public class RefreshAccessTokenUseCaseShould
     
     
     [Fact]
-    public async Task CanReturnSuccessForCorrectRequest()
+    public async Task ReturnSuccessForCorrectRequest()
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
@@ -44,7 +44,7 @@ public class RefreshAccessTokenUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnCorrectErrorIfVerifyingJwtRefreshTokenFails()
+    public async Task ReturnCorrectErrorIfVerifyingJwtRefreshTokenFails()
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
@@ -63,7 +63,7 @@ public class RefreshAccessTokenUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfGetRefreshTokenReturnsNull()
+    public async Task ReturnFailedResultIfGetRefreshTokenReturnsNull()
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
@@ -80,7 +80,7 @@ public class RefreshAccessTokenUseCaseShould
     }
 
     [Fact]
-    public async Task CanThrowsDataConsistencyViolationExceptionIfGetByIdReturnNotFoundError()
+    public async Task ThrowsDataConsistencyViolationExceptionIfGetByIdReturnNotFoundError()
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
@@ -101,7 +101,7 @@ public class RefreshAccessTokenUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfAccountCannotBeAuthenticated()
+    public async Task ReturnFailedResultIfAccountCannotBeAuthenticated()
     {
         // Arrange
         var refreshToken = RefreshToken.Create(_account);
@@ -122,7 +122,7 @@ public class RefreshAccessTokenUseCaseShould
     
     
     [Fact]
-    public async Task CanReturnCorrectErrorIfTransactionFails()
+    public async Task ReturnCorrectErrorIfTransactionFails()
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);

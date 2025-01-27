@@ -22,8 +22,9 @@ public class Status : Entity<int>
     
     public string Name { get; private set; } = null!;
 
-    public bool CanBeChangedToThisStatus(Status potentialStatus) =>
-        potentialStatus switch
+    public bool CanBeChangedToThisStatus(Status potentialStatus)
+    {
+        return potentialStatus switch
         {
             null => throw new ValueIsRequiredException($"{nameof(potentialStatus)} cannot be null"),
             _ when this == potentialStatus => false,
@@ -33,32 +34,33 @@ public class Status : Entity<int>
             _ when this == Approved && potentialStatus == PendingApproval => true,
             _ when this == Deactivated && potentialStatus == Approved => true,
             _ when potentialStatus == Deleted => true,
-            _ => false 
+            _ => false
         };
-    
+    }
+
     public bool CanBeAuthorize() => this == Approved || this == PendingApproval;
 
-    public static IEnumerable<Status> All()
-    {
-        yield return Approved;
-        yield return PendingConfirmation;
-        yield return PendingApproval;
-        yield return Deactivated;
-        yield return Deleted;
-    }
-    
+    public static IEnumerable<Status> All() =>
+    [
+        Approved,
+        PendingConfirmation,
+        PendingApproval,
+        Deactivated,
+        Deleted
+    ];
+
     public static Status FromName(string name)
     {
         var status = All()
             .SingleOrDefault(s => string.Equals(s.Name, name, StringComparison.CurrentCultureIgnoreCase));
-        if (status == null) throw new ValueOutOfRangeException($"{nameof(name)} unknown or null");
+        if (status == null) throw new ValueOutOfRangeException($"{nameof(name)} unknown status or null");
         return status;
     }
 
     public static Status FromId(int id)
     {
         var status = All().SingleOrDefault(s => s.Id == id);
-        if (status == null) throw new ValueOutOfRangeException($"{nameof(id)} unknown or null");
+        if (status == null) throw new ValueOutOfRangeException($"{nameof(id)} unknown status or null");
         return status;
     }
 

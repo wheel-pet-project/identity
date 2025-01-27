@@ -18,7 +18,7 @@ public class AuthenticateUseCaseShould
     private const string ExpectedJwtRefreshToken = "jwt_refresh_token";
     
     [Fact]
-    public async Task CanReturnSuccessResultForCorrectRequest()
+    public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
@@ -43,7 +43,7 @@ public class AuthenticateUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfGetByEmailReturnNull()
+    public async Task ReturnFailedResultIfGetByEmailReturnNull()
     {
         // Arrange
         var expectedError = new Error("expected error");
@@ -60,7 +60,7 @@ public class AuthenticateUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfAccountCannotAuthenticate()
+    public async Task ReturnFailedResultIfAccountCannotAuthenticate()
     {
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60)); 
@@ -83,7 +83,7 @@ public class AuthenticateUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnFailedResultIfPasswordInvalid()
+    public async Task ReturnFailedResultIfPasswordInvalid()
     {
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
@@ -102,7 +102,7 @@ public class AuthenticateUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnErrorIfTransactionFails()
+    public async Task ReturnErrorIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error");

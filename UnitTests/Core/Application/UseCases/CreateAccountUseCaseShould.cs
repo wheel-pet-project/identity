@@ -19,7 +19,7 @@ public class CreateAccountUseCaseShould
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
     
     [Fact]
-    public async Task CanReturnAccountIdForCorrectRequest()
+    public async Task ReturnAccountIdForCorrectRequest()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
@@ -36,7 +36,7 @@ public class CreateAccountUseCaseShould
     }
 
     [Fact]
-    public async Task CanReturnCorrectErrorIfCreateAccountReturnsFail()
+    public async Task ReturnCorrectErrorIfCreateAccountReturnsFail()
     {
         // Arrange
         var expectedError = new Error("expected error");
@@ -56,7 +56,7 @@ public class CreateAccountUseCaseShould
     }
     
     [Fact]
-    public async Task CanReturnCorrectErrorResultIfTransactionFails()
+    public async Task ReturnCorrectErrorResultIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error");
