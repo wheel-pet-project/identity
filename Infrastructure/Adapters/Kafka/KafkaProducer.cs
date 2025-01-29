@@ -2,7 +2,8 @@ using Core.Domain.ConfirmationTokenAggregate.DomainEvents;
 using Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 using Core.Ports.Kafka;
 using MassTransit;
-using NotificationKafkaEvents;
+using To.NotificationKafkaEvents;
+
 
 namespace Infrastructure.Adapters.Kafka;
 

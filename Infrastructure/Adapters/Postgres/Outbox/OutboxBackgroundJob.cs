@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Data.Common;
 using Core.Domain.SharedKernel;
 using Dapper;
@@ -61,6 +60,7 @@ public class OutboxBackgroundJob(
                occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
         FROM outbox
         WHERE processed_on_utc IS NULL
+        ORDER BY occurred_on_utc
         LIMIT 50
         """;
 

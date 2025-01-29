@@ -1,6 +1,5 @@
 using System.Data.Common;
 using Api.PipelineBehaviours;
-using Api.Settings;
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.Services.CreateAccountService;
 using Core.Domain.Services.UpdateAccountPasswordService;
@@ -18,7 +17,6 @@ using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using MassTransit;
 using MediatR;
-using NotificationKafkaEvents;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -27,6 +25,7 @@ using Quartz;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using To.NotificationKafkaEvents;
 
 namespace Api;
 
@@ -47,6 +46,7 @@ public static class ServiceCollectionExtensions
                     Database = Environment.GetEnvironmentVariable("POSTGRES_DB")!,
                     Username = Environment.GetEnvironmentVariable("POSTGRES_USER"),
                     Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")!,
+                    BrowsableConnectionString = false,
                 }
             };
             
@@ -227,29 +227,26 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, 
         IConfiguration configuration)
     {
-        var dbSettings = configuration.GetSection("DbConnectionSettings").Get<DbConnectionSettings>();
-        var kafkaSettings = configuration.GetSection("KafkaSettings").Get<KafkaSettings>();
-
-        var getConnectionString = () => 
+        var getConnectionString = () =>
         {
-            var sourceBuilder = new NpgsqlDataSourceBuilder
+            var connectionBuilder = new NpgsqlConnectionStringBuilder()
             {
-                ConnectionStringBuilder =
-                {
-                    ApplicationName = "Identity",
-                    Host = dbSettings!.Host,
-                    Port = dbSettings.Port,
-                    Database = dbSettings.Database,
-                    Username = dbSettings.Username,
-                    Password = dbSettings.Password
-                }
+                ApplicationName = "Identity" + Environment.MachineName,
+                Host = Environment.GetEnvironmentVariable("POSTGRES_HOST"),
+                Port = int.Parse(Environment.GetEnvironmentVariable("POSTGRES_PORT")!),
+                Database = Environment.GetEnvironmentVariable("POSTGRES_DB")!,
+                Username = Environment.GetEnvironmentVariable("POSTGRES_USER"),
+                Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")!,
+                BrowsableConnectionString = false,
             };
-            return sourceBuilder.ConnectionStringBuilder.ConnectionString;
+            
+            return connectionBuilder.ConnectionString;
         };
         
         services.AddGrpcHealthChecks()
             .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
-            .AddKafka(cfg => cfg.BootstrapServers = kafkaSettings!.BootstrapServers[0],
+            .AddKafka(cfg => 
+                    cfg.BootstrapServers = Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS")!.Split("__")[0], 
                 timeout: TimeSpan.FromSeconds(10));
         
         return services;

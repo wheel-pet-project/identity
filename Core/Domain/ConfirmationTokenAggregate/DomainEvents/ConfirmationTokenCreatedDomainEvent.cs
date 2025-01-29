@@ -5,9 +5,9 @@ namespace Core.Domain.ConfirmationTokenAggregate.DomainEvents;
 
 public record ConfirmationTokenCreatedDomainEvent : DomainEvent
 {
-    public Guid ConfirmationToken { get; init; }
+    public Guid ConfirmationToken { get; private set; }
     
-    public string Email { get; init; }
+    public string Email { get; private set; }
     
     public ConfirmationTokenCreatedDomainEvent(Guid confirmationToken, string email)
     {
