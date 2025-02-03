@@ -4,13 +4,14 @@ using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
 using Newtonsoft.Json;
+using Npgsql;
 using Quartz;
 
 namespace Infrastructure.Adapters.Postgres.Outbox;
 
 [DisallowConcurrentExecution]
 public class OutboxBackgroundJob(
-    DbDataSource dataSource, 
+    NpgsqlDataSource dataSource, 
     IMediator mediator) 
     : IJob
 {

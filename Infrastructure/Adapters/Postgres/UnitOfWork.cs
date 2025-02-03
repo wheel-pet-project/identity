@@ -11,18 +11,19 @@ public class UnitOfWork(
     : IUnitOfWork
 {
     public async Task BeginTransaction() =>
-        await retryPolicy.ExecuteAsync(() => session.Transaction = session.Connection.BeginTransaction());
+        await retryPolicy.ExecuteAsync(async () =>
+            session.Transaction = await session.Connection.BeginTransactionAsync());
 
     public async Task<Result> Commit()
     {
         var result = Result.Ok();
         try
         {
-            await retryPolicy.ExecuteAsync(() => session.Transaction!.Commit());
+            await retryPolicy.ExecuteAsync(() => session.Transaction!.CommitAsync());
         }
         catch
         {
-            await retryPolicy.ExecuteAsync(() => session.Transaction!.Rollback());
+            await retryPolicy.ExecuteAsync(() => session.Transaction!.RollbackAsync());
             result = Result.Fail(new TransactionFail("Transaction failed"));
         }
         finally

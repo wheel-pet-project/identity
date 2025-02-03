@@ -13,7 +13,8 @@ public class RecoverAccountPasswordHandler(
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
     IOutbox outbox,
-    IHasher hasher)
+    IHasher hasher,
+    TimeProvider timeProvider)
     : IRequestHandler<RecoverAccountPasswordRequest, Result>
 {
     public async Task<Result> Handle(RecoverAccountPasswordRequest request, CancellationToken _)
@@ -22,7 +23,8 @@ public class RecoverAccountPasswordHandler(
         if (account == null) return Result.Fail(new NotFound($"account with this {nameof(request.Email)} not found"));
 
         var recoverToken = Guid.NewGuid();
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, hasher.GenerateHash(recoverToken.ToString()));
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, hasher.GenerateHash(recoverToken.ToString()), 
+            timeProvider);
         passwordRecoverToken.AddCreatedDomainEvent(recoverToken, account.Email);
         
         await unitOfWork.BeginTransaction();

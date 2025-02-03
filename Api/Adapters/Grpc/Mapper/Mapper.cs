@@ -2,7 +2,7 @@ using Proto.IdentityV1;
 using DomainRole = Core.Domain.AccountAggregate.Role;
 using DomainStatus = Core.Domain.AccountAggregate.Status;
 
-namespace Api.Mapper;
+namespace Api.Adapters.Grpc.Mapper;
 
 public class Mapper
 {

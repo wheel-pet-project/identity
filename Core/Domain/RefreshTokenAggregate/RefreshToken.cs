@@ -9,12 +9,12 @@ public class RefreshToken
     
     private RefreshToken(){}
 
-    private RefreshToken(Account account) : this()
+    private RefreshToken(Account account, DateTime issueDateTime, DateTime expiresAt) : this()
     {
         Id = Guid.NewGuid();
         AccountId = account.Id;
-        IssueDateTime = DateTime.UtcNow;
-        ExpiresAt = DateTime.UtcNow + DefaultRefreshTokenLifetime; 
+        IssueDateTime = issueDateTime;
+        ExpiresAt = expiresAt; 
         IsRevoked = false;
     }
     
@@ -29,14 +29,23 @@ public class RefreshToken
     
     public bool IsRevoked { get; private set; }
 
-    public bool IsValid() => !IsRevoked && ExpiresAt > DateTime.UtcNow;
-    
+    public bool IsValid(TimeProvider timeProvider)
+    {
+        if (timeProvider == null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
+        
+        return !IsRevoked && ExpiresAt > timeProvider.GetUtcNow().UtcDateTime;
+    }
+
     public void Revoke() => IsRevoked = true;
 
-    public static RefreshToken Create(Account account)
+    public static RefreshToken Create(Account account, TimeProvider timeProvider)
     {
+        if (timeProvider == null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
         if (account == null) throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
 
-        return new RefreshToken(account);
+        var issueDateTime = timeProvider.GetUtcNow().UtcDateTime;
+        var expiresAt = timeProvider.GetUtcNow().Add(DefaultRefreshTokenLifetime).UtcDateTime;
+        
+        return new RefreshToken(account, issueDateTime, expiresAt);
     }
 }

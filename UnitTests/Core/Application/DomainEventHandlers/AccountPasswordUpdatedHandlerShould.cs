@@ -13,12 +13,13 @@ public class AccountPasswordUpdatedHandlerShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60));
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
     public async Task ChangeTokensStateToRevoke()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
         var handlerBuilder = new HandlerBuilder();
         handlerBuilder.ConfigureRefreshTokenRepository([refreshToken]);
         var handler = handlerBuilder.Build();

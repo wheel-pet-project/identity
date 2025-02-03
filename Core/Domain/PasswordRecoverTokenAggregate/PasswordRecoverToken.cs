@@ -7,14 +7,16 @@ namespace Core.Domain.PasswordRecoverTokenAggregate;
 
 public class PasswordRecoverToken : Aggregate
 {
+    private static readonly TimeSpan RecoverExpiryTimeSpan = TimeSpan.FromMinutes(15);
+    
     private PasswordRecoverToken(){}
 
-    private PasswordRecoverToken(string recoverTokenHash, Account account) : this()
+    private PasswordRecoverToken(string recoverTokenHash, DateTime expiresAt, Account account) : this()
     {
         Id = Guid.NewGuid();
         RecoverTokenHash = recoverTokenHash;
         AccountId = account.Id;
-        ExpiresAt = DateTime.UtcNow.AddMinutes(15);
+        ExpiresAt = expiresAt;
         IsAlreadyApplied = false;
     }
     
@@ -29,20 +31,28 @@ public class PasswordRecoverToken : Aggregate
     
     public bool IsAlreadyApplied { get; private set; }
     
-    public bool IsValid() => ExpiresAt > DateTime.UtcNow && IsAlreadyApplied == false;
-    
+    public bool IsValid(TimeProvider timeProvider)
+    {
+        if (timeProvider is null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
+        
+        return ExpiresAt > timeProvider.GetUtcNow().UtcDateTime && IsAlreadyApplied == false;
+    }
+
     public void Apply() => IsAlreadyApplied = true;
     
     public void AddCreatedDomainEvent(Guid recoverToken, string email) => 
         AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(recoverToken, email));
 
-    public static PasswordRecoverToken Create(Account account, string recoverTokenHash)
+    public static PasswordRecoverToken Create(Account account, string recoverTokenHash, TimeProvider timeProvider)
     {
+        if (timeProvider == null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
         if (account == null) throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
         if (!ValidatePasswordRecoverToken(recoverTokenHash)) 
             throw new ValueOutOfRangeException($"{recoverTokenHash} cannot be invalid");
         
-        return new PasswordRecoverToken(recoverTokenHash, account);
+        var expiresAt = timeProvider.GetUtcNow().UtcDateTime.Add(RecoverExpiryTimeSpan);
+        
+        return new PasswordRecoverToken(recoverTokenHash, expiresAt, account);
     }
 
     private static bool ValidatePasswordRecoverToken(string recoverTokenHash)

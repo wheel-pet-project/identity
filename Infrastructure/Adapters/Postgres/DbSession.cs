@@ -1,15 +1,14 @@
-using System.Data;
-using System.Data.Common;
+using Npgsql;
 
 namespace Infrastructure.Adapters.Postgres;
 
-public class DbSession(DbDataSource dataSource) : IDisposable
+public class DbSession(NpgsqlDataSource dataSource) : IDisposable
 {
     private Guid _id = Guid.NewGuid();
     
-    public IDbConnection Connection { get; } = dataSource.OpenConnection();
+    public NpgsqlConnection Connection { get; } = dataSource.OpenConnection();
 
-    public IDbTransaction? Transaction { get; set; }
+    public NpgsqlTransaction? Transaction { get; set; }
     
     public void Dispose()
     {

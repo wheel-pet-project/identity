@@ -16,12 +16,13 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
     public async Task CanAddRefreshToken()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -49,7 +50,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     public async Task CanUpdateRevokeStatusRefreshToken()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -82,7 +83,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     public async Task CanGetRefreshToken()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -112,7 +113,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     public async Task CanGetNotRevokedRefreshTokens()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -143,8 +144,8 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
     public async Task CanAddTokenAndRevokeOldToken()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
-        var newRefreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
+        var newRefreshToken = RefreshToken.Create(_account, _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, repositoryForAct) = uowAndRepoBuilder.Build();
@@ -194,14 +195,14 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
 
         public IAccountRepository BuildAccountRepository() => 
-            new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+            new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
 
         /// <summary>
         /// Вызывает Dispose у подключения к БД и сессии и обновляет их
         /// </summary>
         public void Reset()
         {
-            _session.Dispose();
+            _session?.Dispose();
             _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
             _session = new DbSession(_dataSource);
         }

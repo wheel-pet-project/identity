@@ -13,7 +13,8 @@ public class AuthenticateAccountHandler(
     IAccountRepository accountRepository,
     IJwtProvider jwtProvider,
     IUnitOfWork unitOfWork,
-    IHasher hasher) 
+    IHasher hasher,
+    TimeProvider timeProvider) 
     : IRequestHandler<AuthenticateAccountRequest, Result<AuthenticateAccountResponse>>
 {
     public async Task<Result<AuthenticateAccountResponse>> Handle(
@@ -25,7 +26,7 @@ public class AuthenticateAccountHandler(
         if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
         if (!hasher.VerifyHash(request.Password, account.PasswordHash)) return Result.Fail("Password is incorrect");
         
-        var refreshToken = RefreshToken.Create(account);
+        var refreshToken = RefreshToken.Create(account, timeProvider);
         var jwtAccessToken = jwtProvider.GenerateJwtAccessToken(account);
         var jwtRefreshToken = jwtProvider.GenerateJwtRefreshToken(refreshToken.Id);
 

@@ -13,22 +13,23 @@ public class Program
         
         // Extensions
         services
-            .AddMediatrAndPipelines()
-            .AddPostgresDataSource(builder.Configuration)
-            .ConfigureMassTransit(builder.Configuration)
-            .ConfigureSerilog(builder.Configuration)
-            .AddHealthCheckV1(builder.Configuration)
-            .AddJwtProvider(builder.Configuration)
-            .AddOutboxBackgroundJob()
-            .AddOutbox()
-            .AddMessageBus()
-            .AddUnitOfWorkAndDbSession()
-            .AddRepositories()
-            .AddDomainServices()
-            .AddPasswordHasher()
-            .AddRetryPolicies()
-            .AddMapper()
-            .AddTelemetry();
+            .RegisterMediatrAndPipelines()
+            .RegisterPostgresDataSource()
+            .RegisterMassTransit()
+            .RegisterSerilog()
+            .RegisterHealthCheckV1()
+            .RegisterJwtProvider()
+            .RegisterOutboxBackgroundJob()
+            .RegisterOutbox()
+            .RegisterMessageBus()
+            .RegisterUnitOfWorkAndDbSession()
+            .RegisterRepositories()
+            .RegisterDomainServices()
+            .RegisterPasswordHasher()
+            .RegisterRetryPolicies()
+            .RegisterMapper()
+            .RegisterTimeProvider()
+            .RegisterTelemetry();
         
         
         var app = builder.Build();

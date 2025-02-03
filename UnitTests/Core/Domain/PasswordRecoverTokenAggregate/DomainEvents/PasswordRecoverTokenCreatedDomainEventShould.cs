@@ -12,6 +12,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
     public void CreateDomainEvent()
@@ -20,7 +21,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         var expEventId = Guid.NewGuid();
         
         var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
 
         // Act
         passwordRecoverToken.AddCreatedDomainEvent(expEventId, "email@email.com");
@@ -35,7 +36,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         // Arrange
         var eventId = Guid.Empty;
         var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
 
         // Act
         void Act() => passwordRecoverToken.AddCreatedDomainEvent(eventId, "email@email.com");
@@ -53,7 +54,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         // Arrange
         var eventId = Guid.NewGuid();
         var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
 
         // Act
         void Act() => passwordRecoverToken.AddCreatedDomainEvent(eventId, email);

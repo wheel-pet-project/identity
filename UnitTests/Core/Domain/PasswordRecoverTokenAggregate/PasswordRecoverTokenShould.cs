@@ -11,6 +11,7 @@ public class PasswordRecoverTokenShould
 {
     private const string PasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
     private const string PasswordRecoverTokenHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2Klq";
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
 
     [Fact]
     public void CreatePasswordRecoverTokenWithCorrectValues()
@@ -19,7 +20,7 @@ public class PasswordRecoverTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
 
         // Act
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash, _timeProvider);
 
         // Assert
         Assert.NotEqual(Guid.Empty, passwordRecoverToken.Id);
@@ -35,7 +36,7 @@ public class PasswordRecoverTokenShould
         // Arrange
 
         // Act
-        void Act() => PasswordRecoverToken.Create(null, PasswordRecoverTokenHash);
+        void Act() => PasswordRecoverToken.Create(null, PasswordRecoverTokenHash, _timeProvider);
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -51,7 +52,7 @@ public class PasswordRecoverTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
 
         // Act
-        void Act() => PasswordRecoverToken.Create(account, invalidRecoverTokenHash);
+        void Act() => PasswordRecoverToken.Create(account, invalidRecoverTokenHash, _timeProvider);
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -64,7 +65,7 @@ public class PasswordRecoverTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
 
         // Act
-        void Act() => PasswordRecoverToken.Create(account, null);
+        void Act() => PasswordRecoverToken.Create(account, null, _timeProvider);
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -75,7 +76,7 @@ public class PasswordRecoverTokenShould
     {
         // Arrange
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash, _timeProvider);
         
         // Act
         passwordRecoverToken.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
@@ -89,10 +90,10 @@ public class PasswordRecoverTokenShould
     {
         // Arrange
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash, _timeProvider);
         
         // Act
-        var result = passwordRecoverToken.IsValid();
+        var result = passwordRecoverToken.IsValid(_timeProvider);
 
         // Assert
         Assert.True(result);
@@ -103,13 +104,13 @@ public class PasswordRecoverTokenShould
     {
         // Arrange
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, PasswordRecoverTokenHash, _timeProvider);
         
         // Act
         passwordRecoverToken.Apply();
 
         // Assert
-        var result = passwordRecoverToken.IsValid();
+        var result = passwordRecoverToken.IsValid(_timeProvider);
         Assert.False(result);
     }
 }

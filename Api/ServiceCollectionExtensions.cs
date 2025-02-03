@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Api.Adapters.Grpc.Mapper;
 using Api.PipelineBehaviours;
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.Services.CreateAccountService;
@@ -31,10 +32,9 @@ namespace Api;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPostgresDataSource(this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection RegisterPostgresDataSource(this IServiceCollection services)
     {
-        services.AddTransient<DbDataSource, NpgsqlDataSource>(_ =>
+        services.AddTransient<NpgsqlDataSource>(_ =>
         {
             var sourceBuilder = new NpgsqlDataSourceBuilder
             {
@@ -56,7 +56,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddUnitOfWorkAndDbSession(this IServiceCollection services)
+    public static IServiceCollection RegisterUnitOfWorkAndDbSession(this IServiceCollection services)
     {
         services.AddScoped<DbSession>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -64,14 +64,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection AddOutbox(this IServiceCollection services)
+    public static IServiceCollection RegisterOutbox(this IServiceCollection services)
     {
         services.AddTransient<IOutbox, Outbox>();
         
         return services;
     }
 
-    public static IServiceCollection AddOutboxBackgroundJob(this IServiceCollection services)
+    public static IServiceCollection RegisterOutboxBackgroundJob(this IServiceCollection services)
     {
         services.AddQuartz(configure =>
         {
@@ -88,7 +88,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddMediatrAndPipelines(this IServiceCollection services)
+    public static IServiceCollection RegisterMediatrAndPipelines(this IServiceCollection services)
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly))
             .AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>))
@@ -97,14 +97,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection AddMapper(this IServiceCollection services)
+    public static IServiceCollection RegisterMapper(this IServiceCollection services)
     {
-        services.AddScoped<Mapper.Mapper>();
+        services.AddScoped<Mapper>();
         
         return services;
     }
     
-    public static IServiceCollection AddRepositories(this IServiceCollection services)
+    public static IServiceCollection RegisterRepositories(this IServiceCollection services)
     {
         services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IPasswordRecoverTokenRepository, PasswordRecoverTokenRepository>();
@@ -114,7 +114,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddDomainServices(this IServiceCollection services)
+    public static IServiceCollection RegisterDomainServices(this IServiceCollection services)
     {
         services.AddTransient<ICreateAccountService, CreateAccountService>();
         services.AddTransient<IUpdateAccountPasswordService, UpdateAccountPasswordService>();
@@ -122,14 +122,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddPasswordHasher(this IServiceCollection services)
+    public static IServiceCollection RegisterPasswordHasher(this IServiceCollection services)
     {
         services.AddScoped<IHasher, Hasher>();
 
         return services;
     }
 
-    public static IServiceCollection AddJwtProvider(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection RegisterJwtProvider(this IServiceCollection services)
     {
         services.Configure<JwtOptions>(options =>
         {
@@ -145,8 +145,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection ConfigureSerilog(this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection RegisterSerilog(this IServiceCollection services)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen)
@@ -161,8 +160,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection ConfigureMassTransit(this IServiceCollection services, 
-        IConfiguration configuration)
+    public static IServiceCollection RegisterMassTransit(this IServiceCollection services)
     {
         services.AddMassTransit(x =>
         {
@@ -181,7 +179,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddMessageBus(this IServiceCollection services)
+    public static IServiceCollection RegisterMessageBus(this IServiceCollection services)
     {
         services.AddTransient<IMessageBus, KafkaProducer>();
         
@@ -189,7 +187,7 @@ public static class ServiceCollectionExtensions
     }
     
 
-    public static IServiceCollection AddTelemetry(this IServiceCollection services)
+    public static IServiceCollection RegisterTelemetry(this IServiceCollection services)
     {
         services.AddOpenTelemetry()
             .WithMetrics(builder =>
@@ -224,12 +222,11 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    public static IServiceCollection AddHealthCheckV1(this IServiceCollection services, 
-        IConfiguration configuration)
+    public static IServiceCollection RegisterHealthCheckV1(this IServiceCollection services)
     {
         var getConnectionString = () =>
         {
-            var connectionBuilder = new NpgsqlConnectionStringBuilder()
+            var connectionBuilder = new NpgsqlConnectionStringBuilder
             {
                 ApplicationName = "Identity" + Environment.MachineName,
                 Host = Environment.GetEnvironmentVariable("POSTGRES_HOST"),
@@ -252,10 +249,17 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddRetryPolicies(this IServiceCollection services)
+    public static IServiceCollection RegisterRetryPolicies(this IServiceCollection services)
     {
         services.AddTransient<PostgresRetryPolicy>();
 
+        return services;
+    }
+
+    public static IServiceCollection RegisterTimeProvider(this IServiceCollection services)
+    {
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        
         return services;
     }
 }

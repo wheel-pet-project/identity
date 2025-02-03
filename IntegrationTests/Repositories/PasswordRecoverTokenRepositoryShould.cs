@@ -16,12 +16,13 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
     public async Task CanAddRecoverToken()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -49,7 +50,7 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     public async Task CanGetRecoverToken()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, _) = uowAndRepoBuilder.Build();
@@ -93,7 +94,7 @@ public class PasswordRecoverTokenRepositoryShould : IntegrationTestBase
     public async Task CanUpdateAppliedStatus()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60));
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
         
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());

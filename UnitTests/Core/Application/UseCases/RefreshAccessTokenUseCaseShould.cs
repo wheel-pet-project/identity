@@ -18,6 +18,7 @@ public class RefreshAccessTokenUseCaseShould
     private const string ExpectedJwtRefreshToken = "new_jwt_refresh_token";
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     
     [Fact]
@@ -25,7 +26,7 @@ public class RefreshAccessTokenUseCaseShould
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
@@ -84,7 +85,7 @@ public class RefreshAccessTokenUseCaseShould
     {
         // Arrange
         _account.SetStatus(Status.PendingApproval);
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: null);
@@ -104,7 +105,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ReturnFailedResultIfAccountCannotBeAuthenticated()
     {
         // Arrange
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
@@ -127,7 +128,7 @@ public class RefreshAccessTokenUseCaseShould
         // Arrange
         _account.SetStatus(Status.PendingApproval);
         var expectedError = new Error("expected error");
-        var refreshToken = RefreshToken.Create(_account);
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
@@ -152,10 +153,11 @@ public class RefreshAccessTokenUseCaseShould
         private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
         private readonly Mock<IJwtProvider> _jwtProviderMock = new();
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         public RefreshAccountAccessTokenHandler Build() =>
             new(_accountRepositoryMock.Object, _refreshTokenRepositoryMock.Object, _jwtProviderMock.Object,
-                _unitOfWorkMock.Object);
+                _unitOfWorkMock.Object, _timeProvider);
 
         public void ConfigureAccountRepository(Account getByIdShouldReturn) => 
             _accountRepositoryMock.Setup(x => x.GetById(It.IsAny<Guid>(), default)).ReturnsAsync(getByIdShouldReturn);

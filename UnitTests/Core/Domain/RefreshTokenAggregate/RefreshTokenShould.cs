@@ -10,6 +10,7 @@ namespace UnitTests.Core.Domain.RefreshTokenAggregate;
 public class RefreshTokenShould
 {
     private const string PasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
     public void CreateRefreshTokenWithCorrectValues()
@@ -18,7 +19,7 @@ public class RefreshTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
 
         // Act
-        var refreshToken = RefreshToken.Create(account);
+        var refreshToken = RefreshToken.Create(account, _timeProvider);
 
         // Assert
         Assert.NotEqual(Guid.Empty, refreshToken.Id);
@@ -33,7 +34,7 @@ public class RefreshTokenShould
         // Arrange
 
         // Act
-        void Act() => RefreshToken.Create(null);
+        void Act() => RefreshToken.Create(null, _timeProvider);
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -46,10 +47,10 @@ public class RefreshTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
 
         // Act
-        var refreshToken = RefreshToken.Create(account);
+        var refreshToken = RefreshToken.Create(account, _timeProvider);
 
         // Assert
-        Assert.True(refreshToken.IsValid());
+        Assert.True(refreshToken.IsValid(_timeProvider));
     }
 
     [Fact]
@@ -57,13 +58,13 @@ public class RefreshTokenShould
     {
         // Arrange
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
-        var refreshToken = RefreshToken.Create(account);
+        var refreshToken = RefreshToken.Create(account, _timeProvider);
         
         // Act
         refreshToken.Revoke();
 
         // Assert
         Assert.True(refreshToken.IsRevoked);
-        Assert.False(refreshToken.IsValid());
+        Assert.False(refreshToken.IsValid(_timeProvider));
     }
 }

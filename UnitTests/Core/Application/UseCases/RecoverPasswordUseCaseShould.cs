@@ -75,10 +75,11 @@ public class RecoverPasswordUseCaseShould
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
         private readonly Mock<IOutbox> _outboxMock = new();
         private readonly Mock<IHasher> _hasher = new();
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         public RecoverAccountPasswordHandler Build() =>
             new(_passwordRecoverTokenRepositoryMock.Object, _accountRepositoryMock.Object, _unitOfWorkMock.Object, 
-                _outboxMock.Object, _hasher.Object);
+                _outboxMock.Object, _hasher.Object, _timeProvider);
         
         public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))

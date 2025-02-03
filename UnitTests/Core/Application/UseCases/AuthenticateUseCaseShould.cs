@@ -133,10 +133,11 @@ public class AuthenticateUseCaseShould
         private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
         private readonly Mock<IJwtProvider> _jwtProviderMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         public AuthenticateAccountHandler Build() =>
-            new(_refreshTokenRepositoryMock.Object,
-                _accountRepositoryMock.Object, _jwtProviderMock.Object, _unitOfWorkMock.Object, _hasherMock.Object);
+            new(_refreshTokenRepositoryMock.Object, _accountRepositoryMock.Object, _jwtProviderMock.Object,
+                _unitOfWorkMock.Object, _hasherMock.Object, _timeProvider);
 
         public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))
