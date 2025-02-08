@@ -5,16 +5,15 @@ namespace Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 
 public record PasswordRecoverTokenCreatedDomainEvent : DomainEvent
 {
-    public Guid RecoverToken { get; private set; }
-    
-    public string Email { get; private set; }
-    
-    public PasswordRecoverTokenCreatedDomainEvent(Guid recoverToken, string email)
+    public PasswordRecoverTokenCreatedDomainEvent(Guid accountId, Guid recoverToken)
     {
+        if (accountId == Guid.Empty) throw new ValueIsRequiredException($"{nameof(accountId)} cannot be empty");
         if (recoverToken == Guid.Empty) throw new ValueIsRequiredException($"{nameof(recoverToken)} cannot be empty");
-        if (string.IsNullOrWhiteSpace(email)) throw new ValueIsRequiredException($"{nameof(email)} cannot be empty or null");
         
+        AccountId = accountId;
         RecoverToken = recoverToken;
-        Email = email;
     }
+    
+    public Guid RecoverToken { get; private set; }
+    public Guid AccountId { get; private set; }
 };

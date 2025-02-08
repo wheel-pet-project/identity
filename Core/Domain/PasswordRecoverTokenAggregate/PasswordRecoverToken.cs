@@ -22,13 +22,9 @@ public class PasswordRecoverToken : Aggregate
     
     
     public Guid Id { get; private set; }
-    
     public Guid AccountId { get; private set; }
-    
     public string RecoverTokenHash { get; private set; } = null!;
-
     public DateTime ExpiresAt { get; private set; }
-    
     public bool IsAlreadyApplied { get; private set; }
     
     public bool IsValid(TimeProvider timeProvider)
@@ -39,20 +35,25 @@ public class PasswordRecoverToken : Aggregate
     }
 
     public void Apply() => IsAlreadyApplied = true;
-    
-    public void AddCreatedDomainEvent(Guid recoverToken, string email) => 
-        AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(recoverToken, email));
 
-    public static PasswordRecoverToken Create(Account account, string recoverTokenHash, TimeProvider timeProvider)
+    public static PasswordRecoverToken Create(Account account, Guid recoverTokenGuid, string recoverTokenHash, 
+        TimeProvider timeProvider)
     {
-        if (timeProvider == null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
-        if (account == null) throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
+        if (timeProvider == null) 
+            throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
+        if (recoverTokenGuid == Guid.Empty)
+            throw new ValueIsRequiredException($"{nameof(recoverTokenGuid)} cannot be empty");
+        if (account == null) 
+            throw new ValueIsRequiredException($"{nameof(account)} cannot be null");
         if (!ValidatePasswordRecoverToken(recoverTokenHash)) 
             throw new ValueOutOfRangeException($"{recoverTokenHash} cannot be invalid");
         
         var expiresAt = timeProvider.GetUtcNow().UtcDateTime.Add(RecoverExpiryTimeSpan);
         
-        return new PasswordRecoverToken(recoverTokenHash, expiresAt, account);
+        var newRecoverToken = new PasswordRecoverToken(recoverTokenHash, expiresAt, account);
+        newRecoverToken.AddDomainEvent(new PasswordRecoverTokenCreatedDomainEvent(account.Id, recoverTokenGuid));
+        
+        return newRecoverToken;
     }
 
     private static bool ValidatePasswordRecoverToken(string recoverTokenHash)

@@ -15,7 +15,7 @@ namespace IntegrationTests.Repositories;
 public class AccountRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
-        Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+        Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
 
     [Fact]
     public async Task CanAddAccount()
@@ -31,6 +31,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uow.Commit();
         
         // Assert
+        _account.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
         var accountFromDb = await repoForAssert.GetById(_account.Id);
         Assert.NotNull(accountFromDb);
@@ -54,6 +55,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         var accountFromDb = await repository.GetById(_account.Id);
         
         // Assert
+        _account.ClearDomainEvents();
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(_account, accountFromDb);
     }
@@ -75,6 +77,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         var accountFromDb = await repository.GetByEmail(_account.Email);
         
         // Assert
+        _account.ClearDomainEvents();
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(_account, accountFromDb);
     }
@@ -83,7 +86,8 @@ public class AccountRepositoryShould : IntegrationTestBase
     public async Task CanUpdateStatusAccount()
     {
         // Arrange
-        var accountForUpdateStatusTest = Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+        var accountForUpdateStatusTest = Account.Create(Role.Customer, "email@email.com", "+79007006050",
+            new string('*', 60), Guid.NewGuid());
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
@@ -100,6 +104,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uow.Commit();
         
         // Assert
+        accountForUpdateStatusTest.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
         var accountFromDb = await repoForAssert.GetById(accountForUpdateStatusTest.Id);
         Assert.NotNull(accountFromDb);
@@ -111,7 +116,7 @@ public class AccountRepositoryShould : IntegrationTestBase
     {
         // Arrange
         var accountForUpdatePassHash =
-            Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+            Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uow, repositoryForArrange) = uowAndRepoBuilder.Build();
@@ -128,6 +133,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uowForAct.Commit();
         
         // Assert
+        _account.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
         var accountFromDb = await repoForAssert.GetById(accountForUpdatePassHash.Id);
         Assert.NotNull(accountFromDb);

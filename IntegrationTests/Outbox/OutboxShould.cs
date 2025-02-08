@@ -1,3 +1,4 @@
+using Core.Domain.AccountAggregate;
 using Core.Domain.ConfirmationTokenAggregate;
 using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
@@ -20,6 +21,9 @@ public class OutboxShould : IntegrationTestBase
        occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
 FROM outbox";
     
+    private readonly Account _account =
+        Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
+    
     [Fact]
     public async Task CanAddOutboxEvents()
     {
@@ -30,9 +34,7 @@ FROM outbox";
             ContractResolver = new PrivateSetterContractResolver()
         };
         
-        var aggregate = ConfirmationToken.Create(accountId: Guid.NewGuid(), new string('*', 60));
-        aggregate.AddCreatedDomainEvent(Guid.NewGuid(), "email@domain.com");
-        var expectedEventId = aggregate.DomainEvents.First().EventId;
+        var expectedEventId = _account.DomainEvents.First().EventId;
         
         var uowAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
         uowAndOutboxBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
@@ -40,7 +42,7 @@ FROM outbox";
 
         // Act
         await uow.BeginTransaction();
-        await outbox.PublishDomainEvents(aggregate);
+        await outbox.PublishDomainEvents(_account);
         await uow.Commit();
         
         // Assert

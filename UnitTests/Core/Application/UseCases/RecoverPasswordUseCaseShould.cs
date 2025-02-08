@@ -17,7 +17,8 @@ public class RecoverPasswordUseCaseShould
     public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
@@ -52,7 +53,8 @@ public class RecoverPasswordUseCaseShould
     {
         // Arrange
         var expectedError = new Error("expected error message");
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);

@@ -1,10 +1,9 @@
-using Core.Domain.ConfirmationTokenAggregate.DomainEvents;
-using Core.Domain.SharedKernel;
+using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 
 namespace Core.Domain.ConfirmationTokenAggregate;
 
-public class ConfirmationToken : Aggregate
+public class ConfirmationToken
 {
     private ConfirmationToken(){}
 
@@ -16,11 +15,8 @@ public class ConfirmationToken : Aggregate
     
     
     public Guid AccountId { get; private set; }
-    
     public string ConfirmationTokenHash { get; private set; } = null!;
-
-    public void AddCreatedDomainEvent(Guid confirmationToken, string email) => 
-        AddDomainEvent(new ConfirmationTokenCreatedDomainEvent(confirmationToken, email));
+    
 
     public static ConfirmationToken Create(Guid accountId, string confirmationTokenHash)
     {
@@ -30,7 +26,7 @@ public class ConfirmationToken : Aggregate
         
         return new ConfirmationToken(accountId, confirmationTokenHash);
     }
-
+    
     private static bool ValidateConfirmationTokenHash(string tokenHash)
     {
         const int hashLength = 60;

@@ -17,8 +17,8 @@
         "MONGO_CONNECTION_STRING": "mongodb://carsharing:12s56daw4gby@localhost:27017/identity?authSource=admin",
         "JWT_SECRET_KEY": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
         "JWT_ISSUER": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
-        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
-        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa"
+        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "15",
+        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "21"
       }
     },
     "https": {
@@ -37,8 +37,8 @@
         "MONGO_CONNECTION_STRING": "mongodb://carsharing:12s56daw4gby@localhost:27017/identity?authSource=admin",
         "JWT_SECRET_KEY": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
         "JWT_ISSUER": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
-        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
-        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa"
+        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "15",
+        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "21"
       }
     }
   }

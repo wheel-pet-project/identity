@@ -20,13 +20,9 @@ public class RefreshToken
     
     
     public Guid Id { get; private set; }
-    
     public Guid AccountId { get; private set; }
-    
     public DateTime IssueDateTime { get; private set; }
-    
     public DateTime ExpiresAt { get; private set; }
-    
     public bool IsRevoked { get; private set; }
 
     public bool IsValid(TimeProvider timeProvider)

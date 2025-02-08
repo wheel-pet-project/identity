@@ -12,7 +12,7 @@ namespace UnitTests.Core.Application.DomainEventHandlers;
 public class AccountPasswordUpdatedHandlerShould
 {
     private readonly Account _account =
-        Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]

@@ -15,7 +15,7 @@ public class CreateAccountServiceShould
     private readonly (Role role, string email, string phone, string password) _parameters = (Role.Customer,
         "email@mail.com", "+79008007060", "password");
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     
     [Fact]
     public async Task CreateAccountIfEmailNotExistsAndPasswordCorrect()
@@ -27,8 +27,8 @@ public class CreateAccountServiceShould
         var service = serviceBuilder.Build();
 
         // Act
-        var creatingAccountResult =
-            await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, _parameters.password);
+        var creatingAccountResult = await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, 
+            _parameters.password, Guid.NewGuid());
 
         // Assert
         Assert.True(creatingAccountResult.IsSuccess);
@@ -44,8 +44,8 @@ public class CreateAccountServiceShould
         var service = serviceBuilder.Build();
 
         // Act
-        var creatingAccountResult =
-            await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, _parameters.password);
+        var creatingAccountResult = await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, 
+            _parameters.password, Guid.NewGuid());
 
         // Assert
         Assert.True(creatingAccountResult.IsFailed);
@@ -64,7 +64,8 @@ public class CreateAccountServiceShould
 
         // Act
         async Task<Result<Account>> Act() =>
-            await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, invalidPassword);
+            await service.CreateUser(_parameters.role, _parameters.email, _parameters.phone, invalidPassword, 
+                Guid.NewGuid());
 
         // Assert
         await Assert.ThrowsAsync<ValueOutOfRangeException>(Act);
@@ -75,7 +76,8 @@ public class CreateAccountServiceShould
         private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
         
-        public global::Core.Domain.Services.CreateAccountService.CreateAccountService Build() => new(_accountRepositoryMock.Object, _hasherMock.Object);
+        public global::Core.Domain.Services.CreateAccountService.CreateAccountService Build() => 
+            new(_accountRepositoryMock.Object, _hasherMock.Object);
 
         public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))

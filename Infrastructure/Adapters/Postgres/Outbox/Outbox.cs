@@ -20,6 +20,8 @@ public class Outbox(DbSession session) : IOutbox
             OccurredOnUtc = DateTime.UtcNow
         }).AsList().AsReadOnly();
         
+        aggregate.ClearDomainEvents();
+        
         foreach (var @event in outboxEvents)
         {
             var command = new CommandDefinition(_sql, new

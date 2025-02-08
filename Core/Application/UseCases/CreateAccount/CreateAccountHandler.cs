@@ -20,20 +20,20 @@ public class CreateAccountHandler(
 {
     public async Task<Result<CreateAccountResponse>> Handle(CreateAccountRequest request, CancellationToken _)
     {
-        var creatingAccountResult =
-            await createAccountService.CreateUser(request.Role, request.Email, request.Phone, request.Password);
+        var confirmationTokenGuid = Guid.NewGuid();
+
+        var creatingAccountResult = await createAccountService.CreateUser(request.Role, request.Email, request.Phone, 
+            request.Password, confirmationTokenGuid);
         if (creatingAccountResult.IsFailed) return Result.Fail(creatingAccountResult.Errors);
         var account = creatingAccountResult.Value;
-        
-        var confirmationTokenGuid = Guid.NewGuid();
-        var confirmationToken = ConfirmationToken.Create(account.Id,
-            confirmationTokenHash: hasher.GenerateHash(confirmationTokenGuid.ToString()));
-        confirmationToken.AddCreatedDomainEvent(confirmationTokenGuid, account.Email);
+
+        var confirmationToken =
+            ConfirmationToken.Create(account.Id, hasher.GenerateHash(confirmationTokenGuid.ToString()));
         
         await unitOfWork.BeginTransaction();
         await accountRepository.Add(account);
         await confirmationTokenRepository.Add(confirmationToken);
-        await outbox.PublishDomainEvents(confirmationToken);
+        await outbox.PublishDomainEvents(account);
         
         var transactionResult = await unitOfWork.Commit();
 

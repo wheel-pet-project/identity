@@ -19,7 +19,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         
         // Act
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.NotEqual(Guid.Empty, account.Id);
@@ -39,7 +39,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role: null, email, phone, passwordHash);
+        void Act() => Account.Create(role: null, email, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -60,7 +60,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash);
+        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
@@ -75,7 +75,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email: null, phone, passwordHash);
+        void Act() => Account.Create(role, email: null, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -97,7 +97,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash);
+        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
@@ -112,7 +112,7 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone: null, passwordHash);
+        void Act() => Account.Create(role, email, phone: null, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -132,7 +132,7 @@ public class AccountShould
         var passwordHash = invalidPassword;
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash);
+        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -147,7 +147,7 @@ public class AccountShould
         var phone = "+79008007060";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash: null);
+        void Act() => Account.Create(role, email, phone, passwordHash: null, Guid.NewGuid());
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -161,7 +161,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         account.SetStatus(Status.PendingApproval);
@@ -178,7 +178,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetStatus(null);
@@ -195,7 +195,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetStatus(Status.Approved);
@@ -212,7 +212,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         account.SetRole(Role.Support);
@@ -229,7 +229,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetStatus(null);
@@ -246,7 +246,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetRole(Role.Support);
@@ -263,7 +263,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
         
         var newEmail = "newemail@test.com";
 
@@ -287,7 +287,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetEmail(invalidEmail);
@@ -304,7 +304,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetEmail(null);
@@ -321,7 +321,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
         
         var newPhone = "89008007060";
 
@@ -346,7 +346,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetPhone(invalidPhone);
@@ -363,7 +363,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetPhone(null);
@@ -380,7 +380,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
         
         var newPasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2Fht";
 
@@ -402,7 +402,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
         void Act() => account.SetPasswordHash(invalidPassword);
@@ -419,7 +419,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
         
         // Act
         void Act() => account.SetPasswordHash(null);

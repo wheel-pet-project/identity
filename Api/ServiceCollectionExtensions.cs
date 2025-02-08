@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Api.Adapters.Grpc.Mapper;
 using Api.PipelineBehaviours;
 using Core.Application.UseCases.CreateAccount;
@@ -9,6 +8,7 @@ using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Kafka;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
+using From.IdentityKafkaEvents;
 using Infrastructure.Adapters.Kafka;
 using Infrastructure.Adapters.Postgres;
 using Infrastructure.Adapters.Postgres.Outbox;
@@ -26,7 +26,7 @@ using Quartz;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using To.NotificationKafkaEvents;
+
 
 namespace Api;
 
@@ -133,12 +133,12 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<JwtOptions>(options =>
         {
-            options.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!;
-            options.Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER")!;
+            options.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "secret-key123456789101112";
+            options.Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "carsharing-identity";
             options.AccessTokenExpirationMinutes =
-                int.Parse(Environment.GetEnvironmentVariable("JWT_ACCESS_EXPIRATION_MINUTES")!);
+                int.Parse(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRATION_MINUTES") ?? "15");
             options.RefreshTokenExpirationDays =
-                int.Parse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRATION_DAYS")!);
+                int.Parse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRATION_DAYS") ?? "21");
         });
         services.AddScoped<IJwtProvider, JwtProvider>();
 
@@ -168,7 +168,7 @@ public static class ServiceCollectionExtensions
 
             x.AddRider(rider =>
             {
-                rider.AddProducer<string, ConfirmationTokenCreated>("confirmation-token-created-topic");
+                rider.AddProducer<string, AccountCreated>("account-created-topic");
                 rider.AddProducer<string, PasswordRecoverTokenCreated>("password-recover-token-created-topic");
 
                 rider.UsingKafka((_, k) =>

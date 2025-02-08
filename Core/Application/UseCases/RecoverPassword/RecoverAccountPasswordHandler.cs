@@ -23,9 +23,8 @@ public class RecoverAccountPasswordHandler(
         if (account == null) return Result.Fail(new NotFound($"account with this {nameof(request.Email)} not found"));
 
         var recoverToken = Guid.NewGuid();
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, hasher.GenerateHash(recoverToken.ToString()), 
-            timeProvider);
-        passwordRecoverToken.AddCreatedDomainEvent(recoverToken, account.Email);
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, recoverToken, 
+            hasher.GenerateHash(recoverToken.ToString()), timeProvider);
         
         await unitOfWork.BeginTransaction();
         await passwordRecoverTokenRepository.Add(passwordRecoverToken);

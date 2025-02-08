@@ -15,7 +15,7 @@ namespace UnitTests.Core.Application.UseCases;
 public class UpdatePasswordUseCaseShould
 {
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly UpdateAccountPasswordRequest _request = new(Guid.NewGuid(), "newpassword", "test@test.com",
         Guid.NewGuid());
     private readonly TimeProvider _timeProvider = TimeProvider.System;
@@ -24,7 +24,7 @@ public class UpdatePasswordUseCaseShould
     public async Task ReturnSuccessForCorrectRequest()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
@@ -64,7 +64,7 @@ public class UpdatePasswordUseCaseShould
     public async Task ReturnFailedResultErrorIfGetByEmailReturnsNull()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
         
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: null);
@@ -85,7 +85,7 @@ public class UpdatePasswordUseCaseShould
     public async Task ReturnFailedResultErrorIfVerifyHashReturnsFalse()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
         
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
@@ -107,7 +107,7 @@ public class UpdatePasswordUseCaseShould
     {
         // Arrange
         var expectedError = new Error("expected error");
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, new string('h', 60), _timeProvider);
+        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);

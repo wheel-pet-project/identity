@@ -16,7 +16,7 @@ public class CreateAccountUseCaseShould
     private readonly CreateAccountRequest _request = new(Guid.NewGuid(), Role.Customer, "test@test.com", "+79008007060",
         "somepassword");
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     
     [Fact]
     public async Task ReturnAccountIdForCorrectRequest()
@@ -94,8 +94,8 @@ public class CreateAccountUseCaseShould
 
         public void ConfigureCreateAccountService(Result<Account> createAccountShouldReturn) =>
             _createAccountServiceMock
-                .Setup(x => x.CreateUser(It.IsAny<Role>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(createAccountShouldReturn);
+                .Setup(x => x.CreateUser(It.IsAny<Role>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), 
+                    It.IsAny<Guid>())).ReturnsAsync(createAccountShouldReturn);
         
         public void ConfigureUnitOfWork(Result commitShouldReturn) =>
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);

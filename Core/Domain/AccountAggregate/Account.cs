@@ -23,15 +23,10 @@ public class Account : Aggregate
     
     
     public Guid Id { get; private set; }
-
     public Role Role { get; private set; } = null!;
-
     public string Email { get; private set; } = null!;
-
     public string Phone { get; private set; } = null!;
-
     public string PasswordHash { get; private set; } = null!;
-
     public Status Status { get; private set; } = null!;
 
 
@@ -78,8 +73,7 @@ public class Account : Aggregate
         AddDomainEvent(new AccountPasswordUpdatedDomainEvent(Id));
     }
     
-    public static Account Create(Role role, string email, string phone,
-        string passwordHash)
+    public static Account Create(Role role, string email, string phone, string passwordHash, Guid confirmationTokenGuid)
     {
         if (!Role.All().Contains(role)) throw new ValueOutOfRangeException($"{nameof(role)} cannot be unknown or null");
         if (!ValidateEmail(email)) throw new ValueIsInvalidException(
@@ -89,7 +83,11 @@ public class Account : Aggregate
         if (!ValidatePasswordHash(passwordHash)) throw new ValueOutOfRangeException(
             $"{nameof(passwordHash)} cannot be invalid, hash length must be 60");
         
-        return new Account(role, email, phone, passwordHash);
+        var newAccount = new Account(role, email, phone, passwordHash);
+        newAccount.AddDomainEvent(new AccountCreatedDomainEvent(newAccount.Id, newAccount.Email, newAccount.Phone,
+            confirmationTokenGuid));
+        
+        return newAccount;
     }
 
     public static bool ValidateNotHashedPassword(string password)

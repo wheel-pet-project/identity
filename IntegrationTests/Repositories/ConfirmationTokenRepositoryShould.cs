@@ -15,7 +15,7 @@ namespace IntegrationTests.Repositories;
 public class ConfirmationTokenRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
-        Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60));
+        Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
 
     [Fact]
     public async Task CanAddConfirmationToken()

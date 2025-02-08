@@ -10,57 +10,49 @@ namespace UnitTests.Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 [TestSubject(typeof(PasswordRecoverTokenCreatedDomainEvent))]
 public class PasswordRecoverTokenCreatedDomainEventShould
 {
+    // todo: переписать этот ужас
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     [Fact]
-    public void CreateDomainEvent()
+    public void CreateNewInstanceWithCorrectValues()
     {
         // Arrange
-        var expEventId = Guid.NewGuid();
-        
-        var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
+        var (accountId, recoverToken) = (Guid.NewGuid(), Guid.NewGuid());
 
         // Act
-        passwordRecoverToken.AddCreatedDomainEvent(expEventId, "email@email.com");
-        
+        var actual = new PasswordRecoverTokenCreatedDomainEvent(accountId, recoverToken);
+
         // Assert
-        Assert.NotNull(passwordRecoverToken.DomainEvents[0]);
+        Assert.NotNull(actual);
+        Assert.Equal(accountId, actual.AccountId);
+        Assert.Equal(recoverToken, actual.RecoverToken);
     }
 
     [Fact]
-    public void ThrowValueIsRequiredWhenEventIdIsEmpty()
+    public void ThrowValueIsRequiredWhenAccountIdIsEmpty()
     {
         // Arrange
-        var eventId = Guid.Empty;
-        var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
+        var (emptyAccountId, recoverToken) = (Guid.Empty, Guid.NewGuid());
 
         // Act
-        void Act() => passwordRecoverToken.AddCreatedDomainEvent(eventId, "email@email.com");
+        void Act() => new PasswordRecoverTokenCreatedDomainEvent(emptyAccountId, recoverToken);
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void CanThrowValueIsRequiredWhenEmailIsInvalid(string email)
+    [Fact]
+    public void ThrowValueIsRequiredWhenRecoverTokenIsEmpty()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        var hash = new string('*', 60);
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, hash, _timeProvider);
+        var (accountId, emptyRecoverToken) = (Guid.NewGuid(), Guid.Empty);
 
         // Act
-        void Act() => passwordRecoverToken.AddCreatedDomainEvent(eventId, email);
+        void Act() => new PasswordRecoverTokenCreatedDomainEvent(accountId, emptyRecoverToken);
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
     }
-    
 }

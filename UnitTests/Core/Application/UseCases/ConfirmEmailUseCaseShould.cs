@@ -18,7 +18,7 @@ public class ConfirmEmailUseCaseShould
         AccountId: Guid.NewGuid(),
         ConfirmationToken: Guid.NewGuid());
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()

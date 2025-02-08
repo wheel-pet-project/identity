@@ -21,7 +21,7 @@ public class AuthenticateUseCaseShould
     public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -63,7 +63,7 @@ public class AuthenticateUseCaseShould
     public async Task ReturnFailedResultIfAccountCannotAuthenticate()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60)); 
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid()); 
         //аккаунт со статусом 'pending confirmation' не может быть авторизован и аунтентифицирован
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -86,7 +86,7 @@ public class AuthenticateUseCaseShould
     public async Task ReturnFailedResultIfPasswordInvalid()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -106,7 +106,7 @@ public class AuthenticateUseCaseShould
     {
         // Arrange
         var expectedError = new Error("expected error");
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();

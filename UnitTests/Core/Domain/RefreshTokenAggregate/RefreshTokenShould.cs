@@ -16,7 +16,7 @@ public class RefreshTokenShould
     public void CreateRefreshTokenWithCorrectValues()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
+        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash, Guid.NewGuid());
 
         // Act
         var refreshToken = RefreshToken.Create(account, _timeProvider);
@@ -44,7 +44,7 @@ public class RefreshTokenShould
     public void IsValidWithForNewRefreshTokenMustReturnTrue()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
+        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash, Guid.NewGuid());
 
         // Act
         var refreshToken = RefreshToken.Create(account, _timeProvider);
@@ -57,7 +57,7 @@ public class RefreshTokenShould
     public void RevokeMustChangeIsRevokedPropertyToTrueAndIsValidMustReturnFalse()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash);
+        var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash, Guid.NewGuid());
         var refreshToken = RefreshToken.Create(account, _timeProvider);
         
         // Act

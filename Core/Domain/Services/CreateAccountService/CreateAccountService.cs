@@ -12,7 +12,12 @@ public class CreateAccountService(
     IHasher hasher) 
     : ICreateAccountService
 {
-    public async Task<Result<Account>> CreateUser(Role role, string email, string phone, string password)
+    public async Task<Result<Account>> CreateUser(
+        Role role,
+        string email,
+        string phone,
+        string password,
+        Guid confirmationTokenGuid)
     {
         var existingAccount = await accountRepository.GetByEmail(email);
         if (existingAccount is not null)
@@ -23,7 +28,7 @@ public class CreateAccountService(
         
         var passwordHash = hasher.GenerateHash(password);
         
-        var account = Account.Create(role, email, phone, passwordHash);
+        var account = Account.Create(role, email, phone, passwordHash, confirmationTokenGuid);
         
         return Result.Ok(account);
     }

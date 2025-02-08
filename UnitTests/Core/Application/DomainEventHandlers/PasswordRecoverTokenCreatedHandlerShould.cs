@@ -8,7 +8,7 @@ namespace UnitTests.Core.Application.DomainEventHandlers;
 
 public class PasswordRecoverTokenCreatedHandlerShould
 {
-    private readonly PasswordRecoverTokenCreatedDomainEvent _event = new(Guid.NewGuid(), "email@email.com");
+    private readonly PasswordRecoverTokenCreatedDomainEvent _event = new(Guid.NewGuid(), Guid.NewGuid());
     
     [Fact]
     public async Task CallPublishMethod()

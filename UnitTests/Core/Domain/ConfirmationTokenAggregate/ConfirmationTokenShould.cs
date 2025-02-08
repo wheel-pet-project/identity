@@ -11,7 +11,7 @@ namespace UnitTests.Core.Domain.ConfirmationTokenAggregate;
 public class ConfirmationTokenShould
 {
     private readonly Account _account =
-        Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly string _confirmationTokenHash = new string('*', 60);
     
     [Fact]

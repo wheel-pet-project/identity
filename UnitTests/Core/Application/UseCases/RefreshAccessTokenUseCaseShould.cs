@@ -17,7 +17,7 @@ public class RefreshAccessTokenUseCaseShould
     private const string ExpectedJwtAccessToken = "new_jwt_access_token";
     private const string ExpectedJwtRefreshToken = "new_jwt_refresh_token";
     private readonly Account _account =
-        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60));
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly TimeProvider _timeProvider = TimeProvider.System;
     
     
