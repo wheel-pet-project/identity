@@ -10,7 +10,6 @@ namespace UnitTests.Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 [TestSubject(typeof(PasswordRecoverTokenCreatedDomainEvent))]
 public class PasswordRecoverTokenCreatedDomainEventShould
 {
-    // todo: переписать этот ужас
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
     private readonly TimeProvider _timeProvider = TimeProvider.System;

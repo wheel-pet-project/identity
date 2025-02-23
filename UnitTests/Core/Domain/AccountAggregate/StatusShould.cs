@@ -193,10 +193,9 @@ public class StatusShould
     public void NotEqOperatorForIdenticalStatusesMustReturnFalse()
     {
         // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
 
         // Act
-        var result = pendingConfirmation != Status.PendingConfirmation;
+        var result = Status.PendingConfirmation != Status.PendingConfirmation;
 
         // Assert
         Assert.False(result);
@@ -206,10 +205,9 @@ public class StatusShould
     public void NotEqOperatorForDifferentStatusesMustReturnTrue()
     {
         // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
 
         // Act
-        var result = pendingConfirmation != Status.Approved;
+        var result = Status.PendingConfirmation != Status.Approved;
 
         // Assert
         Assert.True(result);

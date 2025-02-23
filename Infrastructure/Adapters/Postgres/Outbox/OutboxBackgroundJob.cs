@@ -3,6 +3,7 @@ using Core.Domain.SharedKernel;
 using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Npgsql;
 using Quartz;
@@ -12,7 +13,8 @@ namespace Infrastructure.Adapters.Postgres.Outbox;
 [DisallowConcurrentExecution]
 public class OutboxBackgroundJob(
     NpgsqlDataSource dataSource, 
-    IMediator mediator) 
+    IMediator mediator,
+    ILogger<OutboxBackgroundJob> logger) 
     : IJob
 {
     private readonly JsonSerializerSettings _jsonSerializerSettings = new()
@@ -48,8 +50,9 @@ public class OutboxBackgroundJob(
 
                 await transaction.CommitAsync();
             }
-            catch
+            catch (Exception e)
             {
+                logger.LogError("Failed of processing outbox events and save updates, exception: {e}", e);
                 await transaction.RollbackAsync();
             }
         }
