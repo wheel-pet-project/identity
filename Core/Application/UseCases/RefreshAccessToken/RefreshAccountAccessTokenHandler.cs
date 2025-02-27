@@ -17,7 +17,8 @@ public class RefreshAccountAccessTokenHandler(
     TimeProvider timeProvider)
     : IRequestHandler<RefreshAccountAccessTokenRequest, Result<RefreshAccountAccessTokenResponse>>
 {
-    public async Task<Result<RefreshAccountAccessTokenResponse>> Handle(RefreshAccountAccessTokenRequest request, 
+    public async Task<Result<RefreshAccountAccessTokenResponse>> Handle(
+        RefreshAccountAccessTokenRequest request,
         CancellationToken _)
     {
         var refreshTokenVerifyingResult = await jwtProvider.VerifyJwtRefreshToken(request.RefreshToken);
@@ -30,7 +31,8 @@ public class RefreshAccountAccessTokenHandler(
         if (!refreshToken.IsValid(timeProvider)) return Result.Fail("Refresh token is revoked or expired");
 
         var account = await accountRepository.GetById(refreshToken.AccountId);
-        if (account is null) throw new DataConsistencyViolationException(
+        if (account is null)
+            throw new DataConsistencyViolationException(
                 "Data consistency violation: refresh token not revoked for deleted account");
         if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
 

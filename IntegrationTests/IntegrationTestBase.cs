@@ -14,13 +14,13 @@ public class IntegrationTestBase : IAsyncLifetime
         .WithPassword("password")
         .WithCleanUp(true)
         .Build();
-    
+
     public async Task InitializeAsync()
     {
         await PostgreSqlContainer.StartAsync();
 
         var sql = await File.ReadAllTextAsync("db.sql");
-        
+
         var connection = new NpgsqlConnection(PostgreSqlContainer.GetConnectionString());
 
         await connection.OpenAsync();

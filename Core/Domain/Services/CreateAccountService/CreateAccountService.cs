@@ -8,8 +8,8 @@ using FluentResults;
 namespace Core.Domain.Services.CreateAccountService;
 
 public class CreateAccountService(
-    IAccountRepository accountRepository, 
-    IHasher hasher) 
+    IAccountRepository accountRepository,
+    IHasher hasher)
     : ICreateAccountService
 {
     public async Task<Result<Account>> CreateUser(
@@ -25,11 +25,11 @@ public class CreateAccountService(
 
         if (Account.ValidateNotHashedPassword(password) == false)
             throw new ValueOutOfRangeException($"{nameof(password)} must be at between 6 and 30 characters long");
-        
+
         var passwordHash = hasher.GenerateHash(password);
-        
+
         var account = Account.Create(role, email, phone, passwordHash, confirmationTokenGuid);
-        
+
         return Result.Ok(account);
     }
 }

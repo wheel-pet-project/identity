@@ -28,7 +28,10 @@ public class AccountPasswordUpdatedDomainEventShould
         var accountId = Guid.Empty;
 
         // Act
-        void Act() => new AccountPasswordUpdatedDomainEvent(accountId);
+        void Act()
+        {
+            new AccountPasswordUpdatedDomainEvent(accountId);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);

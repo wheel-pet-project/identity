@@ -7,7 +7,7 @@ namespace FunctionalTests;
 public class FunctionalTestBase : IClassFixture<SubstituteWebApplicationFactory>, IAsyncDisposable
 {
     private SubstituteWebApplicationFactory _factory;
-    
+
     protected readonly HttpClient Client;
 
     public FunctionalTestBase(SubstituteWebApplicationFactory webApplicationFactory)
@@ -15,7 +15,7 @@ public class FunctionalTestBase : IClassFixture<SubstituteWebApplicationFactory>
         _factory = webApplicationFactory;
         Client = webApplicationFactory.CreateClient();
     }
-    
+
     public async ValueTask DisposeAsync()
     {
         Client.Dispose();

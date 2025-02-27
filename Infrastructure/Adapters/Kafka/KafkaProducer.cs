@@ -8,13 +8,13 @@ namespace Infrastructure.Adapters.Kafka;
 
 public class KafkaProducer(
     ITopicProducer<string, AccountCreated> sendConfirmationEmailProducer,
-    ITopicProducer<string, PasswordRecoverTokenCreated> passwordRecoverTokenCreatedProducer) 
+    ITopicProducer<string, PasswordRecoverTokenCreated> passwordRecoverTokenCreatedProducer)
     : IMessageBus
 {
     public async Task Publish(AccountCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        await sendConfirmationEmailProducer.Produce(domainEvent.EventId.ToString(), 
-            new AccountCreated(domainEvent.EventId, domainEvent.AccountId, domainEvent.Email, domainEvent.Phone, 
+        await sendConfirmationEmailProducer.Produce(domainEvent.EventId.ToString(),
+            new AccountCreated(domainEvent.EventId, domainEvent.AccountId, domainEvent.Email, domainEvent.Phone,
                 "someurl:" + domainEvent.ConfirmationToken),
             Pipe.Execute<KafkaSendContext<string, AccountCreated>>(ctx =>
                 ctx.MessageId = domainEvent.EventId), cancellationToken);
@@ -22,7 +22,7 @@ public class KafkaProducer(
 
     public async Task Publish(PasswordRecoverTokenCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        await passwordRecoverTokenCreatedProducer.Produce(key: domainEvent.EventId.ToString(),
+        await passwordRecoverTokenCreatedProducer.Produce(domainEvent.EventId.ToString(),
             new PasswordRecoverTokenCreated(domainEvent.EventId, domainEvent.AccountId,
                 "someurl:" + domainEvent.RecoverToken),
             Pipe.Execute<KafkaSendContext<string, PasswordRecoverTokenCreated>>(ctx =>

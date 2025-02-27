@@ -26,13 +26,13 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uow, repository) = uowAndRepoBuilder.Build();
         var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
-        
+
         // Act
         await uow.BeginTransaction();
         await accountRepository.Add(_account);
         await repository.Add(confirmationToken);
         await uow.Commit();
-    
+
         // Assert
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
         var confirmationTokenFromDb = await repoForAssert.Get(_account.Id);
@@ -49,17 +49,17 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
         var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
-        
+
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await repositoryForArrange.Add(confirmationToken);
         await uowForArrange.Commit();
-        
+
         var (_, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         var confirmationTokenFromDb = await repository.Get(_account.Id);
-    
+
         // Assert
         Assert.NotNull(confirmationTokenFromDb);
         Assert.Equivalent(confirmationToken, confirmationTokenFromDb);
@@ -74,47 +74,52 @@ public class ConfirmationTokenRepositoryShould : IntegrationTestBase
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uowForArrange, repositoryForArrange) = uowAndRepoBuilder.Build();
         var accountRepository = uowAndRepoBuilder.BuildAccountRepository();
-        
+
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await repositoryForArrange.Add(confirmationToken);
         await uowForArrange.Commit();
-        
+
         var (uow, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         await uow.BeginTransaction();
         await repository.Delete(confirmationToken.AccountId);
         await uow.Commit();
-    
+
         // Assert
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
         var confirmationTokenFromDb = await repoForAssert.Get(_account.Id);
         Assert.Null(confirmationTokenFromDb);
     }
-    
+
     private class UnitOfWorkAndRepoBuilder
     {
         private string _connectionString = null!;
         private NpgsqlDataSource _dataSource = null!;
         private DbSession? _session;
         private readonly Mock<ILogger<PostgresRetryPolicy>> _postgresRetryPolicyLoggerMock = new();
-        
+
         public (IUnitOfWork, IConfirmationTokenRepository) Build()
         {
             _session?.Dispose();
             _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
             _session = new DbSession(_dataSource);
-            
+
             var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var confirmationTokenRepository = new ConfirmationTokenRepository(_session,
                 new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             return (uow, confirmationTokenRepository);
         }
 
-        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+        public void ConfigureConnection(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
 
-        public IAccountRepository BuildAccountRepository() => 
-            new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+        public IAccountRepository BuildAccountRepository()
+        {
+            return new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+        }
     }
 }

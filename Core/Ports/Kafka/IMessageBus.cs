@@ -6,6 +6,6 @@ namespace Core.Ports.Kafka;
 public interface IMessageBus
 {
     Task Publish(AccountCreatedDomainEvent domainEvent, CancellationToken cancellationToken);
-    
+
     Task Publish(PasswordRecoverTokenCreatedDomainEvent domainEvent, CancellationToken cancellationToken);
 }

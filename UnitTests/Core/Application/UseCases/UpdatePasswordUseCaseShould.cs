@@ -16,67 +16,71 @@ public class UpdatePasswordUseCaseShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
-    private readonly UpdateAccountPasswordRequest _request = new(Guid.NewGuid(), "newpassword", "test@test.com",
+
+    private readonly UpdateAccountPasswordRequest _request = new("newpassword", "test@test.com",
         Guid.NewGuid());
+
     private readonly TimeProvider _timeProvider = TimeProvider.System;
-    
+
     [Fact]
     public async Task ReturnSuccessForCorrectRequest()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
+        var passwordRecoverToken =
+            PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
+        useCaseBuilder.ConfigureAccountRepository(_account);
         useCaseBuilder.ConfigurePasswordRecoverTokenRepository(
-            getPasswordRecoverTokenShouldReturn: passwordRecoverToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true, generateHashShouldReturn: new string('*', 60));
+            passwordRecoverToken);
+        useCaseBuilder.ConfigureHasher(true, new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
         var result = await useCase.Handle(_request, default);
-        
+
         // Assert
         Assert.True(result.IsSuccess);
     }
-    
+
     [Fact]
     public async Task ReturnCorrectErrorIfGetPasswordRecoverTokenReturnsNull()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
+        useCaseBuilder.ConfigureAccountRepository(_account);
         useCaseBuilder.ConfigurePasswordRecoverTokenRepository(
-            getPasswordRecoverTokenShouldReturn: null);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true, generateHashShouldReturn: new string('*', 60));
+            null);
+        useCaseBuilder.ConfigureHasher(true, new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
         var result = await useCase.Handle(_request, default);
-        
+
         // Assert
         Assert.True(result.IsFailed);
     }
-    
+
     [Fact]
     public async Task ReturnFailedResultErrorIfGetByEmailReturnsNull()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
-        
+        var passwordRecoverToken =
+            PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: null);
+        useCaseBuilder.ConfigureAccountRepository(null);
         useCaseBuilder.ConfigurePasswordRecoverTokenRepository(
-            getPasswordRecoverTokenShouldReturn: passwordRecoverToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true, generateHashShouldReturn: new string('*', 60));
+            passwordRecoverToken);
+        useCaseBuilder.ConfigureHasher(true, new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
         var result = await useCase.Handle(_request, default);
-        
+
         // Assert
         Assert.True(result.IsFailed);
     }
@@ -85,19 +89,20 @@ public class UpdatePasswordUseCaseShould
     public async Task ReturnFailedResultErrorIfVerifyHashReturnsFalse()
     {
         // Arrange
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
-        
+        var passwordRecoverToken =
+            PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
+        useCaseBuilder.ConfigureAccountRepository(_account);
         useCaseBuilder.ConfigurePasswordRecoverTokenRepository(
-            getPasswordRecoverTokenShouldReturn: passwordRecoverToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: false, generateHashShouldReturn: new string('*', 60));
+            passwordRecoverToken);
+        useCaseBuilder.ConfigureHasher(false, new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
         var result = await useCase.Handle(_request, default);
-        
+
         // Assert
         Assert.True(result.IsFailed);
     }
@@ -107,16 +112,17 @@ public class UpdatePasswordUseCaseShould
     {
         // Arrange
         var expectedError = new Error("expected error");
-        var passwordRecoverToken = PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
+        var passwordRecoverToken =
+            PasswordRecoverToken.Create(_account, Guid.NewGuid(), new string('h', 60), _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: _account);
+        useCaseBuilder.ConfigureAccountRepository(_account);
         useCaseBuilder.ConfigurePasswordRecoverTokenRepository(
-            getPasswordRecoverTokenShouldReturn: passwordRecoverToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true, generateHashShouldReturn: new string('*', 60));
+            passwordRecoverToken);
+        useCaseBuilder.ConfigureHasher(true, new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -138,7 +144,7 @@ public class UpdatePasswordUseCaseShould
         public UpdateAccountPasswordHandler Build()
         {
             ConfigureUpdateAccountPasswordService(Result.Ok());
-            
+
             return new UpdateAccountPasswordHandler(
                 _updateAccountPasswordServiceMock.Object,
                 _passwordRecoverTokenRepositoryMock.Object,
@@ -149,10 +155,12 @@ public class UpdatePasswordUseCaseShould
                 _timeProvider);
         }
 
-        public void ConfigureUpdateAccountPasswordService(Result updateAccountPasswordShouldReturn) =>
+        public void ConfigureUpdateAccountPasswordService(Result updateAccountPasswordShouldReturn)
+        {
             _updateAccountPasswordServiceMock.Setup(x => x.UpdatePassword(It.IsAny<Account>(), It.IsAny<string>()))
                 .Returns(Result.Ok);
-        
+        }
+
         public void ConfigureAccountRepository(Account getByEmailShouldReturn)
         {
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))
@@ -167,8 +175,10 @@ public class UpdatePasswordUseCaseShould
             _passwordRecoverTokenRepositoryMock.Setup(x => x.UpdateAppliedStatus(It.IsAny<PasswordRecoverToken>()));
         }
 
-        public void ConfigureUnitOfWork(Result commitShouldReturn) =>
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
+        }
 
         public void ConfigureHasher(bool verifyHashShouldReturn, string generateHashShouldReturn)
         {

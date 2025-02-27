@@ -10,7 +10,7 @@ public record AccountPasswordUpdatedDomainEvent : DomainEvent
     public AccountPasswordUpdatedDomainEvent(Guid accountId)
     {
         if (accountId == Guid.Empty) throw new ValueIsRequiredException($"{nameof(accountId)} cannot be empty");
-        
+
         AccountId = accountId;
     }
 }

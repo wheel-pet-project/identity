@@ -18,10 +18,10 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     : Identity.IdentityBase
 {
     public override async Task<CreateResponse> CreateAccount(
-        CreateRequest request, ServerCallContext context)
+        CreateRequest request,
+        ServerCallContext context)
     {
         var createAccountRequest = new CreateAccountRequest(
-            Guid.Parse(request.CorId),
             mapper.RoleFromRequest(request.Role),
             request.Email,
             request.Phone,
@@ -34,11 +34,11 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             : ParseErrorToRpcException<CreateResponse>(result.Errors);
     }
 
-    public override async Task<ConfirmEmailResponse> ConfirmEmail(ConfirmEmailRequest request,
+    public override async Task<ConfirmEmailResponse> ConfirmEmail(
+        ConfirmEmailRequest request,
         ServerCallContext context)
     {
         var confirmEmailRequest = new ConfirmAccountEmailRequest(
-            Guid.Parse(request.CorId),
             Guid.Parse(request.AccId),
             Guid.Parse(request.ConfirmationTkn));
 
@@ -50,12 +50,10 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     }
 
     public override async Task<AuthenticateResponse> Authenticate(
-        AuthenticateRequest request, ServerCallContext context)
+        AuthenticateRequest request,
+        ServerCallContext context)
     {
-        var authenticateRequest = new AuthenticateAccountRequest(
-            Guid.Parse(request.CorId),
-            request.Email,
-            request.Pass);
+        var authenticateRequest = new AuthenticateAccountRequest(request.Email, request.Pass);
 
         var result = await mediator.Send(authenticateRequest, context.CancellationToken);
 
@@ -65,9 +63,10 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     }
 
     public override async Task<AuthorizeResponse> Authorize(
-        AuthorizeRequest request, ServerCallContext context)
+        AuthorizeRequest request,
+        ServerCallContext context)
     {
-        var authorizeRequest = new AuthorizeAccountRequest(Guid.Parse(request.CorId), request.Tkn);
+        var authorizeRequest = new AuthorizeAccountRequest(request.Tkn);
 
         var result = await mediator.Send(authorizeRequest, context.CancellationToken);
 
@@ -82,10 +81,11 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
     }
 
     public override async Task<RefreshAccessTokenResponse> RefreshAccessToken(
-        RefreshAccessTokenRequest request, ServerCallContext context)
+        RefreshAccessTokenRequest request,
+        ServerCallContext context)
     {
         var refreshAccessTokenRequest =
-            new RefreshAccountAccessTokenRequest(Guid.Parse(request.CorId), request.RefreshTkn);
+            new RefreshAccountAccessTokenRequest(request.RefreshTkn);
 
         var result = await mediator.Send(refreshAccessTokenRequest, context.CancellationToken);
 
@@ -98,10 +98,11 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             : ParseErrorToRpcException<RefreshAccessTokenResponse>(result.Errors);
     }
 
-    public override async Task<RecoverPasswordResponse> RecoverPassword(RecoverPasswordRequest request,
+    public override async Task<RecoverPasswordResponse> RecoverPassword(
+        RecoverPasswordRequest request,
         ServerCallContext context)
     {
-        var recoverPasswordRequest = new RecoverAccountPasswordRequest(Guid.Parse(request.CorId), request.Email);
+        var recoverPasswordRequest = new RecoverAccountPasswordRequest(request.Email);
 
         var result = await mediator.Send(recoverPasswordRequest, context.CancellationToken);
 
@@ -110,11 +111,11 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
             : ParseErrorToRpcException<RecoverPasswordResponse>(result.Errors);
     }
 
-    public override async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordRequest request,
+    public override async Task<UpdatePasswordResponse> UpdatePassword(
+        UpdatePasswordRequest request,
         ServerCallContext context)
     {
         var updatePasswordRequest = new UpdateAccountPasswordRequest(
-            Guid.Parse(request.CorId),
             request.NewPass,
             request.Email,
             Guid.Parse(request.ResetTkn));
@@ -137,7 +138,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         if (errors.Exists(x => x is AlreadyExists))
             throw new RpcException(new Status(StatusCode.InvalidArgument,
                 string.Join(' ', errors.Select(x => x.Message))));
-        
+
         throw new RpcException(new Status(StatusCode.InvalidArgument, string.Join(' ', errors.Select(x => x.Message))));
     }
 }

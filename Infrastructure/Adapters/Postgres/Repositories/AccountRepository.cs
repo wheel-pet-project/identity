@@ -33,7 +33,8 @@ public class AccountRepository(
     }
 
     public async Task<Account?> GetByEmail(
-        string email, CancellationToken cancellationToken = default)
+        string email,
+        CancellationToken cancellationToken = default)
     {
         var queryCommand = new CommandDefinition(_getByEmailSql, new { email }, cancellationToken: cancellationToken,
             transaction: session.Transaction);

@@ -30,7 +30,10 @@ public class RoleShould
         // Arrange
 
         // Act
-        void Act() => Role.FromName(invalidRoleName);
+        void Act()
+        {
+            Role.FromName(invalidRoleName);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -48,7 +51,7 @@ public class RoleShould
         // Assert
         Assert.Equal(Role.Customer, role);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(100)]
@@ -57,13 +60,16 @@ public class RoleShould
         // Arrange
 
         // Act
-        void Act() => Role.FromId(invalidId);
+        void Act()
+        {
+            Role.FromId(invalidId);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
     }
-    
-    
+
+
     [Fact]
     public void EqOperatorMustReturnTrueWhenRolesIsIdentical()
     {
@@ -158,7 +164,7 @@ public class RoleShould
         // Assert
         Assert.False(result);
     }
-    
+
     [Fact]
     public void BeChangedToThisRoleWhenPotentialRoleIsNullMustThrowValueIsRequiredException()
     {
@@ -166,7 +172,10 @@ public class RoleShould
         var role = Role.Support;
 
         // Act
-        void Act() => role.CanBeChangedToThisRole(null);
+        void Act()
+        {
+            role.CanBeChangedToThisRole(null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);

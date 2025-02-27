@@ -15,26 +15,26 @@ public class CreateAccountHandler(
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
     IOutbox outbox,
-    IHasher hasher) 
+    IHasher hasher)
     : IRequestHandler<CreateAccountRequest, Result<CreateAccountResponse>>
 {
     public async Task<Result<CreateAccountResponse>> Handle(CreateAccountRequest request, CancellationToken _)
     {
         var confirmationTokenGuid = Guid.NewGuid();
 
-        var creatingAccountResult = await createAccountService.CreateUser(request.Role, request.Email, request.Phone, 
+        var creatingAccountResult = await createAccountService.CreateUser(request.Role, request.Email, request.Phone,
             request.Password, confirmationTokenGuid);
         if (creatingAccountResult.IsFailed) return Result.Fail(creatingAccountResult.Errors);
         var account = creatingAccountResult.Value;
 
         var confirmationToken =
             ConfirmationToken.Create(account.Id, hasher.GenerateHash(confirmationTokenGuid.ToString()));
-        
+
         await unitOfWork.BeginTransaction();
         await accountRepository.Add(account);
         await confirmationTokenRepository.Add(confirmationToken);
         await outbox.PublishDomainEvents(account);
-        
+
         var transactionResult = await unitOfWork.Commit();
 
         return transactionResult.IsSuccess

@@ -16,8 +16,9 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
+
     private readonly TimeProvider _timeProvider = TimeProvider.System;
-    
+
     [Fact]
     public async Task CanAddRefreshToken()
     {
@@ -31,9 +32,9 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await uowForArrange.Commit();
-        
+
         var (uow, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         await uow.BeginTransaction();
         await repository.Add(refreshToken);
@@ -59,14 +60,14 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await uowForArrange.Commit();
-        
+
         var (unitOfWorkForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
         await unitOfWorkForAdd.BeginTransaction();
         await repositoryForAdd.Add(refreshToken);
         await unitOfWorkForAdd.Commit();
-        
+
         var (uow, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         refreshToken.Revoke();
         await uow.BeginTransaction();
@@ -92,15 +93,15 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await uowForArrange.Commit();
-        
+
         var (uowForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
-        
+
         await uowForAdd.BeginTransaction();
         await repositoryForAdd.Add(refreshToken);
         await uowForAdd.Commit();
-        
+
         var (_, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         var refreshTokenFromDb = await repository.GetNotRevokedToken(refreshToken.Id);
 
@@ -108,7 +109,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         Assert.NotNull(refreshTokenFromDb);
         Assert.Equivalent(refreshToken, refreshTokenFromDb);
     }
-    
+
     [Fact]
     public async Task CanGetNotRevokedRefreshTokens()
     {
@@ -122,15 +123,15 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         await uowForArrange.BeginTransaction();
         await accountRepository.Add(_account);
         await uowForArrange.Commit();
-        
+
         var (uowForAdd, repositoryForAdd) = uowAndRepoBuilder.Build();
-        
+
         await uowForAdd.BeginTransaction();
         await repositoryForAdd.Add(refreshToken);
         await uowForAdd.Commit();
-        
+
         var (_, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         var refreshTokensFromDb = await repository.GetNotRevokedTokensByAccountId(_account.Id);
 
@@ -138,7 +139,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         Assert.NotEmpty(refreshTokensFromDb);
         Assert.Equivalent(refreshToken, refreshTokensFromDb[0]);
     }
-    
+
 
     [Fact]
     public async Task CanAddTokenAndRevokeOldToken()
@@ -155,7 +156,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         await accountRepository.Add(_account);
         await repositoryForAct.Add(refreshToken);
         await uowForArrange.Commit();
-        
+
         var (uow, repository) = uowAndRepoBuilder.Build();
 
         // Act
@@ -171,7 +172,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
         Assert.NotNull(newRefreshTokenFromDb);
         Assert.Equivalent(newRefreshToken, newRefreshTokenFromDb);
     }
-    
+
     private class UnitOfWorkAndRepoBuilder
     {
         private string _connectionString = null!;
@@ -184,7 +185,7 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
             _session?.Dispose();
             _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
             _session = new DbSession(_dataSource);
-            
+
             var uow = new UnitOfWork(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var refreshTokenRepository =
                 new RefreshTokenRepository(_session,
@@ -192,10 +193,15 @@ public class RefreshTokenRepositoryShould : IntegrationTestBase
             return (uow, refreshTokenRepository);
         }
 
-        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+        public void ConfigureConnection(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
 
-        public IAccountRepository BuildAccountRepository() => 
-            new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+        public IAccountRepository BuildAccountRepository()
+        {
+            return new AccountRepository(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
+        }
 
         /// <summary>
         /// Вызывает Dispose у подключения к БД и сессии и обновляет их

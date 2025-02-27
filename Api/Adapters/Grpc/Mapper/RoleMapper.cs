@@ -6,8 +6,9 @@ namespace Api.Adapters.Grpc.Mapper;
 
 public class RoleMapper
 {
-    public DomainRole RoleFromRequest(Role protoRole) =>
-        protoRole switch
+    public DomainRole RoleFromRequest(Role protoRole)
+    {
+        return protoRole switch
         {
             Role.CustomerUnspecified => DomainRole.Customer,
             Role.Admin => DomainRole.Admin,
@@ -16,9 +17,11 @@ public class RoleMapper
             Role.Hr => DomainRole.Hr,
             _ => throw new ValueOutOfRangeException($"{nameof(protoRole)} is unknown role")
         };
+    }
 
-    public Role RoleToResponse(DomainRole domainRole) =>
-        domainRole switch
+    public Role RoleToResponse(DomainRole domainRole)
+    {
+        return domainRole switch
         {
             _ when domainRole == DomainRole.Customer => Role.CustomerUnspecified,
             _ when domainRole == DomainRole.Admin => Role.Admin,
@@ -27,4 +30,5 @@ public class RoleMapper
             _ when domainRole == DomainRole.Hr => Role.Hr,
             _ => throw new ValueOutOfRangeException($"{nameof(domainRole)} is unknown role")
         };
+    }
 }

@@ -13,24 +13,25 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class AuthenticateUseCaseShould
 {
-    private readonly AuthenticateAccountRequest _request = new(Guid.NewGuid(), "test@test.com", "somepassword");
+    private readonly AuthenticateAccountRequest _request = new("test@test.com", "somepassword");
     private const string ExpectedJwtAccessToken = "jwt_access_token";
     private const string ExpectedJwtRefreshToken = "jwt_refresh_token";
-    
+
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
+        useCaseBuilder.ConfigureAccountRepository(account);
         useCaseBuilder.ConfigureRefreshTokenRepositoryMock();
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
-        useCaseBuilder.ConfigureJwtProvider(generateJwtAccessTokenShouldReturn: ExpectedJwtAccessToken, 
-            generateJwtRefreshTokenShouldReturn: ExpectedJwtRefreshToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
+        useCaseBuilder.ConfigureJwtProvider(ExpectedJwtAccessToken,
+            ExpectedJwtRefreshToken);
+        useCaseBuilder.ConfigureHasher(true);
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -49,7 +50,7 @@ public class AuthenticateUseCaseShould
         var expectedError = new Error("expected error");
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: null);
+        useCaseBuilder.ConfigureAccountRepository(null);
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -63,18 +64,19 @@ public class AuthenticateUseCaseShould
     public async Task ReturnFailedResultIfAccountCannotAuthenticate()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid()); 
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
         //аккаунт со статусом 'pending confirmation' не может быть авторизован и аунтентифицирован
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
+        useCaseBuilder.ConfigureAccountRepository(account);
         useCaseBuilder.ConfigureRefreshTokenRepositoryMock();
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
-        useCaseBuilder.ConfigureJwtProvider(generateJwtAccessTokenShouldReturn: ExpectedJwtAccessToken, 
-            generateJwtRefreshTokenShouldReturn: ExpectedJwtRefreshToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
+        useCaseBuilder.ConfigureJwtProvider(ExpectedJwtAccessToken,
+            ExpectedJwtRefreshToken);
+        useCaseBuilder.ConfigureHasher(true);
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -86,14 +88,15 @@ public class AuthenticateUseCaseShould
     public async Task ReturnFailedResultIfPasswordInvalid()
     {
         // Arrange
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: false);
+        useCaseBuilder.ConfigureAccountRepository(account);
+        useCaseBuilder.ConfigureHasher(false);
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -106,18 +109,19 @@ public class AuthenticateUseCaseShould
     {
         // Arrange
         var expectedError = new Error("expected error");
-        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+        var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
+            Guid.NewGuid());
         account.SetStatus(Status.PendingApproval);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
+        useCaseBuilder.ConfigureAccountRepository(account);
         useCaseBuilder.ConfigureRefreshTokenRepositoryMock();
         useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
-        useCaseBuilder.ConfigureJwtProvider(generateJwtAccessTokenShouldReturn: ExpectedJwtAccessToken,
-            generateJwtRefreshTokenShouldReturn: ExpectedJwtRefreshToken);
+        useCaseBuilder.ConfigureHasher(true);
+        useCaseBuilder.ConfigureJwtProvider(ExpectedJwtAccessToken,
+            ExpectedJwtRefreshToken);
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -125,7 +129,7 @@ public class AuthenticateUseCaseShould
         Assert.True(result.IsFailed);
         Assert.Equivalent(expectedError, result.Errors.First());
     }
-    
+
     private class UseCaseBuilder
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
@@ -135,21 +139,31 @@ public class AuthenticateUseCaseShould
         private readonly Mock<IHasher> _hasherMock = new();
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
-        public AuthenticateAccountHandler Build() =>
-            new(_refreshTokenRepositoryMock.Object, _accountRepositoryMock.Object, _jwtProviderMock.Object,
+        public AuthenticateAccountHandler Build()
+        {
+            return new AuthenticateAccountHandler(_refreshTokenRepositoryMock.Object, _accountRepositoryMock.Object,
+                _jwtProviderMock.Object,
                 _unitOfWorkMock.Object, _hasherMock.Object, _timeProvider);
+        }
 
-        public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
+        public void ConfigureAccountRepository(Account getByEmailShouldReturn)
+        {
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))
                 .ReturnsAsync(getByEmailShouldReturn);
+        }
 
-        public void ConfigureRefreshTokenRepositoryMock() =>
+        public void ConfigureRefreshTokenRepositoryMock()
+        {
             _refreshTokenRepositoryMock.Setup(x => x.Add(It.IsAny<RefreshToken>()));
+        }
 
-        public void ConfigureUnitOfWork(Result commitShouldReturn) => 
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
+        }
 
-        public void ConfigureJwtProvider(string generateJwtAccessTokenShouldReturn, 
+        public void ConfigureJwtProvider(
+            string generateJwtAccessTokenShouldReturn,
             string generateJwtRefreshTokenShouldReturn)
         {
             _jwtProviderMock.Setup(x => x.GenerateJwtAccessToken(It.IsAny<Account>()))
@@ -158,8 +172,10 @@ public class AuthenticateUseCaseShould
                 .Returns(generateJwtRefreshTokenShouldReturn);
         }
 
-        public void ConfigureHasher(bool verifyHashShouldReturn) =>
+        public void ConfigureHasher(bool verifyHashShouldReturn)
+        {
             _hasherMock.Setup(x => x.VerifyHash(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(verifyHashShouldReturn);
+        }
     }
 }

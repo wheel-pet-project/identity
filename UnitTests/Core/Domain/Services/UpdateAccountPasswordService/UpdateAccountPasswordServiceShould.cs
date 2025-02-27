@@ -12,14 +12,15 @@ public class UpdateAccountPasswordServiceShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+
     private readonly Mock<Account> _accountMock = new();
-    
+
     [Fact]
     public void ReturnSuccessWhenValidationReturnSuccess()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
-        serviceBuilder.ConfigureHasher(generateHashShouldReturn: new string('*', 60));
+        serviceBuilder.ConfigureHasher(new string('*', 60));
         var service = serviceBuilder.Build();
 
         // Act
@@ -28,13 +29,13 @@ public class UpdateAccountPasswordServiceShould
         // Assert
         Assert.True(result.IsSuccess);
     }
-    
+
     [Fact]
     public void ChangeAccountStateWithSetNewPasswordHash()
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
-        serviceBuilder.ConfigureHasher(generateHashShouldReturn: new string('!', 60));
+        serviceBuilder.ConfigureHasher(new string('!', 60));
         var service = serviceBuilder.Build();
         var oldPasswordHash = _account.PasswordHash;
 
@@ -53,24 +54,32 @@ public class UpdateAccountPasswordServiceShould
     {
         // Arrange
         var serviceBuilder = new ServiceBuilder();
-        serviceBuilder.ConfigureHasher(generateHashShouldReturn: new string('*', 60));
+        serviceBuilder.ConfigureHasher(new string('*', 60));
         var service = serviceBuilder.Build();
 
         // Act
-        void Act() => service.UpdatePassword(_account, invalidPassword);
+        void Act()
+        {
+            service.UpdatePassword(_account, invalidPassword);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
     }
-    
+
     private class ServiceBuilder
     {
         private readonly Mock<IHasher> _hasherMock = new();
 
-        public global::Core.Domain.Services.UpdateAccountPasswordService.UpdateAccountPasswordService Build() =>
-            new(_hasherMock.Object);
+        public global::Core.Domain.Services.UpdateAccountPasswordService.UpdateAccountPasswordService Build()
+        {
+            return new global::Core.Domain.Services.UpdateAccountPasswordService.UpdateAccountPasswordService(
+                _hasherMock.Object);
+        }
 
-        public void ConfigureHasher(string generateHashShouldReturn) =>
+        public void ConfigureHasher(string generateHashShouldReturn)
+        {
             _hasherMock.Setup(x => x.GenerateHash(It.IsAny<string>())).Returns(generateHashShouldReturn);
+        }
     }
 }

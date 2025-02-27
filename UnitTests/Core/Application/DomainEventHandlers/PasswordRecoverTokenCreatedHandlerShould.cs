@@ -9,7 +9,7 @@ namespace UnitTests.Core.Application.DomainEventHandlers;
 public class PasswordRecoverTokenCreatedHandlerShould
 {
     private readonly PasswordRecoverTokenCreatedDomainEvent _event = new(Guid.NewGuid(), Guid.NewGuid());
-    
+
     [Fact]
     public async Task CallPublishMethod()
     {
@@ -19,7 +19,7 @@ public class PasswordRecoverTokenCreatedHandlerShould
 
         // Act
         await handler.Handle(_event, CancellationToken.None);
-        
+
         // Assert
         messageBusMock.Verify(x => x.Publish(_event, It.IsAny<CancellationToken>()), Times.Once);
     }

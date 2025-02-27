@@ -16,7 +16,7 @@ public class RefreshTokenRepository(
             id = refreshToken.Id, accountId = refreshToken.AccountId, isRevoked = refreshToken.IsRevoked,
             issueDateTime = refreshToken.IssueDateTime, expiresAt = refreshToken.ExpiresAt
         }, session.Transaction);
-        
+
         await session.Connection.ExecuteAsync(command);
     }
 
@@ -38,14 +38,16 @@ public class RefreshTokenRepository(
 
     public async Task UpdateRevokeStatus(RefreshToken refreshToken)
     {
-        var command = new CommandDefinition(_updateRevokeStatus, new { isRevoked = refreshToken.IsRevoked, id = refreshToken.Id },
+        var command = new CommandDefinition(_updateRevokeStatus,
+            new { isRevoked = refreshToken.IsRevoked, id = refreshToken.Id },
             session.Transaction);
 
         await session.Connection.ExecuteAsync(command);
     }
 
     public async Task AddTokenAndRevokeOldToken(
-        RefreshToken newRefreshToken, RefreshToken oldRefreshToken)
+        RefreshToken newRefreshToken,
+        RefreshToken oldRefreshToken)
     {
         var revokeCommand =
             new CommandDefinition(_revokeTokenSql, new { oldId = oldRefreshToken.Id }, session.Transaction);
@@ -54,7 +56,7 @@ public class RefreshTokenRepository(
             newRefreshToken.Id, accountId = newRefreshToken.AccountId, isRevoked = oldRefreshToken.IsRevoked,
             issueDateTime = newRefreshToken.IssueDateTime, expiresAt = newRefreshToken.ExpiresAt
         }, session.Transaction);
-        
+
         await session.Connection.ExecuteAsync(revokeCommand);
         await session.Connection.ExecuteAsync(addCommand);
     }

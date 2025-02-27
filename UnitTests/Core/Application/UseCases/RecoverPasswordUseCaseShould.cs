@@ -11,8 +11,8 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class RecoverPasswordUseCaseShould
 {
-    private readonly RecoverAccountPasswordRequest _request = new(Guid.NewGuid(), "email@email.com");
-    
+    private readonly RecoverAccountPasswordRequest _request = new("email@email.com");
+
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
     {
@@ -21,8 +21,8 @@ public class RecoverPasswordUseCaseShould
             Guid.NewGuid());
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
-        useCaseBuilder.ConfigureHasherShouldReturn(generateHashShouldReturn: new string('*', 60));
+        useCaseBuilder.ConfigureAccountRepository(account);
+        useCaseBuilder.ConfigureHasherShouldReturn(new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
@@ -38,16 +38,16 @@ public class RecoverPasswordUseCaseShould
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: null);
+        useCaseBuilder.ConfigureAccountRepository(null);
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
         // Assert
         Assert.True(result.IsFailed);
     }
-    
+
     [Fact]
     public async Task ReturnCorrectErrorIfTransactionFails()
     {
@@ -57,14 +57,14 @@ public class RecoverPasswordUseCaseShould
             Guid.NewGuid());
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByEmailShouldReturn: account);
-        useCaseBuilder.ConfigureHasherShouldReturn(generateHashShouldReturn: new string('*', 60));
+        useCaseBuilder.ConfigureAccountRepository(account);
+        useCaseBuilder.ConfigureHasherShouldReturn(new string('*', 60));
         useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
 
         // Act
         var result = await useCase.Handle(_request, default);
-        
+
         // Assert
         Assert.True(result.IsFailed);
         Assert.Equal(expectedError, result.Errors.First());
@@ -79,22 +79,32 @@ public class RecoverPasswordUseCaseShould
         private readonly Mock<IHasher> _hasher = new();
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
-        public RecoverAccountPasswordHandler Build() =>
-            new(_passwordRecoverTokenRepositoryMock.Object, _accountRepositoryMock.Object, _unitOfWorkMock.Object, 
+        public RecoverAccountPasswordHandler Build()
+        {
+            return new RecoverAccountPasswordHandler(_passwordRecoverTokenRepositoryMock.Object,
+                _accountRepositoryMock.Object,
+                _unitOfWorkMock.Object,
                 _outboxMock.Object, _hasher.Object, _timeProvider);
-        
-        public void ConfigureAccountRepository(Account getByEmailShouldReturn) =>
+        }
+
+        public void ConfigureAccountRepository(Account getByEmailShouldReturn)
+        {
             _accountRepositoryMock.Setup(x => x.GetByEmail(It.IsAny<string>(), default))
                 .ReturnsAsync(getByEmailShouldReturn);
+        }
 
         // public void ConfigurePasswordRecoverRepository() =>
         //     _passwordRecoverTokenRepositoryMock
         //         .Setup(x => x.Add(It.IsAny<PasswordRecoverToken>()));
 
-        public void ConfigureUnitOfWork(Result commitShouldReturn) =>
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
-        
-        public void ConfigureHasherShouldReturn(string generateHashShouldReturn) => 
+        }
+
+        public void ConfigureHasherShouldReturn(string generateHashShouldReturn)
+        {
             _hasher.Setup(x => x.GenerateHash(It.IsAny<string>())).Returns(generateHashShouldReturn);
+        }
     }
 }

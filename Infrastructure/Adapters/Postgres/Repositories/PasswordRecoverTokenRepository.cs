@@ -6,7 +6,7 @@ using Infrastructure.Settings;
 namespace Infrastructure.Adapters.Postgres.Repositories;
 
 public class PasswordRecoverTokenRepository(
-    DbSession session, 
+    DbSession session,
     PostgresRetryPolicy retryPolicy) : IPasswordRecoverTokenRepository
 {
     public async Task Add(PasswordRecoverToken token)
@@ -17,7 +17,7 @@ public class PasswordRecoverTokenRepository(
                 id = token.Id, accountId = token.AccountId, recoverTokenHash = token.RecoverTokenHash,
                 isAlreadyApplied = token.IsAlreadyApplied, expiresAt = token.ExpiresAt
             }, session.Transaction);
-        
+
         await session.Connection.ExecuteAsync(command);
     }
 
@@ -25,7 +25,7 @@ public class PasswordRecoverTokenRepository(
     {
         var command = new CommandDefinition(_getSql, new { accountId }, session.Transaction);
 
-        return await retryPolicy.ExecuteAsync(() => 
+        return await retryPolicy.ExecuteAsync(() =>
             session.Connection.QuerySingleOrDefaultAsync<PasswordRecoverToken>(command));
     }
 
@@ -33,7 +33,7 @@ public class PasswordRecoverTokenRepository(
     {
         var command = new CommandDefinition(_updateAppliedStatusSql,
             new { isAlreadyApplied = token.IsAlreadyApplied, accountId = token.AccountId }, session.Transaction);
-        
+
         await session.Connection.ExecuteAsync(command);
     }
 

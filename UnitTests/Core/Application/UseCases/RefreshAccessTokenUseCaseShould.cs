@@ -13,14 +13,16 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class RefreshAccessTokenUseCaseShould
 {
-    private readonly RefreshAccountAccessTokenRequest _request = new(Guid.NewGuid(), "jwt_refresh_token");
+    private readonly RefreshAccountAccessTokenRequest _request = new("jwt_refresh_token");
     private const string ExpectedJwtAccessToken = "new_jwt_access_token";
     private const string ExpectedJwtRefreshToken = "new_jwt_refresh_token";
+
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+
     private readonly TimeProvider _timeProvider = TimeProvider.System;
-    
-    
+
+
     [Fact]
     public async Task ReturnSuccessForCorrectRequest()
     {
@@ -29,10 +31,10 @@ public class RefreshAccessTokenUseCaseShould
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: refreshToken);
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -52,7 +54,7 @@ public class RefreshAccessTokenUseCaseShould
         var expectedError = new Error("expected error");
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Fail(expectedError));
+        useCaseBuilder.ConfigureJwtProvider(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -69,8 +71,8 @@ public class RefreshAccessTokenUseCaseShould
         // Arrange
         _account.SetStatus(Status.PendingApproval);
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
-        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: null);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureRefreshTokenRepository(null);
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -88,14 +90,17 @@ public class RefreshAccessTokenUseCaseShould
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: null);
-        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: refreshToken);
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(null);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
-        async Task Act() => await useCase.Handle(_request, default);
+        async Task Act()
+        {
+            await useCase.Handle(_request, default);
+        }
 
         // Assert
         await Assert.ThrowsAsync<DataConsistencyViolationException>(Act);
@@ -108,10 +113,10 @@ public class RefreshAccessTokenUseCaseShould
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: refreshToken);
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(It.IsAny<Guid>()));
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
 
         // Act
@@ -120,8 +125,8 @@ public class RefreshAccessTokenUseCaseShould
         // Assert
         Assert.True(result.IsFailed);
     }
-    
-    
+
+
     [Fact]
     public async Task ReturnCorrectErrorIfTransactionFails()
     {
@@ -131,14 +136,14 @@ public class RefreshAccessTokenUseCaseShould
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureRefreshTokenRepository(getRefreshTokenInfoShouldReturn: refreshToken);
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtRefreshTokenShouldReturn: Result.Ok(refreshToken.Id),
-            generateJwtAccessTokenShouldReturn: ExpectedJwtAccessToken,
-            generateJwtRefreshTokenShouldReturn: ExpectedJwtRefreshToken);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Fail(expectedError));
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(refreshToken.Id),
+            ExpectedJwtAccessToken,
+            ExpectedJwtRefreshToken);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -155,12 +160,17 @@ public class RefreshAccessTokenUseCaseShould
         private readonly Mock<IJwtProvider> _jwtProviderMock = new();
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
-        public RefreshAccountAccessTokenHandler Build() =>
-            new(_accountRepositoryMock.Object, _refreshTokenRepositoryMock.Object, _jwtProviderMock.Object,
+        public RefreshAccountAccessTokenHandler Build()
+        {
+            return new RefreshAccountAccessTokenHandler(_accountRepositoryMock.Object,
+                _refreshTokenRepositoryMock.Object, _jwtProviderMock.Object,
                 _unitOfWorkMock.Object, _timeProvider);
+        }
 
-        public void ConfigureAccountRepository(Account getByIdShouldReturn) => 
+        public void ConfigureAccountRepository(Account getByIdShouldReturn)
+        {
             _accountRepositoryMock.Setup(x => x.GetById(It.IsAny<Guid>(), default)).ReturnsAsync(getByIdShouldReturn);
+        }
 
         public void ConfigureRefreshTokenRepository(RefreshToken getRefreshTokenInfoShouldReturn)
         {
@@ -170,11 +180,14 @@ public class RefreshAccessTokenUseCaseShould
                 .Setup(x => x.AddTokenAndRevokeOldToken(It.IsAny<RefreshToken>(), It.IsAny<RefreshToken>()));
         }
 
-        public void ConfigureUnitOfWork(Result commitShouldReturn) =>
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
+        }
 
-        public void ConfigureJwtProvider(Result<Guid> verifyJwtRefreshTokenShouldReturn,
-            string generateJwtAccessTokenShouldReturn = ExpectedJwtAccessToken, 
+        public void ConfigureJwtProvider(
+            Result<Guid> verifyJwtRefreshTokenShouldReturn,
+            string generateJwtAccessTokenShouldReturn = ExpectedJwtAccessToken,
             string generateJwtRefreshTokenShouldReturn = ExpectedJwtRefreshToken)
         {
             _jwtProviderMock.Setup(x => x.VerifyJwtRefreshToken(It.IsAny<string>()))

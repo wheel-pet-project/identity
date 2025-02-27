@@ -14,109 +14,112 @@ namespace UnitTests.Core.Application.UseCases;
 public class ConfirmEmailUseCaseShould
 {
     private readonly ConfirmAccountEmailRequest _request = new(
-        CorrelationId: Guid.NewGuid(), 
-        AccountId: Guid.NewGuid(),
-        ConfirmationToken: Guid.NewGuid());
+        Guid.NewGuid(),
+        Guid.NewGuid());
+
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
-    
+
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
-        
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureConfirmationTokenRepository(getConfirmationTokenShouldReturn: confirmationToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureConfirmationTokenRepository(confirmationToken);
+        useCaseBuilder.ConfigureHasher(true);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
-    
+
         // Act
         var result = await useCase.Handle(_request, default);
-    
+
         // Assert
         Assert.True(result.IsSuccess);
     }
-    
+
     [Fact]
     public async Task ReturnFailedResultIfGetConfirmationTokenReturnsNull()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
-        
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureConfirmationTokenRepository(getConfirmationTokenShouldReturn: null);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn:Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureConfirmationTokenRepository(null);
+        useCaseBuilder.ConfigureHasher(true);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
-    
+
         // Act
         var result = await useCase.Handle(_request, default);
-    
+
         // Assert
         Assert.True(result.IsFailed);
     }
-    
+
     [Fact]
     public async Task ReturnFailedResultIfVerifyHashReturnsFalse()
     {
         // Arrange
-        var confirmationToken = ConfirmationToken.Create(accountId: _account.Id, confirmationTokenHash: new string(c: '*', count: 60));
-        
+        var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureConfirmationTokenRepository(getConfirmationTokenShouldReturn: confirmationToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: false);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureConfirmationTokenRepository(confirmationToken);
+        useCaseBuilder.ConfigureHasher(false);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
-    
+
         // Act
-        var result = await useCase.Handle(_request, _: default);
-    
+        var result = await useCase.Handle(_request, default);
+
         // Assert
         Assert.True(result.IsFailed);
     }
-    
+
     [Fact]
     public async Task ThrowsDataConsistencyViolationExceptionIfGetByIdReturnsNull()
     {
         // Arrange
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
-        
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: null);
-        useCaseBuilder.ConfigureConfirmationTokenRepository(getConfirmationTokenShouldReturn: confirmationToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureAccountRepository(null);
+        useCaseBuilder.ConfigureConfirmationTokenRepository(confirmationToken);
+        useCaseBuilder.ConfigureHasher(true);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
         var useCase = useCaseBuilder.Build();
-    
+
         // Act
-        async Task Act() => await useCase.Handle(_request, default);
-    
+        async Task Act()
+        {
+            await useCase.Handle(_request, default);
+        }
+
         // Assert
         await Assert.ThrowsAsync<DataConsistencyViolationException>(Act);
     }
-    
+
     [Fact]
     public async Task ReturnCorrectErrorResultIfTransactionFails()
     {
         // Arrange
         var expectedError = new Error("expected error");
         var confirmationToken = ConfirmationToken.Create(_account.Id, new string('*', 60));
-        
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureAccountRepository(getByIdShouldReturn: _account);
-        useCaseBuilder.ConfigureConfirmationTokenRepository(getConfirmationTokenShouldReturn: confirmationToken);
-        useCaseBuilder.ConfigureHasher(verifyHashShouldReturn: true);
-        useCaseBuilder.ConfigureUnitOfWork(commitShouldReturn: Result.Fail(expectedError));
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureConfirmationTokenRepository(confirmationToken);
+        useCaseBuilder.ConfigureHasher(true);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
-    
+
         // Act
         var result = await useCase.Handle(_request, default);
-    
+
         // Assert
         Assert.True(result.IsFailed);
         Assert.Equal(expectedError, result.Errors.First());
@@ -129,8 +132,11 @@ public class ConfirmEmailUseCaseShould
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
 
-        public ConfirmAccountEmailHandler Build() => new(_confirmationTokenRepositoryMock.Object,
-            _accountRepositoryMock.Object, _unitOfWorkMock.Object, _hasherMock.Object);
+        public ConfirmAccountEmailHandler Build()
+        {
+            return new ConfirmAccountEmailHandler(_confirmationTokenRepositoryMock.Object,
+                _accountRepositoryMock.Object, _unitOfWorkMock.Object, _hasherMock.Object);
+        }
 
         public void ConfigureAccountRepository(Account getByIdShouldReturn)
         {
@@ -145,11 +151,15 @@ public class ConfirmEmailUseCaseShould
             _confirmationTokenRepositoryMock.Setup(x => x.Delete(It.IsAny<Guid>()));
         }
 
-        public void ConfigureUnitOfWork(Result commitShouldReturn) =>
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
             _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
+        }
 
-        public void ConfigureHasher(bool verifyHashShouldReturn) =>
+        public void ConfigureHasher(bool verifyHashShouldReturn)
+        {
             _hasherMock.Setup(x => x.VerifyHash(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(verifyHashShouldReturn);
+        }
     }
 }

@@ -1,5 +1,4 @@
 using Api.Adapters.Grpc.Mapper;
-using Api.PipelineBehaviours;
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.Services.CreateAccountService;
 using Core.Domain.Services.UpdateAccountPasswordService;
@@ -40,19 +39,19 @@ public static class ServiceCollectionExtensions
             {
                 ConnectionStringBuilder =
                 {
-                    ApplicationName = "Identity" + Environment.MachineName,
+                    ApplicationName = "Identity#" + Environment.MachineName,
                     Host = Environment.GetEnvironmentVariable("POSTGRES_HOST"),
                     Port = int.Parse(Environment.GetEnvironmentVariable("POSTGRES_PORT")!),
                     Database = Environment.GetEnvironmentVariable("POSTGRES_DB")!,
                     Username = Environment.GetEnvironmentVariable("POSTGRES_USER"),
                     Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")!,
-                    BrowsableConnectionString = false,
+                    BrowsableConnectionString = false
                 }
             };
-            
+
             return sourceBuilder.Build();
         });
-        
+
         return services;
     }
 
@@ -60,14 +59,14 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<DbSession>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
-        
+
         return services;
     }
-    
+
     public static IServiceCollection RegisterOutbox(this IServiceCollection services)
     {
         services.AddTransient<IOutbox, Outbox>();
-        
+
         return services;
     }
 
@@ -81,36 +80,34 @@ public static class ServiceCollectionExtensions
                 .AddTrigger(trigger => trigger.ForJob(jobKey)
                     .WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(3).RepeatForever()));
         });
-        
+
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
-        
-        
+
+
         return services;
     }
 
     public static IServiceCollection RegisterMediatrAndPipelines(this IServiceCollection services)
     {
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly))
-            .AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehaviour<,>))
-            .AddScoped(typeof(IPipelineBehavior<,>), typeof(TracingPipelineBehaviour<,>));
-        
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateAccountHandler).Assembly));
+
         return services;
     }
-    
+
     public static IServiceCollection RegisterMapper(this IServiceCollection services)
     {
         services.AddScoped<Mapper>();
-        
+
         return services;
     }
-    
+
     public static IServiceCollection RegisterRepositories(this IServiceCollection services)
     {
         services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IPasswordRecoverTokenRepository, PasswordRecoverTokenRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddTransient<IConfirmationTokenRepository, ConfirmationTokenRepository>();
-    
+
         return services;
     }
 
@@ -118,7 +115,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<ICreateAccountService, CreateAccountService>();
         services.AddTransient<IUpdateAccountPasswordService, UpdateAccountPasswordService>();
-        
+
         return services;
     }
 
@@ -144,7 +141,7 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-    
+
     public static IServiceCollection RegisterSerilog(this IServiceCollection services)
     {
         Log.Logger = new LoggerConfiguration()
@@ -182,10 +179,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection RegisterMessageBus(this IServiceCollection services)
     {
         services.AddTransient<IMessageBus, KafkaProducer>();
-        
+
         return services;
     }
-    
+
 
     public static IServiceCollection RegisterTelemetry(this IServiceCollection services)
     {
@@ -215,37 +212,37 @@ public static class ServiceCollectionExtensions
                     .SetResourceBuilder(ResourceBuilder.CreateDefault()
                         .AddService("Identity"))
                     .AddSource("Identity")
-                    .AddSource("MassTransit") 
+                    .AddSource("MassTransit")
                     .AddJaegerExporter();
             });
 
         return services;
     }
-    
+
     public static IServiceCollection RegisterHealthCheckV1(this IServiceCollection services)
     {
         var getConnectionString = () =>
         {
             var connectionBuilder = new NpgsqlConnectionStringBuilder
             {
-                ApplicationName = "Identity" + Environment.MachineName,
+                ApplicationName = "Identity#" + Environment.MachineName,
                 Host = Environment.GetEnvironmentVariable("POSTGRES_HOST"),
                 Port = int.Parse(Environment.GetEnvironmentVariable("POSTGRES_PORT")!),
                 Database = Environment.GetEnvironmentVariable("POSTGRES_DB")!,
                 Username = Environment.GetEnvironmentVariable("POSTGRES_USER"),
                 Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")!,
-                BrowsableConnectionString = false,
+                BrowsableConnectionString = false
             };
-            
+
             return connectionBuilder.ConnectionString;
         };
-        
+
         services.AddGrpcHealthChecks()
             .AddNpgSql(getConnectionString(), timeout: TimeSpan.FromSeconds(10))
-            .AddKafka(cfg => 
-                    cfg.BootstrapServers = Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS")!.Split("__")[0], 
+            .AddKafka(cfg =>
+                    cfg.BootstrapServers = Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS")!.Split("__")[0],
                 timeout: TimeSpan.FromSeconds(10));
-        
+
         return services;
     }
 
@@ -259,7 +256,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection RegisterTimeProvider(this IServiceCollection services)
     {
         services.AddSingleton<TimeProvider>(TimeProvider.System);
-        
+
         return services;
     }
 }

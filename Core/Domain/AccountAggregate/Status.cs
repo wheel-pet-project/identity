@@ -5,21 +5,23 @@ namespace Core.Domain.AccountAggregate;
 
 public class Status : Entity<int>
 {
-    public static readonly Status Approved = new Status(1, nameof(Approved).ToLowerInvariant());
-    public static readonly Status PendingConfirmation = new Status(2, nameof(PendingConfirmation).ToLowerInvariant());
-    public static readonly Status PendingApproval = new Status(3, nameof(PendingApproval).ToLowerInvariant());
-    public static readonly Status Deactivated = new Status(4, nameof(Deactivated).ToLowerInvariant());
-    public static readonly Status Deleted = new Status(5, nameof(Deleted).ToLowerInvariant());
-    
-    private Status(){}
+    public static readonly Status Approved = new(1, nameof(Approved).ToLowerInvariant());
+    public static readonly Status PendingConfirmation = new(2, nameof(PendingConfirmation).ToLowerInvariant());
+    public static readonly Status PendingApproval = new(3, nameof(PendingApproval).ToLowerInvariant());
+    public static readonly Status Deactivated = new(4, nameof(Deactivated).ToLowerInvariant());
+    public static readonly Status Deleted = new(5, nameof(Deleted).ToLowerInvariant());
+
+    private Status()
+    {
+    }
 
     private Status(int id, string name) : this()
     {
         Id = id;
         Name = name;
     }
-    
-    
+
+
     public string Name { get; private set; } = null!;
 
     public bool CanBeChangedToThisStatus(Status potentialStatus)
@@ -38,16 +40,22 @@ public class Status : Entity<int>
         };
     }
 
-    public bool CanBeAuthorize() => this == Approved || this == PendingApproval;
+    public bool CanBeAuthorize()
+    {
+        return this == Approved || this == PendingApproval;
+    }
 
-    public static IEnumerable<Status> All() =>
-    [
-        Approved,
-        PendingConfirmation,
-        PendingApproval,
-        Deactivated,
-        Deleted
-    ];
+    public static IEnumerable<Status> All()
+    {
+        return
+        [
+            Approved,
+            PendingConfirmation,
+            PendingApproval,
+            Deactivated,
+            Deleted
+        ];
+    }
 
     public static Status FromName(string name)
     {
@@ -64,16 +72,19 @@ public class Status : Entity<int>
         return status;
     }
 
-    public static bool operator == (Status? a, Status? b)
+    public static bool operator ==(Status? a, Status? b)
     {
         if (a is null && b is null)
             return true;
-        
+
         if (a is null || b is null)
             return false;
-        
+
         return a.Id == b.Id;
     }
 
-    public static bool operator != (Status a, Status b) => !(a == b);
+    public static bool operator !=(Status a, Status b)
+    {
+        return !(a == b);
+    }
 }

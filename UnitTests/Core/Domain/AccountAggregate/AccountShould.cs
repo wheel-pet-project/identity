@@ -17,7 +17,7 @@ public class AccountShould
         var email = "test@test.com";
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        
+
         // Act
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
@@ -39,7 +39,10 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role: null, email, phone, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(null, email, phone, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -60,12 +63,15 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
     }
-    
+
     [Fact]
     public void NotCreateAccountWhenEmailIsNullAndThrowsValueIsInvalidException()
     {
@@ -75,7 +81,10 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email: null, phone, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, null, phone, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -97,12 +106,15 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
     }
-    
+
     [Fact]
     public void NotCreateAccountWhenPhoneIsNullAndThrowsValueIsInvalidException()
     {
@@ -112,7 +124,10 @@ public class AccountShould
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
 
         // Act
-        void Act() => Account.Create(role, email, phone: null, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, email, null, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -132,12 +147,15 @@ public class AccountShould
         var passwordHash = invalidPassword;
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
     }
-    
+
     [Fact]
     public void NotCreateAccountWhenInvalidPasswordHashIsNullAndThrowsInvalidPasswordHashException()
     {
@@ -147,7 +165,10 @@ public class AccountShould
         var phone = "+79008007060";
 
         // Act
-        void Act() => Account.Create(role, email, phone, passwordHash: null, Guid.NewGuid());
+        void Act()
+        {
+            Account.Create(role, email, phone, null, Guid.NewGuid());
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -181,7 +202,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetStatus(null);
+        void Act()
+        {
+            account.SetStatus(null);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -198,7 +222,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetStatus(Status.Approved);
+        void Act()
+        {
+            account.SetStatus(Status.Approved);
+        }
 
         // Assert
         Assert.Throws<DomainRulesViolationException>(Act);
@@ -232,7 +259,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetStatus(null);
+        void Act()
+        {
+            account.SetStatus(null);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
@@ -249,7 +279,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetRole(Role.Support);
+        void Act()
+        {
+            account.SetRole(Role.Support);
+        }
 
         // Assert
         Assert.Throws<DomainRulesViolationException>(Act);
@@ -264,7 +297,7 @@ public class AccountShould
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-        
+
         var newEmail = "newemail@test.com";
 
         // Act
@@ -290,12 +323,15 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetEmail(invalidEmail);
+        void Act()
+        {
+            account.SetEmail(invalidEmail);
+        }
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
     }
-    
+
     [Fact]
     public void SetEmailWhenNewEmailIsNullMustThrowsValueIsInvalidException()
     {
@@ -307,7 +343,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetEmail(null);
+        void Act()
+        {
+            account.SetEmail(null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -322,7 +361,7 @@ public class AccountShould
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-        
+
         var newPhone = "89008007060";
 
         // Act
@@ -349,7 +388,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetPhone(invalidPhone);
+        void Act()
+        {
+            account.SetPhone(invalidPhone);
+        }
 
         // Assert
         Assert.Throws<ValueIsInvalidException>(Act);
@@ -366,7 +408,10 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetPhone(null);
+        void Act()
+        {
+            account.SetPhone(null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -381,7 +426,7 @@ public class AccountShould
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-        
+
         var newPasswordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2Fht";
 
         // Act
@@ -405,12 +450,15 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        void Act() => account.SetPasswordHash(invalidPassword);
+        void Act()
+        {
+            account.SetPasswordHash(invalidPassword);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
     }
-    
+
     [Fact]
     public void SetPasswordWhenNewPasswordHashIsNullMustThrowsValueIsRequiredException()
     {
@@ -420,9 +468,12 @@ public class AccountShould
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-        
+
         // Act
-        void Act() => account.SetPasswordHash(null);
+        void Act()
+        {
+            account.SetPasswordHash(null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -449,7 +500,7 @@ public class AccountShould
     public void ValidateNotHashedPasswordMustReturnFalseIfNotHashedPasswordInvalid(string invalidPassword)
     {
         // Arrange
-        
+
         // Act
         var actual = Account.ValidateNotHashedPassword(invalidPassword);
 

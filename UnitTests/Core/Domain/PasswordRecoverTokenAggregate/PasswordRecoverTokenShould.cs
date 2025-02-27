@@ -20,7 +20,7 @@ public class PasswordRecoverTokenShould
         var account = Account.Create(Role.Customer, "email@mail.com", "+79008007060", PasswordHash, Guid.NewGuid());
 
         // Act
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, Guid.NewGuid(), PasswordRecoverTokenHash, 
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, Guid.NewGuid(), PasswordRecoverTokenHash,
             _timeProvider);
 
         // Assert

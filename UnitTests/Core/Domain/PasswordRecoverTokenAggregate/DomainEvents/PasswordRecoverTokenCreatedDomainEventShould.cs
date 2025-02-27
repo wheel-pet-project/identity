@@ -12,8 +12,9 @@ public class PasswordRecoverTokenCreatedDomainEventShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+
     private readonly TimeProvider _timeProvider = TimeProvider.System;
-    
+
     [Fact]
     public void CreateNewInstanceWithCorrectValues()
     {
@@ -36,7 +37,10 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         var (emptyAccountId, recoverToken) = (Guid.Empty, Guid.NewGuid());
 
         // Act
-        void Act() => new PasswordRecoverTokenCreatedDomainEvent(emptyAccountId, recoverToken);
+        void Act()
+        {
+            new PasswordRecoverTokenCreatedDomainEvent(emptyAccountId, recoverToken);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -49,7 +53,10 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         var (accountId, emptyRecoverToken) = (Guid.NewGuid(), Guid.Empty);
 
         // Act
-        void Act() => new PasswordRecoverTokenCreatedDomainEvent(accountId, emptyRecoverToken);
+        void Act()
+        {
+            new PasswordRecoverTokenCreatedDomainEvent(accountId, emptyRecoverToken);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);

@@ -8,33 +8,33 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class AuthorizeUseCaseShould
 {
-    private readonly AuthorizeAccountRequest _request = new(Guid.NewGuid(), "jwt_access_token");
-    
+    private readonly AuthorizeAccountRequest _request = new("jwt_access_token");
+
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
     {
         // Arrange
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtAccessTokenShouldReturn: Result.Ok());
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok());
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
         // Assert
         Assert.True(result.IsSuccess);
     }
-    
+
     [Fact]
     public async Task ReturnCorrectErrorIfAccessTokenIsInvalid()
     {
         // Arrange
         var expectedError = new Error("expected error");
-        
+
         var useCaseBuilder = new UseCaseBuilder();
-        useCaseBuilder.ConfigureJwtProvider(verifyJwtAccessTokenShouldReturn: Result.Fail(expectedError));
+        useCaseBuilder.ConfigureJwtProvider(Result.Fail(expectedError));
         var useCase = useCaseBuilder.Build();
-        
+
         // Act
         var result = await useCase.Handle(_request, default);
 
@@ -42,15 +42,20 @@ public class AuthorizeUseCaseShould
         Assert.True(result.IsFailed);
         Assert.Equivalent(expectedError, result.Errors.First());
     }
-    
+
     private class UseCaseBuilder
     {
         private readonly Mock<IJwtProvider> _jwtProviderMock = new();
 
-        public AuthorizeAccountHandler Build() => new(_jwtProviderMock.Object);
-        
-        public void ConfigureJwtProvider(Result verifyJwtAccessTokenShouldReturn) =>
+        public AuthorizeAccountHandler Build()
+        {
+            return new AuthorizeAccountHandler(_jwtProviderMock.Object);
+        }
+
+        public void ConfigureJwtProvider(Result verifyJwtAccessTokenShouldReturn)
+        {
             _jwtProviderMock.Setup(x => x.VerifyJwtAccessToken(It.IsAny<string>()))
                 .ReturnsAsync(verifyJwtAccessTokenShouldReturn);
+        }
     }
 }

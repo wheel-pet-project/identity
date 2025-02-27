@@ -9,61 +9,61 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AspNetCore.HealthChecks.Kafka" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-        <PackageReference Include="Dapper" Version="2.1.35" />
-        <PackageReference Include="FluentEmail.Core" Version="3.0.2" />
-        <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
-        <PackageReference Include="FluentResults" Version="3.16.0" />
-        <PackageReference Include="FluentValidation" Version="11.11.0" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-        <PackageReference Include="From.IdentityKafkaEvents" Version="1.0.1" />
-        <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
-        <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.67.0" />
+        <PackageReference Include="AspNetCore.HealthChecks.Kafka" Version="9.0.0"/>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0"/>
+        <PackageReference Include="Dapper" Version="2.1.35"/>
+        <PackageReference Include="FluentEmail.Core" Version="3.0.2"/>
+        <PackageReference Include="FluentEmail.Smtp" Version="3.0.2"/>
+        <PackageReference Include="FluentResults" Version="3.16.0"/>
+        <PackageReference Include="FluentValidation" Version="11.11.0"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
+        <PackageReference Include="From.IdentityKafkaEvents" Version="1.0.1"/>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.67.0"/>
+        <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.67.0"/>
         <PackageReference Include="Grpc.Tools" Version="2.68.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MassTransit" Version="8.3.4" />
-        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.3.1" />
-        <PackageReference Include="MassTransit.Kafka" Version="8.3.4" />
-        <PackageReference Include="MediatR" Version="12.4.1" />
-        <PackageReference Include="Npgsql.OpenTelemetry" Version="9.0.2" />
-        <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
-        <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.6.0-rc.1" />
-        <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.9.0-beta.2" />
-        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.9.0-beta.1" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.9.0-beta.1" />
-        <PackageReference Include="Polly" Version="8.5.0" />
-        <PackageReference Include="Quartz" Version="3.13.1" />
-        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1" />
-        <PackageReference Include="Serilog" Version="4.2.0" />
-        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-        <PackageReference Include="Serilog.Sinks.MongoDB" Version="7.0.0" />
+        <PackageReference Include="MassTransit" Version="8.3.4"/>
+        <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.3.1"/>
+        <PackageReference Include="MassTransit.Kafka" Version="8.3.4"/>
+        <PackageReference Include="MediatR" Version="12.4.1"/>
+        <PackageReference Include="Npgsql.OpenTelemetry" Version="9.0.2"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.6.0-rc.1"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.9.0-beta.2"/>
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.9.0-beta.1"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.9.0-beta.1"/>
+        <PackageReference Include="Polly" Version="8.5.0"/>
+        <PackageReference Include="Quartz" Version="3.13.1"/>
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1"/>
+        <PackageReference Include="Serilog" Version="4.2.0"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.MongoDB" Version="7.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
-      <Protobuf Include="Adapters\Grpc\Contract\identity.proto">
-        <GrpcServices>Server</GrpcServices>
-        <Access>Public</Access>
-        <ProtoCompile>True</ProtoCompile>
-        <CompileOutputs>True</CompileOutputs>
-        <OutputDir>obj\Debug/net8.0/</OutputDir>
-        <Generator>MSBuild:Compile</Generator>
-      </Protobuf>
+        <Protobuf Include="Adapters\Grpc\Contract\identity.proto">
+            <GrpcServices>Server</GrpcServices>
+            <Access>Public</Access>
+            <ProtoCompile>True</ProtoCompile>
+            <CompileOutputs>True</CompileOutputs>
+            <OutputDir>obj\Debug/net8.0/</OutputDir>
+            <Generator>MSBuild:Compile</Generator>
+        </Protobuf>
     </ItemGroup>
 
 </Project>

@@ -6,13 +6,15 @@ using Infrastructure.Settings;
 namespace Infrastructure.Adapters.Postgres;
 
 public class UnitOfWork(
-    DbSession session, 
-    PostgresRetryPolicy retryPolicy) 
+    DbSession session,
+    PostgresRetryPolicy retryPolicy)
     : IUnitOfWork
 {
-    public async Task BeginTransaction() =>
+    public async Task BeginTransaction()
+    {
         await retryPolicy.ExecuteAsync(async () =>
             session.Transaction = await session.Connection.BeginTransactionAsync());
+    }
 
     public async Task<Result> Commit()
     {
@@ -30,7 +32,7 @@ public class UnitOfWork(
         {
             Dispose();
         }
-        
+
         return result;
     }
 

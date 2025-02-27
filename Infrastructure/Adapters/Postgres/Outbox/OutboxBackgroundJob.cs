@@ -12,9 +12,9 @@ namespace Infrastructure.Adapters.Postgres.Outbox;
 
 [DisallowConcurrentExecution]
 public class OutboxBackgroundJob(
-    NpgsqlDataSource dataSource, 
+    NpgsqlDataSource dataSource,
     IMediator mediator,
-    ILogger<OutboxBackgroundJob> logger) 
+    ILogger<OutboxBackgroundJob> logger)
     : IJob
 {
     private readonly JsonSerializerSettings _jsonSerializerSettings = new()
@@ -22,13 +22,13 @@ public class OutboxBackgroundJob(
         TypeNameHandling = TypeNameHandling.All,
         ContractResolver = new PrivateSetterContractResolver()
     };
-    
+
     public async Task Execute(IJobExecutionContext context)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
-        
+
         var outboxEventsSequence = await connection.QueryAsync<OutboxEvent>(_querySql);
-    
+
         var events = outboxEventsSequence.AsList().AsReadOnly();
         if (events.Count > 0)
         {
@@ -37,7 +37,9 @@ public class OutboxBackgroundJob(
             {
                 foreach (var domainEvent in events.Select(ev =>
                                  JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
-                             .OfType<DomainEvent>().AsList().AsReadOnly())
+                             .OfType<DomainEvent>()
+                             .AsList()
+                             .AsReadOnly())
                 {
                     await mediator.Publish(domainEvent, context.CancellationToken);
 
@@ -57,15 +59,19 @@ public class OutboxBackgroundJob(
             }
         }
     }
-    
+
     private readonly string _querySql =
         """
-        SELECT event_id AS EventId, type AS Type, content AS Content, 
-               occurred_on_utc AS OccurredOnUtc, processed_on_utc AS ProcessedOnUtc
+        SELECT event_id AS EventId, 
+               type AS Type, 
+               content AS Content, 
+               occurred_on_utc AS OccurredOnUtc, 
+               processed_on_utc AS ProcessedOnUtc
         FROM outbox
         WHERE processed_on_utc IS NULL
         ORDER BY occurred_on_utc
         LIMIT 50
+        FOR UPDATE SKIP LOCKED 
         """;
 
     private readonly string _markAsProcessedSql =

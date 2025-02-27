@@ -1,6 +1,6 @@
 ﻿services:
-
-# Database  
+  
+  # Database  
   c-identity-db:
     image: postgres:latest
     container_name: c-identity-db
@@ -13,7 +13,7 @@
     ports:
       - "5410:5410"
   
-# Kafka
+  # Kafka
   zookeeper:
     image: bitnami/zookeeper:latest
     container_name: zookeeper

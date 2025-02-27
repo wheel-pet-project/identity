@@ -6,14 +6,14 @@ using Xunit;
 
 namespace UnitTests.Core.Domain.ConfirmationTokenAggregate;
 
-
 [TestSubject(typeof(ConfirmationToken))]
 public class ConfirmationTokenShould
 {
     private readonly Account _account =
         Account.Create(Role.Customer, "email@mail.com", "+79008007060", new string('*', 60), Guid.NewGuid());
-    private readonly string _confirmationTokenHash = new string('*', 60);
-    
+
+    private readonly string _confirmationTokenHash = new('*', 60);
+
     [Fact]
     public void CreateInstanceWithCorrectValues()
     {
@@ -33,7 +33,10 @@ public class ConfirmationTokenShould
         // Arrange
 
         // Act
-        void Act() => ConfirmationToken.Create(Guid.Empty, _confirmationTokenHash);
+        void Act()
+        {
+            ConfirmationToken.Create(Guid.Empty, _confirmationTokenHash);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -45,7 +48,10 @@ public class ConfirmationTokenShould
         // Arrange
 
         // Act
-        void Act() => ConfirmationToken.Create(_account.Id, null);
+        void Act()
+        {
+            ConfirmationToken.Create(_account.Id, null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -57,7 +63,10 @@ public class ConfirmationTokenShould
         // Arrange
 
         // Act
-        void Act() => ConfirmationToken.Create(_account.Id, new string('*', 59)); // hash length must 60 
+        void Act()
+        {
+            ConfirmationToken.Create(_account.Id, new string('*', 59));
+        } // hash length must 60 
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);

@@ -14,18 +14,19 @@ public class AuthenticateAccountHandler(
     IJwtProvider jwtProvider,
     IUnitOfWork unitOfWork,
     IHasher hasher,
-    TimeProvider timeProvider) 
+    TimeProvider timeProvider)
     : IRequestHandler<AuthenticateAccountRequest, Result<AuthenticateAccountResponse>>
 {
     public async Task<Result<AuthenticateAccountResponse>> Handle(
-        AuthenticateAccountRequest request, CancellationToken _)
+        AuthenticateAccountRequest request,
+        CancellationToken _)
     {
         var account = await accountRepository.GetByEmail(request.Email);
         if (account is null) return Result.Fail("Account does not found");
-        
+
         if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
         if (!hasher.VerifyHash(request.Password, account.PasswordHash)) return Result.Fail("Password is incorrect");
-        
+
         var refreshToken = RefreshToken.Create(account, timeProvider);
         var jwtAccessToken = jwtProvider.GenerateJwtAccessToken(account);
         var jwtRefreshToken = jwtProvider.GenerateJwtRefreshToken(refreshToken.Id);
@@ -33,7 +34,7 @@ public class AuthenticateAccountHandler(
         await unitOfWork.BeginTransaction();
         await refreshTokenRepository.Add(refreshToken);
         var transactionResult = await unitOfWork.Commit();
-        
+
         return transactionResult.IsSuccess
             ? new AuthenticateAccountResponse(jwtAccessToken, jwtRefreshToken)
             : transactionResult;

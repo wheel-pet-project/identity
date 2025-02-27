@@ -9,11 +9,11 @@ public record PasswordRecoverTokenCreatedDomainEvent : DomainEvent
     {
         if (accountId == Guid.Empty) throw new ValueIsRequiredException($"{nameof(accountId)} cannot be empty");
         if (recoverToken == Guid.Empty) throw new ValueIsRequiredException($"{nameof(recoverToken)} cannot be empty");
-        
+
         AccountId = accountId;
         RecoverToken = recoverToken;
     }
-    
+
     public Guid RecoverToken { get; private set; }
     public Guid AccountId { get; private set; }
 };

@@ -20,7 +20,7 @@ public class StatusShould
         // Assert
         Assert.Equal(Status.PendingConfirmation, status);
     }
-    
+
     [Fact]
     public void FromIdShouldReturnCorrectStatus()
     {
@@ -42,12 +42,15 @@ public class StatusShould
         // Arrange
 
         // Act
-        void Act() => Status.FromId(invalidRoleId);
+        void Act()
+        {
+            Status.FromId(invalidRoleId);
+        }
 
         // Assert
         Assert.Throws<ValueOutOfRangeException>(Act);
     }
-    
+
     [Fact]
     public void IsCanAuthorizeMustReturnTrueForPendingApprovalAndApprovedStatuses()
     {
@@ -65,7 +68,7 @@ public class StatusShould
     }
 
     [Fact]
-    public void 
+    public void
         IsCanAuthorizeShouldReturnFalseForAllStatusesExcludingPendingApprovalAndApprovedStatuses()
     {
         // Arrange
@@ -83,7 +86,7 @@ public class StatusShould
         Assert.False(deletedActualResult);
         Assert.False(pendingConfirmationActualResult);
     }
-    
+
     [Fact]
     public void CanBeChangedToThisStatusWhenPotentialStatusIsValidForDomainStateMachineMustReturnTrue()
     {
@@ -92,9 +95,10 @@ public class StatusShould
         var pendingApproval = Status.PendingApproval;
         var approved = Status.Approved;
         var deactivated = Status.Deactivated;
-        
+
         // Act
-        var pendingConfirmationToPendingApprovalResult = pendingConfirmation.CanBeChangedToThisStatus(Status.PendingApproval);
+        var pendingConfirmationToPendingApprovalResult =
+            pendingConfirmation.CanBeChangedToThisStatus(Status.PendingApproval);
         var pendingApprovalToApprovedResult = pendingApproval.CanBeChangedToThisStatus(Status.Approved);
         var approvedToDeactivatedResult = approved.CanBeChangedToThisStatus(Status.Deactivated);
         var approvedToPendingApprovalResult = approved.CanBeChangedToThisStatus(Status.PendingApproval);
@@ -121,12 +125,13 @@ public class StatusShould
 
         // Act
         var pendingConfirmationToApprovedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Approved);
-        var pendingApprovalToPendingConfirmationResult = pendingApproval.CanBeChangedToThisStatus(Status.PendingConfirmation);
+        var pendingApprovalToPendingConfirmationResult =
+            pendingApproval.CanBeChangedToThisStatus(Status.PendingConfirmation);
         var approvedToPendingConfirmationResult = approved.CanBeChangedToThisStatus(Status.PendingConfirmation);
         var pendingConfirmationToDeactivatedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Deactivated);
         var pendingApprovalToDeactivatedResult = pendingApproval.CanBeChangedToThisStatus(Status.Deactivated);
         var deactivatedToPendingConfirmationResult = deactivated.CanBeChangedToThisStatus(Status.PendingConfirmation);
-        
+
 
         // Assert
         Assert.False(pendingConfirmationToApprovedResult);
@@ -136,7 +141,7 @@ public class StatusShould
         Assert.False(pendingApprovalToDeactivatedResult);
         Assert.False(deactivatedToPendingConfirmationResult);
     }
-    
+
     [Fact]
     public void CanBeChangedToThisStatusWhenPotentialStatusIsEqualCurrentStatusMustReturnFalse()
     {
@@ -157,7 +162,10 @@ public class StatusShould
         var pendingConfirmation = Status.PendingConfirmation;
 
         // Act
-        void Act() => pendingConfirmation.CanBeChangedToThisStatus(null);
+        void Act()
+        {
+            pendingConfirmation.CanBeChangedToThisStatus(null);
+        }
 
         // Assert
         Assert.Throws<ValueIsRequiredException>(Act);
@@ -188,7 +196,7 @@ public class StatusShould
         // Assert
         Assert.False(result);
     }
-    
+
     [Fact]
     public void NotEqOperatorForIdenticalStatusesMustReturnFalse()
     {

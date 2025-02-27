@@ -24,12 +24,12 @@ public class AccountRepositoryShould : IntegrationTestBase
         var uowAndRepoBuilder = new UnitOfWorkAndRepoBuilder();
         uowAndRepoBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (uow, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         await uow.BeginTransaction();
-        await repository.Add(_account); 
+        await repository.Add(_account);
         await uow.Commit();
-        
+
         // Assert
         _account.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
@@ -48,18 +48,18 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uow.BeginTransaction();
         await repositoryForArrange.Add(_account);
         await uow.Commit();
-        
+
         var (_, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         var accountFromDb = await repository.GetById(_account.Id);
-        
+
         // Assert
         _account.ClearDomainEvents();
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(_account, accountFromDb);
     }
-    
+
     [Fact]
     public async Task CanGetByEmailAccount()
     {
@@ -70,18 +70,18 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uow.BeginTransaction();
         await repositoryForArrange.Add(_account);
         await uow.Commit();
-        
+
         var (_, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         var accountFromDb = await repository.GetByEmail(_account.Email);
-        
+
         // Assert
         _account.ClearDomainEvents();
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(_account, accountFromDb);
     }
-    
+
     [Fact]
     public async Task CanUpdateStatusAccount()
     {
@@ -94,15 +94,15 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uowForArrange.BeginTransaction();
         await repositoryForArrange.Add(accountForUpdateStatusTest);
         await uowForArrange.Commit();
-        
+
         var (uow, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         accountForUpdateStatusTest.SetStatus(Status.PendingApproval);
         await uow.BeginTransaction();
         await repository.UpdateStatus(accountForUpdateStatusTest);
         await uow.Commit();
-        
+
         // Assert
         accountForUpdateStatusTest.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
@@ -110,7 +110,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         Assert.NotNull(accountFromDb);
         Assert.Equivalent(accountForUpdateStatusTest, accountFromDb);
     }
-    
+
     [Fact]
     public async Task CanUpdatePasswordHashAccount()
     {
@@ -123,15 +123,15 @@ public class AccountRepositoryShould : IntegrationTestBase
         await uow.BeginTransaction();
         await repositoryForArrange.Add(accountForUpdatePassHash);
         await uow.Commit();
-        
+
         var (uowForAct, repository) = uowAndRepoBuilder.Build();
-        
+
         // Act
         accountForUpdatePassHash.SetPasswordHash(new string('-', 60));
         await uowForAct.BeginTransaction();
         await repository.UpdatePasswordHash(accountForUpdatePassHash);
         await uowForAct.Commit();
-        
+
         // Assert
         _account.ClearDomainEvents();
         var (_, repoForAssert) = uowAndRepoBuilder.Build();
@@ -152,13 +152,16 @@ public class AccountRepositoryShould : IntegrationTestBase
             _session?.Dispose();
             _dataSource = new NpgsqlDataSourceBuilder(_connectionString).Build();
             _session = new DbSession(_dataSource);
-            
+
             var uow = new UnitOfWork(_session!, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             var accountRepository =
                 new AccountRepository(_session, new PostgresRetryPolicy(_postgresRetryPolicyLoggerMock.Object));
             return (uow, accountRepository);
         }
 
-        public void ConfigureConnection(string connectionString) => _connectionString = connectionString;
+        public void ConfigureConnection(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
     }
 }

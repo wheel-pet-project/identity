@@ -14,9 +14,9 @@ public class UpdateAccountPasswordService(IHasher hasher) : IUpdateAccountPasswo
                 $"{nameof(potentialPassword)} must be at between 6 and 30 characters long");
 
         var passwordHash = hasher.GenerateHash(potentialPassword);
-        
+
         account.SetPasswordHash(passwordHash);
-        
+
         return Result.Ok();
     }
 }

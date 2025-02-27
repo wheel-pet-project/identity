@@ -9,12 +9,11 @@ public class ConfirmationTokenRepository(
     DbSession session,
     PostgresRetryPolicy retryPolicy) : IConfirmationTokenRepository
 {
-    
     public async Task Add(ConfirmationToken confirmationToken)
     {
         var createConfirmRecordCommand = new CommandDefinition(_addSql,
             new { confirmationToken.AccountId, confirmationToken.ConfirmationTokenHash }, session.Transaction);
-        
+
         await session.Connection.ExecuteAsync(createConfirmRecordCommand);
     }
 
@@ -23,7 +22,7 @@ public class ConfirmationTokenRepository(
         var command = new CommandDefinition(_getSql, new { accountId }, session.Transaction);
 
         return await retryPolicy.ExecuteAsync(() =>
-            session.Connection.QuerySingleOrDefaultAsync<ConfirmationToken>(command)); 
+            session.Connection.QuerySingleOrDefaultAsync<ConfirmationToken>(command));
     }
 
     public async Task Delete(Guid accountId)
