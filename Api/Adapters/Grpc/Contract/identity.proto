@@ -32,8 +32,7 @@ service Identity {
 
 // Authorize account
 message AuthorizeRequest {
-  string cor_id = 1;
-  string tkn = 2;
+  string tkn = 1;
 }
 message AuthorizeResponse {
   string acc_id = 2;
@@ -44,9 +43,8 @@ message AuthorizeResponse {
 
 // Authenticate account
 message AuthenticateRequest{
-  string cor_id = 1;
-  string email = 2;
-  string pass = 3;
+  string email = 1;
+  string pass = 2;
 }
 message AuthenticateResponse{
   string tkn = 1;
@@ -56,11 +54,10 @@ message AuthenticateResponse{
 
 // Create account
 message CreateRequest{
-  string cor_id = 1;
-  Role role = 2;
-  string email = 3;
-  string phone = 4;
-  string pass = 5;
+  Role role = 1;
+  string email = 2;
+  string phone = 3;
+  string pass = 4;
 }
 message CreateResponse{
   string acc_id = 1;
@@ -69,9 +66,8 @@ message CreateResponse{
 
 // Confirm email
 message ConfirmEmailRequest{
-  string cor_id = 1;
-  string acc_id = 2;
-  string confirmation_tkn = 3;
+  string acc_id = 1;
+  string confirmation_tkn = 2;
 }
 message ConfirmEmailResponse{
 } 
@@ -79,8 +75,7 @@ message ConfirmEmailResponse{
 
 // Refresh access token
 message RefreshAccessTokenRequest{
-  string cor_id = 1;
-  string refresh_tkn = 2;
+  string refresh_tkn = 1;
 }
 message RefreshAccessTokenResponse{
   string tkn = 1;
@@ -90,18 +85,16 @@ message RefreshAccessTokenResponse{
 
 // Recover password
 message RecoverPasswordRequest{
-  string cor_id = 1;
-  string email = 2;
+  string email = 1;
 }
 message RecoverPasswordResponse{}
 
 
 // Update Password
 message UpdatePasswordRequest{
-  string cor_id = 1;
-  string new_pass = 2;
-  string email = 3;
-  string reset_tkn = 4;
+  string new_pass = 1;
+  string email = 2;
+  string reset_tkn = 3;
 }
 message UpdatePasswordResponse{}
 

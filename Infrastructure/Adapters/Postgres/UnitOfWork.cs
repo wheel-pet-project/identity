@@ -40,6 +40,5 @@ public class UnitOfWork(
     {
         session.Transaction?.Dispose();
         session.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

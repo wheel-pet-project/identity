@@ -11,7 +11,7 @@ public class AccountRepository(
 {
     public async Task<Account?> GetById(Guid accountId, CancellationToken cancellationToken = default)
     {
-        var queryCommand = new CommandDefinition(_getByIdSql, new { accountId }, cancellationToken: cancellationToken,
+        var queryCommand = new CommandDefinition(GetByIdSql, new { accountId }, cancellationToken: cancellationToken,
             transaction: session.Transaction);
 
         var accounts = await retryPolicy.ExecuteAsync(async () =>
@@ -36,7 +36,7 @@ public class AccountRepository(
         string email,
         CancellationToken cancellationToken = default)
     {
-        var queryCommand = new CommandDefinition(_getByEmailSql, new { email }, cancellationToken: cancellationToken,
+        var queryCommand = new CommandDefinition(GetByEmailSql, new { email }, cancellationToken: cancellationToken,
             transaction: session.Transaction);
 
         var accounts = await retryPolicy.ExecuteAsync(async () =>
@@ -59,7 +59,7 @@ public class AccountRepository(
 
     public async Task Add(Account account)
     {
-        var createCommand = new CommandDefinition(_addSql,
+        var createCommand = new CommandDefinition(AddSql,
             new
             {
                 id = account.Id,
@@ -75,17 +75,17 @@ public class AccountRepository(
 
     public async Task UpdatePasswordHash(Account account)
     {
-        await session.Connection.ExecuteAsync(_updatePasswordHashSql,
+        await session.Connection.ExecuteAsync(UpdatePasswordHashSql,
             new { id = account.Id, account.PasswordHash }, session.Transaction);
     }
 
     public async Task UpdateStatus(Account account)
     {
-        await session.Connection.ExecuteAsync(_updateStatusSql,
+        await session.Connection.ExecuteAsync(UpdateStatusSql,
             new { id = account.Id, statusId = account.Status.Id }, session.Transaction);
     }
 
-    private readonly string _getByIdSql =
+    private const string GetByIdSql =
         """
         SELECT account.id, account.email, account.phone, account.password_hash as passwordHash, 
                account.role_id, account.status_id, role.id, role.name, status.id, status.name
@@ -96,7 +96,7 @@ public class AccountRepository(
         LIMIT 1
         """;
 
-    private readonly string _getByEmailSql =
+    private const string GetByEmailSql =
         """
         SELECT account.id, account.email, account.phone, account.password_hash as passwordHash, 
                account.role_id, account.status_id, role.id, role.name, status.id, status.name 
@@ -107,20 +107,20 @@ public class AccountRepository(
         LIMIT 1
         """;
 
-    private readonly string _addSql =
+    private const string AddSql =
         """
         INSERT INTO account (id, role_id, status_id, email, phone, password_hash)
         VALUES (@id, @roleId, @statusId, @email, @phone, @passwordHash)
         """;
 
-    private readonly string _updatePasswordHashSql =
+    private const string UpdatePasswordHashSql =
         """
         UPDATE account 
         SET password_hash = @passwordHash 
         WHERE id = @id
         """;
 
-    private readonly string _updateStatusSql =
+    private const string UpdateStatusSql =
         """
         UPDATE account 
         SET status_id = @statusId 

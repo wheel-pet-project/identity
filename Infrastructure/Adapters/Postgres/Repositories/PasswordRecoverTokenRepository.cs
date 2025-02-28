@@ -11,7 +11,7 @@ public class PasswordRecoverTokenRepository(
 {
     public async Task Add(PasswordRecoverToken token)
     {
-        var command = new CommandDefinition(_addSql,
+        var command = new CommandDefinition(AddSql,
             new
             {
                 id = token.Id, accountId = token.AccountId, recoverTokenHash = token.RecoverTokenHash,
@@ -23,7 +23,7 @@ public class PasswordRecoverTokenRepository(
 
     public async Task<PasswordRecoverToken?> Get(Guid accountId)
     {
-        var command = new CommandDefinition(_getSql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(GetSql, new { accountId }, session.Transaction);
 
         return await retryPolicy.ExecuteAsync(() =>
             session.Connection.QuerySingleOrDefaultAsync<PasswordRecoverToken>(command));
@@ -31,19 +31,19 @@ public class PasswordRecoverTokenRepository(
 
     public async Task UpdateAppliedStatus(PasswordRecoverToken token)
     {
-        var command = new CommandDefinition(_updateAppliedStatusSql,
+        var command = new CommandDefinition(UpdateAppliedStatusSql,
             new { isAlreadyApplied = token.IsAlreadyApplied, accountId = token.AccountId }, session.Transaction);
 
         await session.Connection.ExecuteAsync(command);
     }
 
-    private readonly string _addSql =
+    private const string AddSql =
         """
         INSERT INTO password_recover_token (id, account_id, recover_token_hash, is_already_applied, expires_at)
         VALUES (@id, @accountId, @recoverTokenHash, @isAlreadyApplied, @expiresAt)
         """;
 
-    private readonly string _getSql =
+    private const string GetSql =
         """
         SELECT id, account_id AS accountId, recover_token_hash AS recoverTokenHash, 
                is_already_applied AS isAlreadyApplied, expires_at as ExpiresAt
@@ -52,7 +52,7 @@ public class PasswordRecoverTokenRepository(
         LIMIT 1
         """;
 
-    private readonly string _updateAppliedStatusSql =
+    private const string UpdateAppliedStatusSql =
         """
         UPDATE password_recover_token
         SET is_already_applied = @isAlreadyApplied

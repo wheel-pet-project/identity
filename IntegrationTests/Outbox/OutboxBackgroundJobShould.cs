@@ -26,7 +26,7 @@ FROM outbox";
         Account.Create(Role.Customer, "email@email.com", "+79007006050", new string('*', 60), Guid.NewGuid());
 
     [Fact]
-    public async Task CanReadAndCallMediatorPublishNotification()
+    public async Task CallMediatorPublishNotification()
     {
         // Arrange
         var uowAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
@@ -49,13 +49,13 @@ FROM outbox";
     }
 
     [Fact]
-    public async Task CanMarkEventsAsProcessed()
+    public async Task MarkEventsAsProcessed()
     {
         // Arrange
         var uowAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
         uowAndOutboxBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (_, uow, outbox) = uowAndOutboxBuilder.Build();
-
+        
         await uow.BeginTransaction();
         await outbox.PublishDomainEvents(_account);
         await uow.Commit();
@@ -74,7 +74,6 @@ FROM outbox";
         var eventModels = outboxEvents.AsList();
 
         Assert.True(eventModels.All(x => x.ProcessedOnUtc != null));
-        ;
     }
 
     private class OutboxBackgroundJobBuilder

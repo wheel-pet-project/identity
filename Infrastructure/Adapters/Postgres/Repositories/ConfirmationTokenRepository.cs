@@ -11,7 +11,7 @@ public class ConfirmationTokenRepository(
 {
     public async Task Add(ConfirmationToken confirmationToken)
     {
-        var createConfirmRecordCommand = new CommandDefinition(_addSql,
+        var createConfirmRecordCommand = new CommandDefinition(AddSql,
             new { confirmationToken.AccountId, confirmationToken.ConfirmationTokenHash }, session.Transaction);
 
         await session.Connection.ExecuteAsync(createConfirmRecordCommand);
@@ -19,7 +19,7 @@ public class ConfirmationTokenRepository(
 
     public async Task<ConfirmationToken?> Get(Guid accountId)
     {
-        var command = new CommandDefinition(_getSql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(GetSql, new { accountId }, session.Transaction);
 
         return await retryPolicy.ExecuteAsync(() =>
             session.Connection.QuerySingleOrDefaultAsync<ConfirmationToken>(command));
@@ -27,24 +27,24 @@ public class ConfirmationTokenRepository(
 
     public async Task Delete(Guid accountId)
     {
-        var command = new CommandDefinition(_deleteSql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(DeleteSql, new { accountId }, session.Transaction);
         await session.Connection.ExecuteAsync(command);
     }
 
-    private readonly string _addSql =
+    private const string AddSql =
         """
         INSERT INTO pending_confirmation_token (account_id, confirmation_token_hash)
         VALUES (@accountId, @confirmationTokenHash)
         """;
 
-    private readonly string _getSql =
+    private const string GetSql =
         """
         SELECT account_id as accountId, confirmation_token_hash as confirmationTokenHash
         FROM pending_confirmation_token
         WHERE account_id = @accountId
         """;
 
-    private readonly string _deleteSql =
+    private const string DeleteSql =
         """
         DELETE FROM pending_confirmation_token
         WHERE account_id = @accountId

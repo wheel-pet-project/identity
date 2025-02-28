@@ -3,7 +3,7 @@ using CSharpFunctionalExtensions;
 
 namespace Core.Domain.AccountAggregate;
 
-public class Role : Entity<int>
+public sealed class Role : Entity<int>
 {
     public static readonly Role Customer = new(1, nameof(Customer).ToLowerInvariant());
     public static readonly Role Admin = new(2, nameof(Admin).ToLowerInvariant());

@@ -1,5 +1,6 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -143,16 +144,20 @@ public class StatusShould
     }
 
     [Fact]
-    public void CanBeChangedToThisStatusWhenPotentialStatusIsEqualCurrentStatusMustReturnFalse()
+    public void PotentialStatusIsEqualCurrentStatusMustThrowDomainRulesViolationExceptionWithIsAlreadyInThisStateTrue()
     {
         // Arrange
         var pendingConfirmation = Status.PendingConfirmation;
 
         // Act
-        var result = pendingConfirmation.CanBeChangedToThisStatus(Status.PendingConfirmation);
+        void Act()
+        {
+            pendingConfirmation.CanBeChangedToThisStatus(Status.PendingConfirmation);
+        }
 
         // Assert
-        Assert.False(result);
+        var exception = Assert.Throws<DomainRulesViolationException>(Act);
+        Assert.True(exception.IsAlreadyInThisState);
     }
 
     [Fact]

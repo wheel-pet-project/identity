@@ -1,9 +1,10 @@
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using CSharpFunctionalExtensions;
 
 namespace Core.Domain.AccountAggregate;
 
-public class Status : Entity<int>
+public sealed class Status : Entity<int>
 {
     public static readonly Status Approved = new(1, nameof(Approved).ToLowerInvariant());
     public static readonly Status PendingConfirmation = new(2, nameof(PendingConfirmation).ToLowerInvariant());
@@ -29,7 +30,8 @@ public class Status : Entity<int>
         return potentialStatus switch
         {
             null => throw new ValueIsRequiredException($"{nameof(potentialStatus)} cannot be null"),
-            _ when this == potentialStatus => false,
+            _ when this == potentialStatus => throw new DomainRulesViolationException(
+                "account already has this status", isAlreadyInThisState: true),
             _ when this == PendingConfirmation && potentialStatus == PendingApproval => true,
             _ when this == PendingApproval && potentialStatus == Approved => true,
             _ when this == Approved && potentialStatus == Deactivated => true,

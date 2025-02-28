@@ -6,7 +6,7 @@ using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 
 namespace Core.Domain.AccountAggregate;
 
-public class Account : Aggregate
+public sealed class Account : Aggregate
 {
     private Account()
     {

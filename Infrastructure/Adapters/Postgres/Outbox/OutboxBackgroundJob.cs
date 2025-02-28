@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Data.Common;
 using Core.Domain.SharedKernel;
+using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
@@ -23,44 +25,71 @@ public class OutboxBackgroundJob(
         ContractResolver = new PrivateSetterContractResolver()
     };
 
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(IJobExecutionContext jobExecutionContext)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
-
-        var outboxEventsSequence = await connection.QueryAsync<OutboxEvent>(_querySql);
-
-        var events = outboxEventsSequence.AsList().AsReadOnly();
-        if (events.Count > 0)
+        var outboxEvents = (await connection.QueryAsync<OutboxEvent>(QuerySql)).AsList().AsReadOnly();
+        
+        if (outboxEvents.Count > 0)
         {
+            var updateQueue = new ConcurrentQueue<Guid>();
+
+            var domainEvents = outboxEvents
+                .Select(ev => JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
+                .OfType<DomainEvent>()
+                .AsList()
+                .AsReadOnly();
+
+            var publishTasks = domainEvents
+                .Select(domainEvent => PublishToMediatr(domainEvent, updateQueue, 
+                    jobExecutionContext.CancellationToken))
+                .ToList()
+                .AsReadOnly();
+            
+            await Task.WhenAll(publishTasks);
+            
+            var updateList = updateQueue.ToList();
+            var paramNames = string.Join(",", updateList.Select((_, i) => $"(@EventId{i}, @ProcessedOnUtc{i})"));
+            var formattedSql = string.Format(UpdateSql, paramNames);
+
+            var processedTime = DateTime.UtcNow;
+            var parameters = new DynamicParameters();
+            for (var i = 0; i < updateList.Count; i++)
+            {
+                parameters.Add($"EventId{i}", updateList[i]);
+                parameters.Add($"ProcessedOnUtc{i}", processedTime);
+            }
+            
             await using var transaction = await connection.BeginTransactionAsync();
+            await connection.ExecuteAsync(formattedSql, parameters, transaction);
+            
+            await transaction.CommitAsync();
+        }
+
+        return;
+
+        async Task PublishToMediatr(
+            DomainEvent @event,
+            ConcurrentQueue<Guid> updateQueue,
+            CancellationToken cancellationToken)
+        {
             try
             {
-                foreach (var domainEvent in events.Select(ev =>
-                                 JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
-                             .OfType<DomainEvent>()
-                             .AsList()
-                             .AsReadOnly())
-                {
-                    await mediator.Publish(domainEvent, context.CancellationToken);
-
-                    var command = new CommandDefinition(_markAsProcessedSql,
-                        new { ProcessedOnUtc = DateTime.UtcNow, domainEvent.EventId },
-                        transaction);
-
-                    await connection.ExecuteAsync(command);
-                }
-
-                await transaction.CommitAsync();
+                await mediator.Publish(@event, cancellationToken);
+                updateQueue.Enqueue(@event.EventId);
+            }
+            catch (DomainRulesViolationException e) when(e is { IsAlreadyInThisState: true })
+            {
+                updateQueue.Enqueue(@event.EventId);
             }
             catch (Exception e)
             {
-                logger.LogError("Failed of processing outbox events and save updates, exception: {e}", e);
-                await transaction.RollbackAsync();
+                logger.LogError("Failed of processing outbox events and save update, exception: {e}", e);
             }
         }
     }
 
-    private readonly string _querySql =
+    private const string QuerySql =
         """
         SELECT event_id AS EventId, 
                type AS Type, 
@@ -74,10 +103,12 @@ public class OutboxBackgroundJob(
         FOR UPDATE SKIP LOCKED 
         """;
 
-    private readonly string _markAsProcessedSql =
+    private const string UpdateSql =
         """
         UPDATE outbox
-        SET processed_on_utc = @ProcessedOnUtc
-        WHERE event_id = @EventId
+        SET processed_on_utc = new.processed_on_utc
+        FROM (VALUES 
+            {0}) AS new(event_id, processed_on_utc)
+        WHERE outbox.event_id = new.event_id::uuid
         """;
 }
