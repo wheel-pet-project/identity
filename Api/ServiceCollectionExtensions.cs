@@ -158,14 +158,25 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection RegisterMassTransit(this IServiceCollection services)
     {
+        const string accountCreatedTopicName = "account-created-topic";
+        const string passwordRecoverTokenCreatedTopicName = "password-recover-token-created-topic";
+        
+        services.Configure<KafkaTopicsConfiguration>(config =>
+        {
+            config.AccountCreatedTopic = accountCreatedTopicName;
+            config.PasswordRecoverTokenCreatedTopic = passwordRecoverTokenCreatedTopicName;
+        });
+
+        services.AddTransient<IMessageBus, KafkaProducer>();
+        
         services.AddMassTransit(x =>
         {
             x.UsingInMemory();
 
             x.AddRider(rider =>
             {
-                rider.AddProducer<string, AccountCreated>("account-created-topic");
-                rider.AddProducer<string, PasswordRecoverTokenCreated>("password-recover-token-created-topic");
+                rider.AddProducer<string, AccountCreated>(accountCreatedTopicName);
+                rider.AddProducer<string, PasswordRecoverTokenCreated>(passwordRecoverTokenCreatedTopicName);
 
                 rider.UsingKafka((_, k) =>
                     k.Host(Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS")!.Split("__")));
