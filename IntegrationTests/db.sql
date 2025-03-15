@@ -55,6 +55,11 @@ CREATE TABLE outbox
     processed_on_utc timestamp with time zone
 );
 
+CREATE INDEX IF NOT EXISTS IX_outbox_messages_unprocessed
+    ON outbox (occurred_on_utc, processed_on_utc)
+    INCLUDE (event_id, type)
+    WHERE processed_on_utc IS NULL;
+
 INSERT INTO role (id, name)
 VALUES (1, 'customer'),
        (2, 'admin'),
