@@ -15,12 +15,12 @@ public class RecoverAccountPasswordHandler(
     IOutbox outbox,
     IHasher hasher,
     TimeProvider timeProvider)
-    : IRequestHandler<RecoverAccountPasswordRequest, Result>
+    : IRequestHandler<RecoverAccountPasswordCommand, Result>
 {
-    public async Task<Result> Handle(RecoverAccountPasswordRequest request, CancellationToken _)
+    public async Task<Result> Handle(RecoverAccountPasswordCommand command, CancellationToken _)
     {
-        var account = await accountRepository.GetByEmail(request.Email);
-        if (account == null) return Result.Fail(new NotFound($"account with this {nameof(request.Email)} not found"));
+        var account = await accountRepository.GetByEmail(command.Email);
+        if (account == null) return Result.Fail(new NotFound($"account with this {nameof(command.Email)} not found"));
 
         var recoverToken = Guid.NewGuid();
         var passwordRecoverToken = PasswordRecoverToken.Create(account, recoverToken,

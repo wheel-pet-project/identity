@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Core.Application.UseCases.RefreshAccessToken;
 
-public record RefreshAccountAccessTokenRequest(string RefreshToken)
+public record RefreshAccountAccessTokenCommand(string RefreshToken)
     : IRequest<Result<RefreshAccountAccessTokenResponse>>;

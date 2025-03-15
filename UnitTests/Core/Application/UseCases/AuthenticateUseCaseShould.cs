@@ -13,7 +13,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class AuthenticateUseCaseShould
 {
-    private readonly AuthenticateAccountRequest _request = new("test@test.com", "somepassword");
+    private readonly AuthenticateAccountCommand _command = new("test@test.com", "somepassword");
     private const string ExpectedJwtAccessToken = "jwt_access_token";
     private const string ExpectedJwtRefreshToken = "jwt_refresh_token";
 
@@ -35,7 +35,7 @@ public class AuthenticateUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -54,7 +54,7 @@ public class AuthenticateUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -78,7 +78,7 @@ public class AuthenticateUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -98,7 +98,7 @@ public class AuthenticateUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -123,7 +123,7 @@ public class AuthenticateUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

@@ -3,6 +3,6 @@ using MediatR;
 
 namespace Core.Application.UseCases.ConfirmEmail;
 
-public record ConfirmAccountEmailRequest(
+public record ConfirmAccountEmailCommand(
     Guid AccountId,
     Guid ConfirmationToken) : IRequest<Result>;

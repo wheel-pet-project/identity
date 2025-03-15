@@ -14,17 +14,17 @@ public class ConfirmAccountEmailHandler(
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
     IHasher hasher)
-    : IRequestHandler<ConfirmAccountEmailRequest, Result>
+    : IRequestHandler<ConfirmAccountEmailCommand, Result>
 {
-    public async Task<Result> Handle(ConfirmAccountEmailRequest request, CancellationToken _)
+    public async Task<Result> Handle(ConfirmAccountEmailCommand command, CancellationToken _)
     {
-        var confirmationToken = await confirmationTokenRepository.Get(request.AccountId);
+        var confirmationToken = await confirmationTokenRepository.Get(command.AccountId);
         if (confirmationToken is null) return Result.Fail(new NotFound("Confirmation token not found"));
 
-        if (!hasher.VerifyHash(request.ConfirmationToken.ToString(), confirmationToken.ConfirmationTokenHash))
+        if (!hasher.VerifyHash(command.ConfirmationToken.ToString(), confirmationToken.ConfirmationTokenHash))
             return Result.Fail("Invalid confirmation token");
 
-        var account = await accountRepository.GetById(request.AccountId);
+        var account = await accountRepository.GetById(command.AccountId);
         if (account is null)
             throw new DataConsistencyViolationException(
                 "Data consistency violation: account that couldn't be found has been confirmed");
@@ -32,7 +32,7 @@ public class ConfirmAccountEmailHandler(
         account.SetStatus(Status.PendingApproval);
 
         await unitOfWork.BeginTransaction();
-        await confirmationTokenRepository.Delete(request.AccountId);
+        await confirmationTokenRepository.Delete(command.AccountId);
         await accountRepository.UpdateStatus(account);
 
         return await unitOfWork.Commit();

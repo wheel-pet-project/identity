@@ -1,5 +1,4 @@
 using Core.Domain.ConfirmationTokenAggregate;
-using Core.Domain.Services;
 using Core.Domain.Services.CreateAccountService;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
@@ -16,14 +15,14 @@ public class CreateAccountHandler(
     IUnitOfWork unitOfWork,
     IOutbox outbox,
     IHasher hasher)
-    : IRequestHandler<CreateAccountRequest, Result<CreateAccountResponse>>
+    : IRequestHandler<CreateAccountCommand, Result<CreateAccountResponse>>
 {
-    public async Task<Result<CreateAccountResponse>> Handle(CreateAccountRequest request, CancellationToken _)
+    public async Task<Result<CreateAccountResponse>> Handle(CreateAccountCommand command, CancellationToken _)
     {
         var confirmationTokenGuid = Guid.NewGuid();
 
-        var creatingAccountResult = await createAccountService.CreateUser(request.Role, request.Email, request.Phone,
-            request.Password, confirmationTokenGuid);
+        var creatingAccountResult = await createAccountService.CreateUser(command.Role, command.Email, command.Phone,
+            command.Password, confirmationTokenGuid);
         if (creatingAccountResult.IsFailed) return Result.Fail(creatingAccountResult.Errors);
         var account = creatingAccountResult.Value;
 

@@ -1,5 +1,4 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.PasswordRecoverTokenAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using JetBrains.Annotations;

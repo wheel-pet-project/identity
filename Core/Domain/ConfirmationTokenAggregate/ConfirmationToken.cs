@@ -1,4 +1,3 @@
-using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 
 namespace Core.Domain.ConfirmationTokenAggregate;

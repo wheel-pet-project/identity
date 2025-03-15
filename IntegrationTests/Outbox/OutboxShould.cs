@@ -1,5 +1,4 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.ConfirmationTokenAggregate;
 using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
 using Dapper;

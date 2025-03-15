@@ -15,13 +15,13 @@ public class RefreshAccountAccessTokenHandler(
     IJwtProvider jwtProvider,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider)
-    : IRequestHandler<RefreshAccountAccessTokenRequest, Result<RefreshAccountAccessTokenResponse>>
+    : IRequestHandler<RefreshAccountAccessTokenCommand, Result<RefreshAccountAccessTokenResponse>>
 {
     public async Task<Result<RefreshAccountAccessTokenResponse>> Handle(
-        RefreshAccountAccessTokenRequest request,
+        RefreshAccountAccessTokenCommand command,
         CancellationToken _)
     {
-        var refreshTokenVerifyingResult = await jwtProvider.VerifyJwtRefreshToken(request.RefreshToken);
+        var refreshTokenVerifyingResult = await jwtProvider.VerifyJwtRefreshToken(command.RefreshToken);
         if (refreshTokenVerifyingResult.IsFailed) return Result.Fail(refreshTokenVerifyingResult.Errors);
         var refreshTokenId = refreshTokenVerifyingResult.Value;
 

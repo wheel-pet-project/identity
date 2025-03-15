@@ -13,8 +13,6 @@ public class UpdateAccountPasswordServiceShould
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
 
-    private readonly Mock<Account> _accountMock = new();
-
     [Fact]
     public void ReturnSuccessWhenValidationReturnSuccess()
     {

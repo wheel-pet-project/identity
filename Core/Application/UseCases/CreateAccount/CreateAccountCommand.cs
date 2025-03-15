@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Core.Application.UseCases.CreateAccount;
 
-public record CreateAccountRequest(
+public record CreateAccountCommand(
     Role Role,
     string Email,
     string Phone,

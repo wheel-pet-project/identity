@@ -13,7 +13,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class ConfirmEmailUseCaseShould
 {
-    private readonly ConfirmAccountEmailRequest _request = new(
+    private readonly ConfirmAccountEmailCommand _command = new(
         Guid.NewGuid(),
         Guid.NewGuid());
 
@@ -34,7 +34,7 @@ public class ConfirmEmailUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -54,7 +54,7 @@ public class ConfirmEmailUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -74,7 +74,7 @@ public class ConfirmEmailUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -96,7 +96,7 @@ public class ConfirmEmailUseCaseShould
         // Act
         async Task Act()
         {
-            await useCase.Handle(_request, default);
+            await useCase.Handle(_command, default);
         }
 
         // Assert
@@ -118,7 +118,7 @@ public class ConfirmEmailUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

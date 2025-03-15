@@ -3,6 +3,6 @@ using MediatR;
 
 namespace Core.Application.UseCases.Authenticate;
 
-public record AuthenticateAccountRequest(
+public record AuthenticateAccountCommand(
     string Email,
     string Password) : IRequest<Result<AuthenticateAccountResponse>>;

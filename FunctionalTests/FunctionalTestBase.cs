@@ -1,5 +1,3 @@
-using Testcontainers.Kafka;
-using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace FunctionalTests;

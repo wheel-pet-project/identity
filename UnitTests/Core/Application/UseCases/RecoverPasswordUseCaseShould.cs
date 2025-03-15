@@ -11,7 +11,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class RecoverPasswordUseCaseShould
 {
-    private readonly RecoverAccountPasswordRequest _request = new("email@email.com");
+    private readonly RecoverAccountPasswordCommand _command = new("email@email.com");
 
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
@@ -27,7 +27,7 @@ public class RecoverPasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -42,7 +42,7 @@ public class RecoverPasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -63,7 +63,7 @@ public class RecoverPasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

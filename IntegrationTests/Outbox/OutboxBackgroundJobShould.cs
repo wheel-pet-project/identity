@@ -1,6 +1,4 @@
-using System.Collections.Immutable;
 using Core.Domain.AccountAggregate;
-using Core.Domain.ConfirmationTokenAggregate;
 using Core.Ports.Postgres;
 using Dapper;
 using Infrastructure.Adapters.Postgres;
@@ -9,7 +7,6 @@ using Infrastructure.Settings;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Newtonsoft.Json;
 using Npgsql;
 using Quartz;
 using Xunit;
@@ -55,7 +52,7 @@ FROM outbox";
         var uowAndOutboxBuilder = new UnitOfWorkAndOutboxBuilder();
         uowAndOutboxBuilder.ConfigureConnection(PostgreSqlContainer.GetConnectionString());
         var (_, uow, outbox) = uowAndOutboxBuilder.Build();
-        
+
         await uow.BeginTransaction();
         await outbox.PublishDomainEvents(_account);
         await uow.Commit();

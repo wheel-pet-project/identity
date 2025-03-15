@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Core.Application.UseCases.RecoverPassword;
 
-public record RecoverAccountPasswordRequest(string Email) : IRequest<Result>;
+public record RecoverAccountPasswordCommand(string Email) : IRequest<Result>;

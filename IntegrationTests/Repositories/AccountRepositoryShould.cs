@@ -1,5 +1,4 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using Infrastructure.Adapters.Postgres;

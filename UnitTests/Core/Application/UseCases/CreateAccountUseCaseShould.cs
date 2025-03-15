@@ -1,6 +1,5 @@
 using Core.Application.UseCases.CreateAccount;
 using Core.Domain.AccountAggregate;
-using Core.Domain.Services;
 using Core.Domain.Services.CreateAccountService;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
@@ -13,7 +12,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class CreateAccountUseCaseShould
 {
-    private readonly CreateAccountRequest _request = new(Role.Customer, "test@test.com", "+79008007060",
+    private readonly CreateAccountCommand _command = new(Role.Customer, "test@test.com", "+79008007060",
         "somepassword");
 
     private readonly Account _account =
@@ -30,7 +29,7 @@ public class CreateAccountUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -49,7 +48,7 @@ public class CreateAccountUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -69,7 +68,7 @@ public class CreateAccountUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

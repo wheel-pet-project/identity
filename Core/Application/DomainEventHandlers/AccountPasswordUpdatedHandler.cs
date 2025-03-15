@@ -1,6 +1,4 @@
-using System.Data.Common;
 using Core.Domain.AccountAggregate.DomainEvents;
-using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using MediatR;
 

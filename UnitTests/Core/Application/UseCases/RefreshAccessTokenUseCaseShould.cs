@@ -13,7 +13,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class RefreshAccessTokenUseCaseShould
 {
-    private readonly RefreshAccountAccessTokenRequest _request = new("jwt_refresh_token");
+    private readonly RefreshAccountAccessTokenCommand _command = new("jwt_refresh_token");
     private const string ExpectedJwtAccessToken = "new_jwt_access_token";
     private const string ExpectedJwtRefreshToken = "new_jwt_refresh_token";
 
@@ -38,7 +38,7 @@ public class RefreshAccessTokenUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -58,7 +58,7 @@ public class RefreshAccessTokenUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -76,7 +76,7 @@ public class RefreshAccessTokenUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -99,7 +99,7 @@ public class RefreshAccessTokenUseCaseShould
         // Act
         async Task Act()
         {
-            await useCase.Handle(_request, default);
+            await useCase.Handle(_command, default);
         }
 
         // Assert
@@ -120,7 +120,7 @@ public class RefreshAccessTokenUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -145,7 +145,7 @@ public class RefreshAccessTokenUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

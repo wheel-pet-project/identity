@@ -8,7 +8,7 @@ namespace UnitTests.Core.Application.UseCases;
 
 public class AuthorizeUseCaseShould
 {
-    private readonly AuthorizeAccountRequest _request = new("jwt_access_token");
+    private readonly AuthorizeAccountCommand _command = new("jwt_access_token");
 
     [Fact]
     public async Task ReturnSuccessResultForCorrectRequest()
@@ -19,7 +19,7 @@ public class AuthorizeUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -36,7 +36,7 @@ public class AuthorizeUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

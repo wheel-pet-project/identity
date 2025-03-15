@@ -32,7 +32,7 @@ public class RefreshTokenRepository(
         var command = new CommandDefinition(GetNotRevokedTokensByAccountIdSql, new { accountId }, session.Transaction);
         var tokens =
             (await retryPolicy.ExecuteAsync(() => session.Connection.QueryAsync<RefreshToken>(command))).AsList();
-        
+
         return tokens;
     }
 

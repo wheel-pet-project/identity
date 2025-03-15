@@ -16,7 +16,6 @@ using Infrastructure.Hasher;
 using Infrastructure.JwtProvider;
 using Infrastructure.Settings;
 using MassTransit;
-using MediatR;
 using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -206,7 +205,7 @@ public static class ServiceCollectionExtensions
             .WithTracing(builder =>
             {
                 builder
-                    .AddGrpcClientInstrumentation()
+                    .AddGrpcCoreInstrumentation()
                     .AddAspNetCoreInstrumentation()
                     .AddNpgsql()
                     .SetResourceBuilder(ResourceBuilder.CreateDefault()

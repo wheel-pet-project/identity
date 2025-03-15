@@ -16,11 +16,11 @@ public class UpdateAccountPasswordHandler(
     IHasher hasher,
     IMediator mediator,
     TimeProvider timeProvider)
-    : IRequestHandler<UpdateAccountPasswordRequest, Result>
+    : IRequestHandler<UpdateAccountPasswordCommand, Result>
 {
-    public async Task<Result> Handle(UpdateAccountPasswordRequest request, CancellationToken _)
+    public async Task<Result> Handle(UpdateAccountPasswordCommand command, CancellationToken _)
     {
-        var account = await accountRepository.GetByEmail(request.Email);
+        var account = await accountRepository.GetByEmail(command.Email);
         if (account == null) return Result.Fail(new NotFound("Account not found"));
 
         var passwordRecoverToken = await passwordRecoverTokenRepository.Get(account.Id);
@@ -28,11 +28,11 @@ public class UpdateAccountPasswordHandler(
 
         if (!passwordRecoverToken.IsValid(timeProvider))
             return Result.Fail("Password recver token has expired or already applied");
-        if (!hasher.VerifyHash(request.RecoverToken.ToString(), passwordRecoverToken.RecoverTokenHash))
+        if (!hasher.VerifyHash(command.RecoverToken.ToString(), passwordRecoverToken.RecoverTokenHash))
             return Result.Fail("Invalid reset password token");
 
         passwordRecoverToken.Apply();
-        updateAccountPasswordService.UpdatePassword(account, request.NewPassword);
+        updateAccountPasswordService.UpdatePassword(account, command.NewPassword);
         foreach (var @event in account.DomainEvents) await mediator.Publish(@event, _);
 
         await unitOfWork.BeginTransaction();

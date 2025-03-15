@@ -1,3 +1,4 @@
+using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using CSharpFunctionalExtensions;
@@ -30,8 +31,8 @@ public sealed class Status : Entity<int>
         return potentialStatus switch
         {
             null => throw new ValueIsRequiredException($"{nameof(potentialStatus)} cannot be null"),
-            _ when this == potentialStatus => throw new DomainRulesViolationException(
-                "account already has this status", isAlreadyInThisState: true),
+            _ when this == potentialStatus => throw new AlreadyHaveThisStateException(
+                "account already have this status"),
             _ when this == PendingConfirmation && potentialStatus == PendingApproval => true,
             _ when this == PendingApproval && potentialStatus == Approved => true,
             _ when this == Approved && potentialStatus == Deactivated => true,

@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Core.Domain.SharedKernel;
 using Core.Ports.Postgres;
 using Dapper;

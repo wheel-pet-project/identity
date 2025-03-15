@@ -17,7 +17,7 @@ public class UpdatePasswordUseCaseShould
     private readonly Account _account =
         Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
 
-    private readonly UpdateAccountPasswordRequest _request = new("newpassword", "test@test.com",
+    private readonly UpdateAccountPasswordCommand _command = new("newpassword", "test@test.com",
         Guid.NewGuid());
 
     private readonly TimeProvider _timeProvider = TimeProvider.System;
@@ -38,7 +38,7 @@ public class UpdatePasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -57,7 +57,7 @@ public class UpdatePasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -79,7 +79,7 @@ public class UpdatePasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -101,7 +101,7 @@ public class UpdatePasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);
@@ -124,7 +124,7 @@ public class UpdatePasswordUseCaseShould
         var useCase = useCaseBuilder.Build();
 
         // Act
-        var result = await useCase.Handle(_request, default);
+        var result = await useCase.Handle(_command, default);
 
         // Assert
         Assert.True(result.IsFailed);

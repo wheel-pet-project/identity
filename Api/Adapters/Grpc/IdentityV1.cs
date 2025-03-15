@@ -21,7 +21,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         CreateRequest request,
         ServerCallContext context)
     {
-        var createAccountRequest = new CreateAccountRequest(
+        var createAccountRequest = new CreateAccountCommand(
             mapper.RoleFromRequest(request.Role),
             request.Email,
             request.Phone,
@@ -38,7 +38,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         ConfirmEmailRequest request,
         ServerCallContext context)
     {
-        var confirmEmailRequest = new ConfirmAccountEmailRequest(
+        var confirmEmailRequest = new ConfirmAccountEmailCommand(
             Guid.Parse(request.AccId),
             Guid.Parse(request.ConfirmationTkn));
 
@@ -53,7 +53,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         AuthenticateRequest request,
         ServerCallContext context)
     {
-        var authenticateRequest = new AuthenticateAccountRequest(request.Email, request.Pass);
+        var authenticateRequest = new AuthenticateAccountCommand(request.Email, request.Pass);
 
         var result = await mediator.Send(authenticateRequest, context.CancellationToken);
 
@@ -66,7 +66,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         AuthorizeRequest request,
         ServerCallContext context)
     {
-        var authorizeRequest = new AuthorizeAccountRequest(request.Tkn);
+        var authorizeRequest = new AuthorizeAccountCommand(request.Tkn);
 
         var result = await mediator.Send(authorizeRequest, context.CancellationToken);
 
@@ -85,7 +85,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         ServerCallContext context)
     {
         var refreshAccessTokenRequest =
-            new RefreshAccountAccessTokenRequest(request.RefreshTkn);
+            new RefreshAccountAccessTokenCommand(request.RefreshTkn);
 
         var result = await mediator.Send(refreshAccessTokenRequest, context.CancellationToken);
 
@@ -102,7 +102,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         RecoverPasswordRequest request,
         ServerCallContext context)
     {
-        var recoverPasswordRequest = new RecoverAccountPasswordRequest(request.Email);
+        var recoverPasswordRequest = new RecoverAccountPasswordCommand(request.Email);
 
         var result = await mediator.Send(recoverPasswordRequest, context.CancellationToken);
 
@@ -115,7 +115,7 @@ public class IdentityV1(IMediator mediator, Mapper.Mapper mapper)
         UpdatePasswordRequest request,
         ServerCallContext context)
     {
-        var updatePasswordRequest = new UpdateAccountPasswordRequest(
+        var updatePasswordRequest = new UpdateAccountPasswordCommand(
             request.NewPass,
             request.Email,
             Guid.Parse(request.ResetTkn));

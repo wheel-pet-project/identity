@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using System.Data.Common;
 using Core.Domain.SharedKernel;
+using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
 using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using Dapper;
 using JsonNet.ContractResolvers;
@@ -28,8 +28,9 @@ public class OutboxBackgroundJob(
     public async Task Execute(IJobExecutionContext jobExecutionContext)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
-        var outboxEvents = (await connection.QueryAsync<OutboxEvent>(QuerySql)).AsList().AsReadOnly();
-        
+        await using var transaction = await connection.BeginTransactionAsync();
+        var outboxEvents = (await connection.QueryAsync<OutboxEvent>(QuerySql, transaction)).AsList().AsReadOnly();
+
         if (outboxEvents.Count > 0)
         {
             var updateQueue = new ConcurrentQueue<Guid>();
@@ -41,13 +42,13 @@ public class OutboxBackgroundJob(
                 .AsReadOnly();
 
             var publishTasks = domainEvents
-                .Select(domainEvent => PublishToMediatr(domainEvent, updateQueue, 
+                .Select(domainEvent => PublishToMediator(domainEvent, updateQueue,
                     jobExecutionContext.CancellationToken))
                 .ToList()
                 .AsReadOnly();
-            
+
             await Task.WhenAll(publishTasks);
-            
+
             var updateList = updateQueue.ToList();
             var paramNames = string.Join(",", updateList.Select((_, i) => $"(@EventId{i}, @ProcessedOnUtc{i})"));
             var formattedSql = string.Format(UpdateSql, paramNames);
@@ -59,16 +60,15 @@ public class OutboxBackgroundJob(
                 parameters.Add($"EventId{i}", updateList[i]);
                 parameters.Add($"ProcessedOnUtc{i}", processedTime);
             }
-            
-            await using var transaction = await connection.BeginTransactionAsync();
+
             await connection.ExecuteAsync(formattedSql, parameters, transaction);
-            
+
             await transaction.CommitAsync();
         }
 
         return;
 
-        async Task PublishToMediatr(
+        async Task PublishToMediator(
             DomainEvent @event,
             ConcurrentQueue<Guid> updateQueue,
             CancellationToken cancellationToken)
@@ -78,7 +78,7 @@ public class OutboxBackgroundJob(
                 await mediator.Publish(@event, cancellationToken);
                 updateQueue.Enqueue(@event.EventId);
             }
-            catch (DomainRulesViolationException e) when(e is { IsAlreadyInThisState: true })
+            catch (AlreadyHaveThisStateException)
             {
                 updateQueue.Enqueue(@event.EventId);
             }
@@ -92,10 +92,7 @@ public class OutboxBackgroundJob(
     private const string QuerySql =
         """
         SELECT event_id AS EventId, 
-               type AS Type, 
-               content AS Content, 
-               occurred_on_utc AS OccurredOnUtc, 
-               processed_on_utc AS ProcessedOnUtc
+               content AS Content
         FROM outbox
         WHERE processed_on_utc IS NULL
         ORDER BY occurred_on_utc

@@ -1,4 +1,5 @@
 using Core.Domain.AccountAggregate;
+using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
 using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using JetBrains.Annotations;
@@ -144,7 +145,7 @@ public class StatusShould
     }
 
     [Fact]
-    public void PotentialStatusIsEqualCurrentStatusMustThrowDomainRulesViolationExceptionWithIsAlreadyInThisStateTrue()
+    public void PotentialStatusIsEqualCurrentStatusMustThrowAlreadyHaveThisStateException()
     {
         // Arrange
         var pendingConfirmation = Status.PendingConfirmation;
@@ -156,8 +157,7 @@ public class StatusShould
         }
 
         // Assert
-        var exception = Assert.Throws<DomainRulesViolationException>(Act);
-        Assert.True(exception.IsAlreadyInThisState);
+        Assert.Throws<AlreadyHaveThisStateException>(Act);
     }
 
     [Fact]
