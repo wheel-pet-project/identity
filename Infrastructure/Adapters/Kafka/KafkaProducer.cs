@@ -13,11 +13,12 @@ public class KafkaProducer(
     : IMessageBus
 {
     private readonly KafkaTopicsConfiguration _configuration = kafkaTopicsConfiguration.Value;
+
     public async Task Publish(AccountCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         var producer = topicProducerProvider.GetProducer<string, AccountCreated>(
             new Uri($"topic:{_configuration.AccountCreatedTopic}"));
-        
+
         await producer.Produce(domainEvent.EventId.ToString(),
             new AccountCreated(domainEvent.EventId, domainEvent.AccountId, domainEvent.Email, domainEvent.Phone,
                 "someurl:" + domainEvent.ConfirmationToken),
@@ -29,7 +30,7 @@ public class KafkaProducer(
     {
         var producer = topicProducerProvider.GetProducer<string, PasswordRecoverTokenCreated>(
             new Uri($"topic:{_configuration.PasswordRecoverTokenCreatedTopic}"));
-        
+
         await producer.Produce(domainEvent.EventId.ToString(),
             new PasswordRecoverTokenCreated(domainEvent.EventId, domainEvent.AccountId,
                 "someurl:" + domainEvent.RecoverToken),

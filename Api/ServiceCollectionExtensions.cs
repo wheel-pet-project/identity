@@ -160,7 +160,7 @@ public static class ServiceCollectionExtensions
     {
         const string accountCreatedTopicName = "account-created-topic";
         const string passwordRecoverTokenCreatedTopicName = "password-recover-token-created-topic";
-        
+
         services.Configure<KafkaTopicsConfiguration>(config =>
         {
             config.AccountCreatedTopic = accountCreatedTopicName;
@@ -168,7 +168,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddTransient<IMessageBus, KafkaProducer>();
-        
+
         services.AddMassTransit(x =>
         {
             x.UsingInMemory();

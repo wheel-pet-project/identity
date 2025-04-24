@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Core.Domain.SharedKernel;
 using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
 using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
@@ -33,7 +32,7 @@ public class OutboxBackgroundJob(
 
         if (outboxEvents.Count > 0)
         {
-            var updateQueue = new ConcurrentQueue<Guid>();
+            var updateQueue = new ConcurrentQueue<EventUpdate>();
 
             var domainEvents = outboxEvents
                 .Select(ev => JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
@@ -49,17 +48,9 @@ public class OutboxBackgroundJob(
 
             await Task.WhenAll(publishTasks);
 
-            var updateList = updateQueue.ToList();
-            var paramNames = string.Join(",", updateList.Select((_, i) => $"(@EventId{i}, @ProcessedOnUtc{i})"));
-            var formattedSql = string.Format(UpdateSql, paramNames);
-
-            var processedTime = DateTime.UtcNow;
-            var parameters = new DynamicParameters();
-            for (var i = 0; i < updateList.Count; i++)
-            {
-                parameters.Add($"EventId{i}", updateList[i]);
-                parameters.Add($"ProcessedOnUtc{i}", processedTime);
-            }
+            var updates = updateQueue.ToList();
+            var formattedSql = FormatSql(updates);
+            var parameters = GenerateDynamicParameters(updates);
 
             await connection.ExecuteAsync(formattedSql, parameters, transaction);
 
@@ -70,23 +61,50 @@ public class OutboxBackgroundJob(
 
         async Task PublishToMediator(
             DomainEvent @event,
-            ConcurrentQueue<Guid> updateQueue,
+            ConcurrentQueue<EventUpdate> updateQueue,
             CancellationToken cancellationToken)
         {
             try
             {
                 await mediator.Publish(@event, cancellationToken);
-                updateQueue.Enqueue(@event.EventId);
+                updateQueue.Enqueue(new EventUpdate(@event.EventId, DateTime.UtcNow));
             }
             catch (AlreadyHaveThisStateException)
             {
-                updateQueue.Enqueue(@event.EventId);
+                updateQueue.Enqueue(new EventUpdate(@event.EventId, DateTime.UtcNow));
             }
             catch (Exception e)
             {
+                updateQueue.Enqueue(new EventUpdate(@event.EventId));
                 logger.LogError("Failed of processing outbox events and save update, exception: {e}", e);
             }
         }
+    }
+    
+    private string FormatSql(List<EventUpdate> updates)
+    {
+        var paramNames = string.Join(",", updates.Select((_, i) => $"(@EventId{i}, @ProcessedOnUtc{i})"));
+        var formattedSql = string.Format(UpdateSql, paramNames);
+        
+        return formattedSql;
+    }
+
+    private DynamicParameters GenerateDynamicParameters(List<EventUpdate> updates)
+    {
+        var parameters = new DynamicParameters();
+        for (var i = 0; i < updates.Count; i++)
+        {
+            parameters.Add($"EventId{i}", updates[i].EventId);
+            parameters.Add($"ProcessedOnUtc{i}", updates[i].ProcessedOnUtc);
+        }
+        
+        return parameters;
+    }
+
+    private class EventUpdate(Guid eventId, DateTime? processedOnUtc = null)
+    {
+        public Guid EventId { get; } = eventId;
+        public DateTime? ProcessedOnUtc { get; } = processedOnUtc;
     }
 
     private const string QuerySql =
