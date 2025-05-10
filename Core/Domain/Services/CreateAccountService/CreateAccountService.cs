@@ -1,6 +1,6 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Errors;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres.Repositories;
 using FluentResults;
@@ -27,7 +27,6 @@ public class CreateAccountService(
             throw new ValueOutOfRangeException($"{nameof(password)} must be at between 6 and 30 characters long");
 
         var passwordHash = hasher.GenerateHash(password);
-
         var account = Account.Create(role, email, phone, passwordHash, confirmationTokenGuid);
 
         return Result.Ok(account);

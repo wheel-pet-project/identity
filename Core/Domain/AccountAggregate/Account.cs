@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Core.Domain.AccountAggregate.DomainEvents;
 using Core.Domain.SharedKernel;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 
 namespace Core.Domain.AccountAggregate;
 
@@ -24,23 +24,35 @@ public sealed class Account : Aggregate
     }
 
 
-    public Guid Id { get; private set; }
+    public Guid Id { get; }
     public Role Role { get; private set; } = null!;
     public string Email { get; private set; } = null!;
     public string Phone { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
     public Status Status { get; private set; } = null!;
 
-
-    public void SetStatus(Status potentialStatus)
+    public void Confirm()
     {
-        if (!Status.All().Contains(potentialStatus))
-            throw new ValueOutOfRangeException($"{nameof(potentialStatus)} cannot unsupported be null");
-        // TODO: вынести проверку сверху в метод CanBeChangedToThisStatus
-        if (!Status.CanBeChangedToThisStatus(potentialStatus))
-            throw new DomainRulesViolationException($"{nameof(potentialStatus)} cannot be set to this account");
+        if (!Status.CanBeChangedToThisStatus(Status.Confirmed))
+            throw new DomainRulesViolationException("Account cannot be approved");
 
-        Status = potentialStatus;
+        Status = Status.Confirmed;
+    }
+
+    public void Deactivate()
+    {
+        if (!Status.CanBeChangedToThisStatus(Status.Deactivated))
+            throw new DomainRulesViolationException("Account cannot be deactivated");
+
+        Status = Status.Deactivated;
+    }
+
+    public void Delete()
+    {
+        if (!Status.CanBeChangedToThisStatus(Status.Deleted))
+            throw new DomainRulesViolationException("Account cannot be deleted");
+
+        Status = Status.Deleted;
     }
 
     public void SetRole(Role potentialRole)
@@ -57,6 +69,7 @@ public sealed class Account : Aggregate
     {
         if (!ValidateEmail(newEmail))
             throw new ValueIsInvalidException($"{nameof(newEmail)} cannot be invalid or null");
+
         Email = newEmail;
     }
 
@@ -64,6 +77,7 @@ public sealed class Account : Aggregate
     {
         if (!ValidatePhone(newPhone))
             throw new ValueIsInvalidException($"{nameof(newPhone)} cannot be invalid phone or null");
+
         Phone = newPhone;
     }
 
@@ -90,11 +104,11 @@ public sealed class Account : Aggregate
             throw new ValueOutOfRangeException(
                 $"{nameof(passwordHash)} cannot be invalid, hash length must be 60");
 
-        var newAccount = new Account(role, email, phone, passwordHash);
-        newAccount.AddDomainEvent(new AccountCreatedDomainEvent(newAccount.Id, newAccount.Email, newAccount.Phone,
+        var account = new Account(role, email, phone, passwordHash);
+        account.AddDomainEvent(new AccountCreatedDomainEvent(account.Id, account.Email, account.Phone,
             confirmationTokenGuid));
 
-        return newAccount;
+        return account;
     }
 
     public static bool ValidateNotHashedPassword(string password)

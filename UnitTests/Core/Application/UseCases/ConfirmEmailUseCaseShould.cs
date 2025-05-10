@@ -1,7 +1,7 @@
 using Core.Application.UseCases.ConfirmEmail;
 using Core.Domain.AccountAggregate;
 using Core.Domain.ConfirmationTokenAggregate;
-using Core.Domain.SharedKernel.Exceptions.DataConsistencyViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;

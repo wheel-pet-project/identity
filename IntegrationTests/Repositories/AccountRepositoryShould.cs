@@ -97,7 +97,7 @@ public class AccountRepositoryShould : IntegrationTestBase
         var (uow, repository) = uowAndRepoBuilder.Build();
 
         // Act
-        accountForUpdateStatusTest.SetStatus(Status.PendingApproval);
+        accountForUpdateStatusTest.Confirm();
         await uow.BeginTransaction();
         await repository.UpdateStatus(accountForUpdateStatusTest);
         await uow.Commit();

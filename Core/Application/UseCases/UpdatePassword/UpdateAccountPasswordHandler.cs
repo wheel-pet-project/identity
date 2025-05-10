@@ -13,31 +13,40 @@ public class UpdateAccountPasswordHandler(
     IPasswordRecoverTokenRepository passwordRecoverTokenRepository,
     IAccountRepository accountRepository,
     IUnitOfWork unitOfWork,
+    IOutbox outbox,
     IHasher hasher,
-    IMediator mediator,
     TimeProvider timeProvider)
     : IRequestHandler<UpdateAccountPasswordCommand, Result>
 {
     public async Task<Result> Handle(UpdateAccountPasswordCommand command, CancellationToken _)
     {
-        var account = await accountRepository.GetByEmail(command.Email);
+        var account = await accountRepository.GetByEmail(command.Email, _);
         if (account == null) return Result.Fail(new NotFound("Account not found"));
 
         var passwordRecoverToken = await passwordRecoverTokenRepository.Get(account.Id);
         if (passwordRecoverToken == null) return Result.Fail(new NotFound("Password recover token not found"));
 
         if (!passwordRecoverToken.IsValid(timeProvider))
-            return Result.Fail("Password recver token has expired or already applied");
+            return Result.Fail("Password recover token has expired or already applied");
         if (!hasher.VerifyHash(command.RecoverToken.ToString(), passwordRecoverToken.RecoverTokenHash))
             return Result.Fail("Invalid reset password token");
 
         passwordRecoverToken.Apply();
         updateAccountPasswordService.UpdatePassword(account, command.NewPassword);
-        foreach (var @event in account.DomainEvents) await mediator.Publish(@event, _);
 
+        return await SaveInTransaction(async () =>
+        {
+            await accountRepository.UpdatePasswordHash(account);
+            await passwordRecoverTokenRepository.UpdateAppliedStatus(passwordRecoverToken);
+            await outbox.PublishDomainEvents(account);
+        });
+    }
+
+    private async Task<Result> SaveInTransaction(Func<Task> execute)
+    {
         await unitOfWork.BeginTransaction();
-        await accountRepository.UpdatePasswordHash(account);
-        await passwordRecoverTokenRepository.UpdateAppliedStatus(passwordRecoverToken);
+
+        await execute();
 
         return await unitOfWork.Commit();
     }

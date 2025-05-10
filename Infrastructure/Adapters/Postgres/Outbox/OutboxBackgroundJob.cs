@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
+using System.Data;
 using Core.Domain.SharedKernel;
-using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
 using Dapper;
 using JsonNet.ContractResolvers;
 using MediatR;
@@ -28,14 +29,17 @@ public class OutboxBackgroundJob(
     {
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
-        var outboxEvents = (await connection.QueryAsync<OutboxEvent>(QuerySql, transaction)).AsList().AsReadOnly();
+        var outboxEvents = (await connection.QueryAsync<OutboxEvent>(QuerySql, transaction))
+            .AsList()
+            .AsReadOnly();
 
         if (outboxEvents.Count > 0)
         {
             var updateQueue = new ConcurrentQueue<EventUpdate>();
 
             var domainEvents = outboxEvents
-                .Select(ev => JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
+                .Select(ev =>
+                    JsonConvert.DeserializeObject<DomainEvent>(ev.Content, _jsonSerializerSettings))
                 .OfType<DomainEvent>()
                 .AsList()
                 .AsReadOnly();
@@ -76,16 +80,17 @@ public class OutboxBackgroundJob(
             catch (Exception e)
             {
                 updateQueue.Enqueue(new EventUpdate(@event.EventId));
-                logger.LogError("Failed of processing outbox events and save update, exception: {e}", e);
+                logger.LogError(
+                    "Failed of processing outbox events and save update, exception: {e}", e);
             }
         }
     }
-    
+
     private string FormatSql(List<EventUpdate> updates)
     {
         var paramNames = string.Join(",", updates.Select((_, i) => $"(@EventId{i}, @ProcessedOnUtc{i})"));
         var formattedSql = string.Format(UpdateSql, paramNames);
-        
+
         return formattedSql;
     }
 
@@ -95,9 +100,9 @@ public class OutboxBackgroundJob(
         for (var i = 0; i < updates.Count; i++)
         {
             parameters.Add($"EventId{i}", updates[i].EventId);
-            parameters.Add($"ProcessedOnUtc{i}", updates[i].ProcessedOnUtc);
+            parameters.Add($"ProcessedOnUtc{i}", (object?)updates[i].ProcessedOnUtc ?? DBNull.Value, DbType.DateTime);
         }
-        
+
         return parameters;
     }
 

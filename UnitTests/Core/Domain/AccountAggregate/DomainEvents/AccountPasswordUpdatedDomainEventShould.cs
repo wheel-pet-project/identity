@@ -1,5 +1,4 @@
 using Core.Domain.AccountAggregate.DomainEvents;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -22,7 +21,7 @@ public class AccountPasswordUpdatedDomainEventShould
     }
 
     [Fact]
-    public void ThrowValueIsRequiredExceptionWhenAccountIdIsEmpty()
+    public void ThrowArgumentExceptionWhenAccountIdIsEmpty()
     {
         // Arrange
         var accountId = Guid.Empty;
@@ -34,6 +33,6 @@ public class AccountPasswordUpdatedDomainEventShould
         }
 
         // Assert
-        Assert.Throws<ValueIsRequiredException>(Act);
+        Assert.Throws<ArgumentException>(Act);
     }
 }

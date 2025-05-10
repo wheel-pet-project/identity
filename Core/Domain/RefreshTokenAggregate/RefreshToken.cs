@@ -1,5 +1,5 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 
 namespace Core.Domain.RefreshTokenAggregate;
 
@@ -24,14 +24,19 @@ public class RefreshToken
     public Guid Id { get; private set; }
     public Guid AccountId { get; private set; }
     public DateTime IssueDateTime { get; private set; }
-    public DateTime ExpiresAt { get; private set; }
+    public DateTime ExpiresAt { get; }
     public bool IsRevoked { get; private set; }
 
     public bool IsValid(TimeProvider timeProvider)
     {
         if (timeProvider == null) throw new ValueIsRequiredException($"{nameof(timeProvider)} cannot be null");
 
-        return !IsRevoked && ExpiresAt > timeProvider.GetUtcNow().UtcDateTime;
+        return (IsRevoked && IsExpired()) == false;
+
+        bool IsExpired()
+        {
+            return ExpiresAt > timeProvider.GetUtcNow().UtcDateTime;
+        }
     }
 
     public void Revoke()

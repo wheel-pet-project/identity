@@ -1,6 +1,7 @@
+using Core.Domain.AccountAggregate;
 using Core.Domain.RefreshTokenAggregate;
 using Core.Domain.SharedKernel.Errors;
-using Core.Domain.SharedKernel.Exceptions.DataConsistencyViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
@@ -21,6 +22,31 @@ public class RefreshAccountAccessTokenHandler(
         RefreshAccountAccessTokenCommand command,
         CancellationToken _)
     {
+        var verifyingAndGettingTokenResult = await VerifyJwtAndGetRefreshTokenAggregate(command);
+        if (verifyingAndGettingTokenResult.IsFailed) return Result.Fail(verifyingAndGettingTokenResult.Errors);
+        var refreshToken = verifyingAndGettingTokenResult.Value;
+        if (!refreshToken.IsValid(timeProvider)) return Result.Fail("Refresh token is revoked or expired");
+
+        var account = await accountRepository.GetById(refreshToken.AccountId, _);
+        if (account is null)
+            throw new DataConsistencyViolationException(
+                "Data consistency violation: refresh token not revoked for deleted account");
+        if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
+
+        var (newRefreshToken, newJwtAccessToken, newJwtRefreshToken) =
+            CreateNewRefreshTokenAndJwtTokens(account, refreshToken);
+
+        var transactionResult = await SaveInTransaction(async () =>
+            await refreshTokenRepository.AddTokenAndRevokeOldToken(newRefreshToken, refreshToken));
+
+        return transactionResult.IsSuccess
+            ? Result.Ok(MapToResponse(newJwtAccessToken, newJwtRefreshToken))
+            : Result.Fail(transactionResult.Errors);
+    }
+
+    private async Task<Result<RefreshToken>> VerifyJwtAndGetRefreshTokenAggregate(
+        RefreshAccountAccessTokenCommand command)
+    {
         var refreshTokenVerifyingResult = await jwtProvider.VerifyJwtRefreshToken(command.RefreshToken);
         if (refreshTokenVerifyingResult.IsFailed) return Result.Fail(refreshTokenVerifyingResult.Errors);
         var refreshTokenId = refreshTokenVerifyingResult.Value;
@@ -28,23 +54,30 @@ public class RefreshAccountAccessTokenHandler(
         var refreshToken = await refreshTokenRepository.GetNotRevokedToken(refreshTokenId);
         if (refreshToken is null) return Result.Fail(new NotFound("Refresh token not found"));
 
-        if (!refreshToken.IsValid(timeProvider)) return Result.Fail("Refresh token is revoked or expired");
+        return refreshToken;
+    }
 
-        var account = await accountRepository.GetById(refreshToken.AccountId);
-        if (account is null)
-            throw new DataConsistencyViolationException(
-                "Data consistency violation: refresh token not revoked for deleted account");
-        if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
-
+    private (RefreshToken newRefreshToken, string newJwtAccessToken, string newJwtRefreshToken)
+        CreateNewRefreshTokenAndJwtTokens(Account account, RefreshToken refreshToken)
+    {
         var newRefreshToken = RefreshToken.Create(account, timeProvider);
+        var newJwtAccessToken = jwtProvider.GenerateJwtAccessToken(account);
+        var newJwtRefreshToken = jwtProvider.GenerateJwtRefreshToken(refreshToken);
 
+        return (newRefreshToken, newJwtAccessToken, newJwtRefreshToken);
+    }
+
+    private async Task<Result> SaveInTransaction(Func<Task> execute)
+    {
         await unitOfWork.BeginTransaction();
-        await refreshTokenRepository.AddTokenAndRevokeOldToken(newRefreshToken, refreshToken);
-        var transactionResult = await unitOfWork.Commit();
 
-        return transactionResult.IsSuccess
-            ? Result.Ok(new RefreshAccountAccessTokenResponse(jwtProvider.GenerateJwtAccessToken(account),
-                jwtProvider.GenerateJwtRefreshToken(newRefreshToken.Id)))
-            : Result.Fail(transactionResult.Errors);
+        await execute();
+
+        return await unitOfWork.Commit();
+    }
+
+    private RefreshAccountAccessTokenResponse MapToResponse(string jwtAccessToken, string jwtRefreshToken)
+    {
+        return new RefreshAccountAccessTokenResponse(jwtAccessToken, jwtRefreshToken);
     }
 }

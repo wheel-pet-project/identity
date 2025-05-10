@@ -1,4 +1,4 @@
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 
 namespace Core.Domain.ConfirmationTokenAggregate;
 

@@ -1,6 +1,6 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using JetBrains.Annotations;
 using Xunit;
 

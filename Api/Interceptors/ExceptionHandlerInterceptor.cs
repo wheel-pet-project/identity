@@ -1,15 +1,11 @@
-using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
-using Core.Domain.SharedKernel.Exceptions.DataConsistencyViolationException;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using Npgsql;
-using ArgumentException = Core.Domain.SharedKernel.Exceptions.ArgumentException.ArgumentException;
 
 namespace Api.Interceptors;
 
-public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> logger)
-    : Interceptor
+public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> logger) : Interceptor
 {
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
@@ -20,36 +16,19 @@ public class ExceptionHandlerInterceptor(ILogger<ExceptionHandlerInterceptor> lo
         {
             return await next(request, context);
         }
-        catch (NpgsqlException e)
+        catch (PublicException e)
         {
-            logger.LogError("NpgsqlException handled: {@exception}", e);
-            throw new RpcException(new Status(StatusCode.Unavailable, "Db unavailable, please try again later."));
-        }
-        catch (ArgumentException e)
-        {
-            logger.LogWarning("ArgumentException handled: {@exception}", e);
+            logger.LogWarning("PublicException handled: {@exception}", e);
             throw new RpcException(new Status(StatusCode.InvalidArgument, e.Message));
         }
-        catch (DataConsistencyViolationException e)
+        catch (InternalException e)
         {
             logger.LogCritical("DataConsistencyViolationException: {@exception}", e);
-            throw new RpcException(new Status(StatusCode.Internal, "Entity invariant violation"));
-        }
-        catch (DomainRulesViolationException e)
-        {
-            logger.LogWarning("DomainRulesViolationException handled: {@exception}", e);
-            throw new RpcException(new Status(StatusCode.FailedPrecondition, e.Message));
-        }
-        catch (AlreadyHaveThisStateException)
-        {
-            logger.LogWarning("AlreadyHaveThisStateException handled");
-            throw new RpcException(new Status(StatusCode.FailedPrecondition, "Resource already have this state"));
+            throw new RpcException(new Status(StatusCode.Internal, "Internal error"));
         }
         catch (Exception e) when (e is not RpcException)
         {
-            logger.LogCritical(
-                "[EXCEPTION] type: {type}, eception: {@exception}",
-                e.GetType().Name, e);
+            logger.LogCritical("Exception: {@exception}", e);
             throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
         }
     }

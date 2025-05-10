@@ -23,10 +23,10 @@ public class UnitOfWork(
         {
             await retryPolicy.ExecuteAsync(() => session.Transaction!.CommitAsync());
         }
-        catch
+        catch (Exception e)
         {
             await retryPolicy.ExecuteAsync(() => session.Transaction!.RollbackAsync());
-            result = Result.Fail(new TransactionFail("Transaction failed"));
+            result = Result.Fail(new TransactionFail("Transaction failed", e));
         }
         finally
         {

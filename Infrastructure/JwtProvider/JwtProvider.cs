@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Core.Domain.AccountAggregate;
+using Core.Domain.RefreshTokenAggregate;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using FluentResults;
 using Infrastructure.Settings;
@@ -23,92 +24,90 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
             new("status_id", account.Status.Id.ToString())
         ];
 
-        var signingCredentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)),
-            SecurityAlgorithms.HmacSha256);
+        var signingCredentials = CreateSigningCredentials();
 
-        var accessToken = new JwtSecurityToken(
-            claims: claims,
-            issuer: _jwtOptions.Issuer,
-            signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpirationMinutes));
+        var accessToken = CreateJwtToken(
+            claims,
+            signingCredentials,
+            TimeSpan.FromMinutes(_jwtOptions.AccessTokenExpirationMinutes));
 
         return new JwtSecurityTokenHandler().WriteToken(accessToken);
     }
 
-    public string GenerateJwtRefreshToken(Guid refreshTokenId)
+    public string GenerateJwtRefreshToken(RefreshToken refreshToken)
     {
-        Claim[] claims = [new("token_id", refreshTokenId.ToString())];
+        Claim[] claims = [new("token_id", refreshToken.Id.ToString())];
 
-        var signingCredentials = new SigningCredentials(
+        var signingCredentials = CreateSigningCredentials();
+
+        var jwtToken = CreateJwtToken(
+            claims,
+            signingCredentials,
+            TimeSpan.FromMinutes(_jwtOptions.RefreshTokenExpirationDays));
+
+        return new JwtSecurityTokenHandler().WriteToken(jwtToken);
+    }
+
+    private SigningCredentials CreateSigningCredentials()
+    {
+        return new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey)),
             SecurityAlgorithms.HmacSha256);
+    }
 
-        var refreshToken = new JwtSecurityToken(
+    private JwtSecurityToken CreateJwtToken(Claim[] claims, SigningCredentials signingCredentials, TimeSpan duration)
+    {
+        return new JwtSecurityToken(
             claims: claims,
             issuer: _jwtOptions.Issuer,
             signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpirationDays));
-
-        return new JwtSecurityTokenHandler().WriteToken(refreshToken);
+            expires: DateTime.UtcNow.Add(duration));
     }
 
-    public async Task<Result<(Guid accountId, Role role, Status status)>> VerifyJwtAccessToken(
-        string accessToken)
+    public async Task<Result<(Guid accountId, Role role, Status status)>> VerifyJwtAccessToken(string accessToken)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var validatingResult = await ValidateTokenAndGetClaims(accessToken);
+        if (validatingResult.IsFailed) return Result.Fail(validatingResult.Errors);
+        var claims = validatingResult.Value;
 
-        var result = await tokenHandler.ValidateTokenAsync(accessToken,
-            new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _jwtOptions.Issuer,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                    _jwtOptions.SecretKey))
-            });
-
-        if (result.IsValid == false)
-            return Result.Fail("Invalid access token");
-
-        if (result.SecurityToken.ValidTo < DateTime.UtcNow)
-            return Result.Fail("Access token expired");
-
-        var claims = result.Claims;
-        var accountId = Guid.Parse(claims.First(c => c.Key == "acc_id").Value.ToString()!);
-        var role = Role.FromId(int.Parse(claims.First(c => c.Key == "role_id").Value.ToString()!));
-        var status = Status.FromId(int.Parse(claims.First(c => c.Key == "status_id").Value.ToString()!));
+        var accountId = Guid.Parse(claims.First(c => c.Subject?.Name == "acc_id").Value.ToString());
+        var role = Role.FromId(int.Parse(claims.First(c => c.Subject?.Name == "role_id").Value.ToString()));
+        var status = Status.FromId(int.Parse(claims.First(c => c.Subject?.Name == "status_id").Value.ToString()));
 
         return Result.Ok((accountId, role, status));
     }
 
     public async Task<Result<Guid>> VerifyJwtRefreshToken(string refreshToken)
     {
+        var validatingResult = await ValidateTokenAndGetClaims(refreshToken);
+        if (validatingResult.IsFailed) return Result.Fail(validatingResult.Errors);
+        var claims = validatingResult.Value;
+
+        var refreshTokenId = Guid.Parse(claims.First(c => c.Subject?.Name == "token_id").Value.ToString());
+
+        return Result.Ok(refreshTokenId);
+    }
+
+    private async Task<Result<Claim[]>> ValidateTokenAndGetClaims(string token)
+    {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var result = await tokenHandler.ValidateTokenAsync(refreshToken,
-            new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _jwtOptions.Issuer,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                    _jwtOptions.SecretKey))
-            });
+        var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = _jwtOptions.Issuer,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _jwtOptions.SecretKey))
+        });
 
         if (result.IsValid == false)
             return Result.Fail("Invalid refresh token");
-
         if (result.SecurityToken.ValidTo < DateTime.UtcNow)
             return Result.Fail("Refresh token expired");
 
-        var claims = result.Claims;
-        var refreshTokenId = Guid.Parse(claims.First(c => c.Key == "token_id").Value.ToString()!);
-
-        return Result.Ok(refreshTokenId);
+        return result.ClaimsIdentity.Claims.ToArray();
     }
 }

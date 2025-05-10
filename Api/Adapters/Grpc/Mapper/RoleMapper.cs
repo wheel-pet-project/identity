@@ -1,4 +1,4 @@
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using Proto.IdentityV1;
 using DomainRole = Core.Domain.AccountAggregate.Role;
 

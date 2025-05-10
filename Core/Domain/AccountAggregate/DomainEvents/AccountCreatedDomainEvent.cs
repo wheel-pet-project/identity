@@ -1,5 +1,4 @@
 using Core.Domain.SharedKernel;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 
 namespace Core.Domain.AccountAggregate.DomainEvents;
 
@@ -8,13 +7,13 @@ public record AccountCreatedDomainEvent : DomainEvent
     public AccountCreatedDomainEvent(Guid accountId, string email, string phone, Guid confirmationToken)
     {
         if (accountId == Guid.Empty)
-            throw new ValueIsRequiredException($"{nameof(accountId)} cannot be empty");
+            throw new ArgumentException($"{nameof(accountId)} cannot be empty");
         if (confirmationToken == Guid.Empty)
-            throw new ValueIsRequiredException($"{nameof(confirmationToken)} cannot be empty");
+            throw new ArgumentException($"{nameof(confirmationToken)} cannot be empty");
         if (string.IsNullOrWhiteSpace(email))
-            throw new ValueIsRequiredException($"{nameof(email)} cannot be empty or null");
+            throw new ArgumentException($"{nameof(email)} cannot be empty or null");
         if (string.IsNullOrWhiteSpace(phone))
-            throw new ValueIsRequiredException($"{nameof(phone)} cannot be empty or null");
+            throw new ArgumentException($"{nameof(phone)} cannot be empty or null");
 
         AccountId = accountId;
         Email = email;

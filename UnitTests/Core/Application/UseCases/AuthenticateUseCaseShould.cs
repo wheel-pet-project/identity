@@ -23,7 +23,7 @@ public class AuthenticateUseCaseShould
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
             Guid.NewGuid());
-        account.SetStatus(Status.PendingApproval);
+        account.Confirm();
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(account);
@@ -90,7 +90,7 @@ public class AuthenticateUseCaseShould
         // Arrange
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
             Guid.NewGuid());
-        account.SetStatus(Status.PendingApproval);
+        account.Confirm();
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(account);
@@ -111,7 +111,7 @@ public class AuthenticateUseCaseShould
         var expectedError = new Error("expected error");
         var account = Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60),
             Guid.NewGuid());
-        account.SetStatus(Status.PendingApproval);
+        account.Confirm();
 
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureAccountRepository(account);
@@ -168,7 +168,7 @@ public class AuthenticateUseCaseShould
         {
             _jwtProviderMock.Setup(x => x.GenerateJwtAccessToken(It.IsAny<Account>()))
                 .Returns(generateJwtAccessTokenShouldReturn);
-            _jwtProviderMock.Setup(x => x.GenerateJwtRefreshToken(It.IsAny<Guid>()))
+            _jwtProviderMock.Setup(x => x.GenerateJwtRefreshToken(It.IsAny<RefreshToken>()))
                 .Returns(generateJwtRefreshTokenShouldReturn);
         }
 

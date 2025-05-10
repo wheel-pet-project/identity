@@ -1,7 +1,7 @@
 using Core.Application.UseCases.RefreshAccessToken;
 using Core.Domain.AccountAggregate;
 using Core.Domain.RefreshTokenAggregate;
-using Core.Domain.SharedKernel.Exceptions.DataConsistencyViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
@@ -27,7 +27,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ReturnSuccessForCorrectRequest()
     {
         // Arrange
-        _account.SetStatus(Status.PendingApproval);
+        _account.Confirm();
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -50,7 +50,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ReturnCorrectErrorIfVerifyingJwtRefreshTokenFails()
     {
         // Arrange
-        _account.SetStatus(Status.PendingApproval);
+        _account.Confirm();
         var expectedError = new Error("expected error");
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -69,7 +69,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ReturnFailedResultIfGetRefreshTokenReturnsNull()
     {
         // Arrange
-        _account.SetStatus(Status.PendingApproval);
+        _account.Confirm();
         var useCaseBuilder = new UseCaseBuilder();
         useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
         useCaseBuilder.ConfigureRefreshTokenRepository(null);
@@ -86,7 +86,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ThrowsDataConsistencyViolationExceptionIfGetByIdReturnNotFoundError()
     {
         // Arrange
-        _account.SetStatus(Status.PendingApproval);
+        _account.Confirm();
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
         var useCaseBuilder = new UseCaseBuilder();
@@ -131,7 +131,7 @@ public class RefreshAccessTokenUseCaseShould
     public async Task ReturnCorrectErrorIfTransactionFails()
     {
         // Arrange
-        _account.SetStatus(Status.PendingApproval);
+        _account.Confirm();
         var expectedError = new Error("expected error");
         var refreshToken = RefreshToken.Create(_account, _timeProvider);
 
@@ -194,7 +194,7 @@ public class RefreshAccessTokenUseCaseShould
                 .ReturnsAsync(verifyJwtRefreshTokenShouldReturn);
             _jwtProviderMock.Setup(x => x.GenerateJwtAccessToken(It.IsAny<Account>()))
                 .Returns(generateJwtAccessTokenShouldReturn);
-            _jwtProviderMock.Setup(x => x.GenerateJwtRefreshToken(It.IsAny<Guid>()))
+            _jwtProviderMock.Setup(x => x.GenerateJwtRefreshToken(It.IsAny<RefreshToken>()))
                 .Returns(generateJwtRefreshTokenShouldReturn);
         }
     }

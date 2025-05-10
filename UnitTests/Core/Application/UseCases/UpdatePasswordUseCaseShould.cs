@@ -6,7 +6,6 @@ using Core.Infrastructure.Interfaces.PasswordHasher;
 using Core.Ports.Postgres;
 using Core.Ports.Postgres.Repositories;
 using FluentResults;
-using MediatR;
 using Moq;
 using Xunit;
 
@@ -137,8 +136,8 @@ public class UpdatePasswordUseCaseShould
         private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
         private readonly Mock<IPasswordRecoverTokenRepository> _passwordRecoverTokenRepositoryMock = new();
         private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<IOutbox> _outboxMock = new();
         private readonly Mock<IHasher> _hasherMock = new();
-        private readonly Mock<IMediator> _mediatorMock = new();
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         public UpdateAccountPasswordHandler Build()
@@ -150,8 +149,8 @@ public class UpdatePasswordUseCaseShould
                 _passwordRecoverTokenRepositoryMock.Object,
                 _accountRepositoryMock.Object,
                 _unitOfWorkMock.Object,
+                _outboxMock.Object,
                 _hasherMock.Object,
-                _mediatorMock.Object,
                 _timeProvider);
         }
 

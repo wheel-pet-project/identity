@@ -1,4 +1,4 @@
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using CSharpFunctionalExtensions;
 
 namespace Core.Domain.AccountAggregate;
@@ -22,7 +22,7 @@ public sealed class Role : Entity<int>
     }
 
 
-    public string Name { get; private set; } = null!;
+    public string Name { get; } = null!;
 
     public bool CanBeChangedToThisRole(Role potentialRole)
     {

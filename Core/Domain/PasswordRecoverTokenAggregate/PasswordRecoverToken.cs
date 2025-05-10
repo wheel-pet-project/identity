@@ -1,7 +1,7 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
 using Core.Domain.SharedKernel;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 
 namespace Core.Domain.PasswordRecoverTokenAggregate;
 
@@ -26,7 +26,7 @@ public class PasswordRecoverToken : Aggregate
     public Guid Id { get; private set; }
     public Guid AccountId { get; private set; }
     public string RecoverTokenHash { get; private set; } = null!;
-    public DateTime ExpiresAt { get; private set; }
+    public DateTime ExpiresAt { get; }
     public bool IsAlreadyApplied { get; private set; }
 
     public bool IsValid(TimeProvider timeProvider)

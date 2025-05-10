@@ -1,7 +1,6 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -27,13 +26,13 @@ public class StatusShould
     public void FromIdShouldReturnCorrectStatus()
     {
         // Arrange
-        var statusId = Status.Approved.Id;
+        var statusId = Status.Confirmed.Id;
 
         // Act
         var role = Status.FromId(statusId);
 
         // Assert
-        Assert.Equal(Status.Approved, role);
+        Assert.Equal(Status.Confirmed, role);
     }
 
     [Theory]
@@ -54,24 +53,24 @@ public class StatusShould
     }
 
     [Fact]
-    public void IsCanAuthorizeMustReturnTrueForPendingApprovalAndApprovedStatuses()
+    public void IsCanAuthorizeMustReturnTrueForPendingApprovalAndConfirmedStatuses()
     {
         // Arrange
-        var pendingApprovalStatus = Status.Approved;
-        var approvedStatus = Status.Approved;
+        var pendingApprovalStatus = Status.Confirmed;
+        var confirmedStatus = Status.Confirmed;
 
         // Act
         var pendingApprovalResult = pendingApprovalStatus.CanBeAuthorize();
-        var approvedResult = approvedStatus.CanBeAuthorize();
+        var confirmedResult = confirmedStatus.CanBeAuthorize();
 
         // Assert
         Assert.True(pendingApprovalResult);
-        Assert.True(approvedResult);
+        Assert.True(confirmedResult);
     }
 
     [Fact]
     public void
-        IsCanAuthorizeShouldReturnFalseForAllStatusesExcludingPendingApprovalAndApprovedStatuses()
+        IsCanAuthorizeShouldReturnFalseForAllStatusesExcludingPendingApprovalAndConfirmedStatuses()
     {
         // Arrange
         var deactivated = Status.Deactivated;
@@ -94,26 +93,22 @@ public class StatusShould
     {
         // Arrange
         var pendingConfirmation = Status.PendingConfirmation;
-        var pendingApproval = Status.PendingApproval;
-        var approved = Status.Approved;
+        var confirmed = Status.Confirmed;
         var deactivated = Status.Deactivated;
 
         // Act
-        var pendingConfirmationToPendingApprovalResult =
-            pendingConfirmation.CanBeChangedToThisStatus(Status.PendingApproval);
-        var pendingApprovalToApprovedResult = pendingApproval.CanBeChangedToThisStatus(Status.Approved);
-        var approvedToDeactivatedResult = approved.CanBeChangedToThisStatus(Status.Deactivated);
-        var approvedToPendingApprovalResult = approved.CanBeChangedToThisStatus(Status.PendingApproval);
+        var pendingConfirmationToConfirmedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Confirmed);
+        var confirmedToDeactivatedResult = confirmed.CanBeChangedToThisStatus(Status.Deactivated);
         var deactivatedToDeletedResult = deactivated.CanBeChangedToThisStatus(Status.Deleted);
-        var deactivatedToApprovedResult = deactivated.CanBeChangedToThisStatus(Status.Approved);
+        var confirmedToDeletedResult = confirmed.CanBeChangedToThisStatus(Status.Deleted);
+        var deactivatedToConfirmedResult = deactivated.CanBeChangedToThisStatus(Status.Confirmed);
 
         // Assert
-        Assert.True(pendingConfirmationToPendingApprovalResult);
-        Assert.True(pendingApprovalToApprovedResult);
-        Assert.True(approvedToDeactivatedResult);
-        Assert.True(approvedToPendingApprovalResult);
+        Assert.True(pendingConfirmationToConfirmedResult);
+        Assert.True(confirmedToDeactivatedResult);
         Assert.True(deactivatedToDeletedResult);
-        Assert.True(deactivatedToApprovedResult);
+        Assert.True(confirmedToDeletedResult);
+        Assert.True(deactivatedToConfirmedResult);
     }
 
     [Fact]
@@ -121,26 +116,18 @@ public class StatusShould
     {
         // Arrange
         var pendingConfirmation = Status.PendingConfirmation;
-        var pendingApproval = Status.PendingApproval;
-        var approved = Status.Approved;
+        var confirmed = Status.Confirmed;
         var deactivated = Status.Deactivated;
 
         // Act
-        var pendingConfirmationToApprovedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Approved);
-        var pendingApprovalToPendingConfirmationResult =
-            pendingApproval.CanBeChangedToThisStatus(Status.PendingConfirmation);
-        var approvedToPendingConfirmationResult = approved.CanBeChangedToThisStatus(Status.PendingConfirmation);
+        var confirmedToPendingConfirmationResult = confirmed.CanBeChangedToThisStatus(Status.PendingConfirmation);
         var pendingConfirmationToDeactivatedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Deactivated);
-        var pendingApprovalToDeactivatedResult = pendingApproval.CanBeChangedToThisStatus(Status.Deactivated);
         var deactivatedToPendingConfirmationResult = deactivated.CanBeChangedToThisStatus(Status.PendingConfirmation);
 
 
         // Assert
-        Assert.False(pendingConfirmationToApprovedResult);
-        Assert.False(pendingApprovalToPendingConfirmationResult);
-        Assert.False(approvedToPendingConfirmationResult);
+        Assert.False(confirmedToPendingConfirmationResult);
         Assert.False(pendingConfirmationToDeactivatedResult);
-        Assert.False(pendingApprovalToDeactivatedResult);
         Assert.False(deactivatedToPendingConfirmationResult);
     }
 
@@ -196,7 +183,7 @@ public class StatusShould
         var pendingConfirmation = Status.PendingConfirmation;
 
         // Act
-        var result = pendingConfirmation == Status.Approved;
+        var result = pendingConfirmation == Status.Confirmed;
 
         // Assert
         Assert.False(result);
@@ -220,7 +207,7 @@ public class StatusShould
         // Arrange
 
         // Act
-        var result = Status.PendingConfirmation != Status.Approved;
+        var result = Status.PendingConfirmation != Status.Confirmed;
 
         // Assert
         Assert.True(result);

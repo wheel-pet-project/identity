@@ -1,6 +1,6 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -175,7 +175,7 @@ public class AccountShould
     }
 
     [Fact]
-    public void SetStatusMustSetNewAccountStatus()
+    public void ConfirmChangeStatus()
     {
         // Arrange
         var role = Role.Customer;
@@ -185,14 +185,14 @@ public class AccountShould
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
 
         // Act
-        account.SetStatus(Status.PendingApproval);
+        account.Confirm();
 
         // Assert
-        Assert.Equal(Status.PendingApproval, account.Status);
+        Assert.Equal(Status.Confirmed, account.Status);
     }
 
     [Fact]
-    public void SetStatusWhenNewStatusIsNullMustThrowsValueOutOfRangeException()
+    public void ConfirmThrowDomainRulesViolationExceptionWhenAccountCannotBeConfirmed()
     {
         // Arrange
         var role = Role.Customer;
@@ -200,31 +200,50 @@ public class AccountShould
         var phone = "+79008007060";
         var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
         var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        account.Confirm();
+        account.Delete();
+
+        // Act
+        void Act() => account.Confirm();
+
+        // Assert
+        Assert.Throws<DomainRulesViolationException>(Act);
+    }
+
+    [Fact]
+    public void DeactivateChangeStatus()
+    {
+        // Arrange
+        var role = Role.Customer;
+        var email = "test@test.com";
+        var phone = "+79008007060";
+        var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        account.Confirm();
+
+        // Act
+        account.Deactivate();
+
+        // Assert
+        Assert.Equal(Status.Deactivated, account.Status);
+    }
+
+    [Fact]
+    public void DeactivateThrowDomainRulesExceptionIfAccountCannotBeDeactivated()
+    {
+        // Arrange
+        var role = Role.Customer;
+        var email = "test@test.com";
+        var phone = "+79008007060";
+        var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
+        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
+        account.Confirm();
+        account.Delete();
 
         // Act
         void Act()
         {
-            account.SetStatus(null);
-        }
-
-        // Assert
-        Assert.Throws<ValueOutOfRangeException>(Act);
-    }
-
-    [Fact]
-    public void SetStatusWhenNewStatusViolationDomainRulesMustThrowsDomainRulesViolationException()
-    {
-        // Arrange
-        var role = Role.Customer;
-        var email = "test@test.com";
-        var phone = "+79008007060";
-        var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-
-        // Act
-        void Act()
-        {
-            account.SetStatus(Status.Approved);
+            account.Deactivate();
         }
 
         // Assert
@@ -246,26 +265,6 @@ public class AccountShould
 
         // Assert
         Assert.Equal(Role.Support, account.Role);
-    }
-
-    [Fact]
-    public void SetRoleWhenNewRoleIsNullMustThrowsValueOutOfRangeException()
-    {
-        // Arrange
-        var role = Role.Customer;
-        var email = "test@test.com";
-        var phone = "+79008007060";
-        var passwordHash = "$2a$11$vTQVeAnZdf4xt8chTfthQ.QNxzS6lZhZkjy7NKoLpuxVS6ZNt2WnG";
-        var account = Account.Create(role, email, phone, passwordHash, Guid.NewGuid());
-
-        // Act
-        void Act()
-        {
-            account.SetStatus(null);
-        }
-
-        // Assert
-        Assert.Throws<ValueOutOfRangeException>(Act);
     }
 
     [Fact]

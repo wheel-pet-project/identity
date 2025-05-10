@@ -1,5 +1,5 @@
 using Core.Domain.AccountAggregate;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using Core.Infrastructure.Interfaces.PasswordHasher;
 using JetBrains.Annotations;
 using Moq;

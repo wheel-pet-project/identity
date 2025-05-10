@@ -1,17 +1,15 @@
-using Core.Domain.SharedKernel.Exceptions.AlreadyHaveThisState;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
-using Core.Domain.SharedKernel.Exceptions.DomainRulesViolationException;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
 using CSharpFunctionalExtensions;
 
 namespace Core.Domain.AccountAggregate;
 
 public sealed class Status : Entity<int>
 {
-    public static readonly Status Approved = new(1, nameof(Approved).ToLowerInvariant());
+    public static readonly Status Confirmed = new(1, nameof(Confirmed).ToLowerInvariant());
     public static readonly Status PendingConfirmation = new(2, nameof(PendingConfirmation).ToLowerInvariant());
-    public static readonly Status PendingApproval = new(3, nameof(PendingApproval).ToLowerInvariant());
-    public static readonly Status Deactivated = new(4, nameof(Deactivated).ToLowerInvariant());
-    public static readonly Status Deleted = new(5, nameof(Deleted).ToLowerInvariant());
+    public static readonly Status Deactivated = new(3, nameof(Deactivated).ToLowerInvariant());
+    public static readonly Status Deleted = new(4, nameof(Deleted).ToLowerInvariant());
 
     private Status()
     {
@@ -24,7 +22,7 @@ public sealed class Status : Entity<int>
     }
 
 
-    public string Name { get; private set; } = null!;
+    public string Name { get; } = null!;
 
     public bool CanBeChangedToThisStatus(Status potentialStatus)
     {
@@ -33,11 +31,9 @@ public sealed class Status : Entity<int>
             null => throw new ValueIsRequiredException($"{nameof(potentialStatus)} cannot be null"),
             _ when this == potentialStatus => throw new AlreadyHaveThisStateException(
                 "account already have this status"),
-            _ when this == PendingConfirmation && potentialStatus == PendingApproval => true,
-            _ when this == PendingApproval && potentialStatus == Approved => true,
-            _ when this == Approved && potentialStatus == Deactivated => true,
-            _ when this == Approved && potentialStatus == PendingApproval => true,
-            _ when this == Deactivated && potentialStatus == Approved => true,
+            _ when this == PendingConfirmation && potentialStatus == Confirmed => true,
+            _ when this == Confirmed && potentialStatus == Deactivated => true,
+            _ when this == Deactivated && potentialStatus == Confirmed => true,
             _ when potentialStatus == Deleted => true,
             _ => false
         };
@@ -45,16 +41,15 @@ public sealed class Status : Entity<int>
 
     public bool CanBeAuthorize()
     {
-        return this == Approved || this == PendingApproval;
+        return this == Confirmed;
     }
 
     public static IEnumerable<Status> All()
     {
         return
         [
-            Approved,
+            Confirmed,
             PendingConfirmation,
-            PendingApproval,
             Deactivated,
             Deleted
         ];

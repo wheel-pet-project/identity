@@ -1,3 +1,4 @@
+using Core.Domain.AccountAggregate;
 using Core.Domain.RefreshTokenAggregate;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using Core.Infrastructure.Interfaces.PasswordHasher;
@@ -21,22 +22,43 @@ public class AuthenticateAccountHandler(
         AuthenticateAccountCommand command,
         CancellationToken _)
     {
-        var account = await accountRepository.GetByEmail(command.Email);
+        var account = await accountRepository.GetByEmail(command.Email, _);
         if (account is null) return Result.Fail("Account does not found");
 
         if (!account.Status.CanBeAuthorize()) return Result.Fail("Account cannot be authenticated");
         if (!hasher.VerifyHash(command.Password, account.PasswordHash)) return Result.Fail("Password is incorrect");
 
         var refreshToken = RefreshToken.Create(account, timeProvider);
-        var jwtAccessToken = jwtProvider.GenerateJwtAccessToken(account);
-        var jwtRefreshToken = jwtProvider.GenerateJwtRefreshToken(refreshToken.Id);
+        var (jwtAccessToken, jwtRefreshToken) = GenerateJwtTokens(account, refreshToken);
 
-        await unitOfWork.BeginTransaction();
-        await refreshTokenRepository.Add(refreshToken);
-        var transactionResult = await unitOfWork.Commit();
+        var transactionResult = await SaveInTransaction(async () => await refreshTokenRepository.Add(refreshToken));
 
         return transactionResult.IsSuccess
-            ? new AuthenticateAccountResponse(jwtAccessToken, jwtRefreshToken)
+            ? MapToResponse(jwtAccessToken, jwtRefreshToken)
             : transactionResult;
+    }
+
+    private (string jwtAccessToken, string jwtRefreshToken) GenerateJwtTokens(
+        Account account,
+        RefreshToken refreshToken)
+    {
+        var jwtAccessToken = jwtProvider.GenerateJwtAccessToken(account);
+        var jwtRefreshToken = jwtProvider.GenerateJwtRefreshToken(refreshToken);
+
+        return (jwtAccessToken, jwtRefreshToken);
+    }
+
+    private async Task<Result> SaveInTransaction(Func<Task> execute)
+    {
+        await unitOfWork.BeginTransaction();
+
+        await execute();
+
+        return await unitOfWork.Commit();
+    }
+
+    private AuthenticateAccountResponse MapToResponse(string jwtAccessToken, string jwtRefreshToken)
+    {
+        return new AuthenticateAccountResponse(jwtAccessToken, jwtRefreshToken);
     }
 }

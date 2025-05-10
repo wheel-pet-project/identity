@@ -1,6 +1,5 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.PasswordRecoverTokenAggregate.DomainEvents;
-using Core.Domain.SharedKernel.Exceptions.ArgumentException;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -30,7 +29,7 @@ public class PasswordRecoverTokenCreatedDomainEventShould
     }
 
     [Fact]
-    public void ThrowValueIsRequiredWhenAccountIdIsEmpty()
+    public void ThrowArgumentExceptionWhenAccountIdIsEmpty()
     {
         // Arrange
         var (emptyAccountId, recoverToken) = (Guid.Empty, Guid.NewGuid());
@@ -42,11 +41,11 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         }
 
         // Assert
-        Assert.Throws<ValueIsRequiredException>(Act);
+        Assert.Throws<ArgumentException>(Act);
     }
 
     [Fact]
-    public void ThrowValueIsRequiredWhenRecoverTokenIsEmpty()
+    public void ThrowArgumentExceptionWhenRecoverTokenIsEmpty()
     {
         // Arrange
         var (accountId, emptyRecoverToken) = (Guid.NewGuid(), Guid.Empty);
@@ -58,6 +57,6 @@ public class PasswordRecoverTokenCreatedDomainEventShould
         }
 
         // Assert
-        Assert.Throws<ValueIsRequiredException>(Act);
+        Assert.Throws<ArgumentException>(Act);
     }
 }

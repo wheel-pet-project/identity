@@ -19,16 +19,25 @@ public class RecoverAccountPasswordHandler(
 {
     public async Task<Result> Handle(RecoverAccountPasswordCommand command, CancellationToken _)
     {
-        var account = await accountRepository.GetByEmail(command.Email);
+        var account = await accountRepository.GetByEmail(command.Email, _);
         if (account == null) return Result.Fail(new NotFound($"account with this {nameof(command.Email)} not found"));
 
-        var recoverToken = Guid.NewGuid();
-        var passwordRecoverToken = PasswordRecoverToken.Create(account, recoverToken,
-            hasher.GenerateHash(recoverToken.ToString()), timeProvider);
+        var recoverTokenGuid = Guid.NewGuid();
+        var passwordRecoverToken = PasswordRecoverToken.Create(account, recoverTokenGuid,
+            hasher.GenerateHash(recoverTokenGuid.ToString()), timeProvider);
 
+        return await SaveInTransaction(async () =>
+        {
+            await passwordRecoverTokenRepository.Add(passwordRecoverToken);
+            await outbox.PublishDomainEvents(passwordRecoverToken);
+        });
+    }
+
+    private async Task<Result> SaveInTransaction(Func<Task> execute)
+    {
         await unitOfWork.BeginTransaction();
-        await passwordRecoverTokenRepository.Add(passwordRecoverToken);
-        await outbox.PublishDomainEvents(passwordRecoverToken);
+
+        await execute();
 
         return await unitOfWork.Commit();
     }

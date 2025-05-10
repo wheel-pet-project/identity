@@ -1,3 +1,4 @@
+using Core.Domain.AccountAggregate;
 using Core.Infrastructure.Interfaces.JwtProvider;
 using FluentResults;
 using MediatR;
@@ -9,11 +10,16 @@ public class AuthorizeAccountHandler(IJwtProvider jwtProvider)
 {
     public async Task<Result<AuthorizeAccountResponse>> Handle(AuthorizeAccountCommand command, CancellationToken _)
     {
-        var result = await jwtProvider.VerifyJwtAccessToken(command.AccessToken);
-        if (result.IsFailed) return Result.Fail(result.Errors);
-        var accountAuthData = result.Value;
+        var jwtVerifyingResult = await jwtProvider.VerifyJwtAccessToken(command.AccessToken);
+        if (jwtVerifyingResult.IsFailed) return Result.Fail(jwtVerifyingResult.Errors);
+        var accountAuthData = jwtVerifyingResult.Value;
 
-        return Result.Ok(new AuthorizeAccountResponse(
-            accountAuthData.accountId, accountAuthData.role, accountAuthData.status));
+        return MapToResponse(accountAuthData);
+    }
+
+    private AuthorizeAccountResponse MapToResponse((Guid accountId, Role role, Status status) accountAuthData)
+    {
+        return new AuthorizeAccountResponse(
+            accountAuthData.accountId, accountAuthData.role, accountAuthData.status);
     }
 }
