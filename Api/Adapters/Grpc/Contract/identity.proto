@@ -13,10 +13,9 @@ enum Role{
 }
 
 enum Status{
-  APPROVED_UNSPECIFIED = 0;
+  CONFIRMED_UNSPECIFIED = 0;
   PENDING_CONFIRMATION = 1;
-  PENDING_APPROVAL = 2;
-  DEACTIVATED = 3;
+  DEACTIVATED = 2;
 }
 
 service Identity {
