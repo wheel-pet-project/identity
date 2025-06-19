@@ -12,7 +12,8 @@ public class LoggingInterceptor(ILogger<LoggingInterceptor> logger) : Intercepto
     {
         logger.LogInformation("Start handling request with correlation id: {correlationId}",
             context.RequestHeaders
-                .FirstOrDefault(x => x.Key.Equals("X-Correlation-Id", StringComparison.InvariantCultureIgnoreCase))
+                .FirstOrDefault(x =>
+                    x.Key.Equals("X-Correlation-Id".ToLowerInvariant(), StringComparison.InvariantCultureIgnoreCase))
                 ?.Value ?? "_");
 
         var response = await continuation(request, context);

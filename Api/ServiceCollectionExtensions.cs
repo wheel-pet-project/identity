@@ -219,8 +219,7 @@ public static class ServiceCollectionExtensions
                     .AddGrpcCoreInstrumentation()
                     .AddAspNetCoreInstrumentation()
                     .AddNpgsql()
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault()
-                        .AddService("Identity"))
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Identity"))
                     .AddSource("Identity")
                     .AddSource("MassTransit")
                     .AddJaegerExporter();

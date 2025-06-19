@@ -15,6 +15,7 @@ public class TracingInterceptor : Interceptor
     {
         using var activity = _activitySource
             .StartActivity($"handling {request.GetType().Name}")!
+            // .SetParentId(context.RequestHeaders.FirstOrDefault(x => x.Key == "traceparent")?.Value!)
             .SetTag("correlation-id",
                 context.RequestHeaders.FirstOrDefault(x =>
                         x.Key.Equals("X-Correlation-Id", StringComparison.InvariantCultureIgnoreCase))

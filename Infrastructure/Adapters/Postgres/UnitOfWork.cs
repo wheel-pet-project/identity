@@ -12,8 +12,7 @@ public class UnitOfWork(
 {
     public async Task BeginTransaction()
     {
-        await retryPolicy.ExecuteAsync(async () =>
-            session.Transaction = await session.Connection.BeginTransactionAsync());
+        session.Transaction = await session.Connection.BeginTransactionAsync();
     }
 
     public async Task<Result> Commit()

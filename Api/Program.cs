@@ -19,6 +19,7 @@ public class Program
 
         // Extensions
         services
+            .RegisterTelemetry()
             .RegisterMediatrAndPipelines()
             .RegisterPostgresDataSource()
             .RegisterMassTransit()
@@ -34,8 +35,7 @@ public class Program
             .RegisterPasswordHasher()
             .RegisterRetryPolicies()
             .RegisterMapper()
-            .RegisterTimeProvider()
-            .RegisterTelemetry();
+            .RegisterTimeProvider();
 
 
         var app = builder.Build();

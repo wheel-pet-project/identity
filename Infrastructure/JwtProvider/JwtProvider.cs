@@ -43,7 +43,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         var jwtToken = CreateJwtToken(
             claims,
             signingCredentials,
-            TimeSpan.FromMinutes(_jwtOptions.RefreshTokenExpirationDays));
+            TimeSpan.FromDays(_jwtOptions.RefreshTokenExpirationDays));
 
         return new JwtSecurityTokenHandler().WriteToken(jwtToken);
     }
@@ -70,9 +70,9 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         if (validatingResult.IsFailed) return Result.Fail(validatingResult.Errors);
         var claims = validatingResult.Value;
 
-        var accountId = Guid.Parse(claims.First(c => c.Subject?.Name == "acc_id").Value.ToString());
-        var role = Role.FromId(int.Parse(claims.First(c => c.Subject?.Name == "role_id").Value.ToString()));
-        var status = Status.FromId(int.Parse(claims.First(c => c.Subject?.Name == "status_id").Value.ToString()));
+        var accountId = Guid.Parse(claims.First(c => c.Type == "acc_id").Value.ToString());
+        var role = Role.FromId(int.Parse(claims.First(c => c.Type == "role_id").Value.ToString()));
+        var status = Status.FromId(int.Parse(claims.First(c => c.Type == "status_id").Value.ToString()));
 
         return Result.Ok((accountId, role, status));
     }
@@ -83,7 +83,7 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
         if (validatingResult.IsFailed) return Result.Fail(validatingResult.Errors);
         var claims = validatingResult.Value;
 
-        var refreshTokenId = Guid.Parse(claims.First(c => c.Subject?.Name == "token_id").Value.ToString());
+        var refreshTokenId = Guid.Parse(claims.First(c => c.Type == "token_id").Value.ToString());
 
         return Result.Ok(refreshTokenId);
     }
@@ -103,11 +103,8 @@ public class JwtProvider(IOptions<JwtOptions> jwtOptions) : IJwtProvider
                 _jwtOptions.SecretKey))
         });
 
-        if (result.IsValid == false)
-            return Result.Fail("Invalid refresh token");
-        if (result.SecurityToken.ValidTo < DateTime.UtcNow)
-            return Result.Fail("Refresh token expired");
-
-        return result.ClaimsIdentity.Claims.ToArray();
+        return result.IsValid == false 
+            ? Result.Fail("Invalid token") 
+            : result.ClaimsIdentity.Claims.ToArray();
     }
 }

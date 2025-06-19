@@ -10,6 +10,8 @@ WORKDIR /src
 COPY ["Api/Api.csproj", "Api/"]
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 COPY ["Core/Core.csproj", "Core/"]
+RUN nuget source add -Name "gitlab-registry" -Source "" -UserName "UserVAR" -Password "PassVAR"
+RUN dotnet restore
 RUN dotnet restore "Api/Api.csproj"
 COPY . .
 WORKDIR "/src/Api"

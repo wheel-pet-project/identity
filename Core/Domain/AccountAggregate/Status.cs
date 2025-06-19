@@ -6,8 +6,8 @@ namespace Core.Domain.AccountAggregate;
 
 public sealed class Status : Entity<int>
 {
-    public static readonly Status Confirmed = new(1, nameof(Confirmed).ToLowerInvariant());
-    public static readonly Status PendingConfirmation = new(2, nameof(PendingConfirmation).ToLowerInvariant());
+    public static readonly Status PendingConfirmation = new(1, nameof(PendingConfirmation).ToLowerInvariant());
+    public static readonly Status Confirmed = new(2, nameof(Confirmed).ToLowerInvariant());
     public static readonly Status Deactivated = new(3, nameof(Deactivated).ToLowerInvariant());
     public static readonly Status Deleted = new(4, nameof(Deleted).ToLowerInvariant());
 

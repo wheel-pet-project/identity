@@ -1,215 +1,353 @@
 using Core.Domain.AccountAggregate;
 using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
 using Core.Domain.SharedKernel.Exceptions.PublicExceptions;
-using JetBrains.Annotations;
 using Xunit;
 
-namespace UnitTests.Core.Domain.AccountAggregate;
+namespace Core.Tests.Domain.AccountAggregate;
 
-[TestSubject(typeof(Status))]
-public class StatusShould
+public class StatusTests
 {
     [Fact]
-    public void FromNameMustReturnCorrectStatus()
+    public void Throw_exception_when_potential_status_is_null()
     {
         // Arrange
-        var name = Status.PendingConfirmation.Name;
+        var sut = Status.Confirmed;
 
-        // Act
-        var status = Status.FromName(name);
-
-        // Assert
-        Assert.Equal(Status.PendingConfirmation, status);
+        // Act & Assert
+        var exception = Assert.Throws<ValueIsRequiredException>(() => sut.CanBeChangedToThisStatus(null));
+        Assert.Contains("potentialStatus", exception.Message);
     }
 
     [Fact]
-    public void FromIdShouldReturnCorrectStatus()
+    public void Throw_exception_when_potential_status_is_same()
     {
         // Arrange
-        var statusId = Status.Confirmed.Id;
+        var sut = Status.Confirmed;
+
+        // Act & Assert
+        var exception = Assert.Throws<AlreadyHaveThisStateException>(() => sut.CanBeChangedToThisStatus(Status.Confirmed));
+        Assert.Contains("account already have this status", exception.Message);
+    }
+
+    [Fact]
+    public void Return_true_when_pending_confirmation_to_confirmed()
+    {
+        // Arrange
+        var sut = Status.PendingConfirmation;
 
         // Act
-        var role = Status.FromId(statusId);
+        var result = sut.CanBeChangedToThisStatus(Status.Confirmed);
 
         // Assert
-        Assert.Equal(Status.Confirmed, role);
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Return_true_when_confirmed_to_deactivated()
+    {
+        // Arrange
+        var sut = Status.Confirmed;
+
+        // Act
+        var result = sut.CanBeChangedToThisStatus(Status.Deactivated);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Return_true_when_deactivated_to_confirmed()
+    {
+        // Arrange
+        var sut = Status.Deactivated;
+
+        // Act
+        var result = sut.CanBeChangedToThisStatus(Status.Confirmed);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Return_true_when_any_status_to_deleted()
+    {
+        // Arrange & Act
+        var pendingToDeleted = Status.PendingConfirmation.CanBeChangedToThisStatus(Status.Deleted);
+        var confirmedToDeleted = Status.Confirmed.CanBeChangedToThisStatus(Status.Deleted);
+        var deactivatedToDeleted = Status.Deactivated.CanBeChangedToThisStatus(Status.Deleted);
+
+        // Assert
+        Assert.True(pendingToDeleted);
+        Assert.True(confirmedToDeleted);
+        Assert.True(deactivatedToDeleted);
+    }
+
+    [Fact]
+    public void Return_false_when_confirmed_to_pending_confirmation()
+    {
+        // Arrange
+        var sut = Status.Confirmed;
+
+        // Act
+        var result = sut.CanBeChangedToThisStatus(Status.PendingConfirmation);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_false_when_pending_confirmation_to_deactivated()
+    {
+        // Arrange
+        var sut = Status.PendingConfirmation;
+
+        // Act
+        var result = sut.CanBeChangedToThisStatus(Status.Deactivated);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_false_when_deleted_to_any_status()
+    {
+        // Arrange
+        var sut = Status.Deleted;
+
+        // Act
+        var deletedToPending = sut.CanBeChangedToThisStatus(Status.PendingConfirmation);
+        var deletedToConfirmed = sut.CanBeChangedToThisStatus(Status.Confirmed);
+        var deletedToDeactivated = sut.CanBeChangedToThisStatus(Status.Deactivated);
+
+        // Assert
+        Assert.False(deletedToPending);
+        Assert.False(deletedToConfirmed);
+        Assert.False(deletedToDeactivated);
+    }
+
+    [Fact]
+    public void Return_true_when_confirmed_status_can_authorize()
+    {
+        // Arrange
+        var sut = Status.Confirmed;
+
+        // Act
+        var result = sut.CanBeAuthorize();
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Return_false_when_pending_confirmation_status_cannot_authorize()
+    {
+        // Arrange
+        var sut = Status.PendingConfirmation;
+
+        // Act
+        var result = sut.CanBeAuthorize();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_false_when_deactivated_status_cannot_authorize()
+    {
+        // Arrange
+        var sut = Status.Deactivated;
+
+        // Act
+        var result = sut.CanBeAuthorize();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_false_when_deleted_status_cannot_authorize()
+    {
+        // Arrange
+        var sut = Status.Deleted;
+
+        // Act
+        var result = sut.CanBeAuthorize();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_all_statuses()
+    {
+        // Act
+        var result = Status.All().ToList();
+
+        // Assert
+        Assert.Equal(4, result.Count);
+        Assert.Contains(Status.Confirmed, result);
+        Assert.Contains(Status.PendingConfirmation, result);
+        Assert.Contains(Status.Deactivated, result);
+        Assert.Contains(Status.Deleted, result);
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(100)]
-    public void FromIdWhenIdIsInvalidMustThrowsValueIsRequiredException(int invalidRoleId)
+    [InlineData("confirmed")]
+    [InlineData("CONFIRMED")]
+    [InlineData("Confirmed")]
+    public void Return_status_when_name_exists_ignoring_case(string name)
     {
-        // Arrange
-
         // Act
-        void Act()
-        {
-            Status.FromId(invalidRoleId);
-        }
+        var result = Status.FromName(name);
 
         // Assert
-        Assert.Throws<ValueOutOfRangeException>(Act);
+        Assert.Equal(Status.Confirmed, result);
     }
 
     [Fact]
-    public void IsCanAuthorizeMustReturnTrueForPendingApprovalAndConfirmedStatuses()
+    public void Return_status_when_exact_name_exists()
     {
-        // Arrange
-        var pendingApprovalStatus = Status.Confirmed;
-        var confirmedStatus = Status.Confirmed;
-
         // Act
-        var pendingApprovalResult = pendingApprovalStatus.CanBeAuthorize();
-        var confirmedResult = confirmedStatus.CanBeAuthorize();
+        var result = Status.FromName("pendingconfirmation");
 
         // Assert
-        Assert.True(pendingApprovalResult);
-        Assert.True(confirmedResult);
+        Assert.Equal(Status.PendingConfirmation, result);
     }
 
     [Fact]
-    public void
-        IsCanAuthorizeShouldReturnFalseForAllStatusesExcludingPendingApprovalAndConfirmedStatuses()
+    public void Throw_exception_when_name_not_exists()
     {
-        // Arrange
-        var deactivated = Status.Deactivated;
-        var deleted = Status.Deleted;
-        var pendingConfirmation = Status.PendingConfirmation;
-
-        // Act
-        var deactivatedActualResult = deactivated.CanBeAuthorize();
-        var deletedActualResult = deleted.CanBeAuthorize();
-        var pendingConfirmationActualResult = pendingConfirmation.CanBeAuthorize();
-
-        // Assert
-        Assert.False(deactivatedActualResult);
-        Assert.False(deletedActualResult);
-        Assert.False(pendingConfirmationActualResult);
+        // Act & Assert
+        var exception = Assert.Throws<ValueOutOfRangeException>(() => Status.FromName("unknown"));
+        Assert.Contains("name", exception.Message);
     }
 
     [Fact]
-    public void CanBeChangedToThisStatusWhenPotentialStatusIsValidForDomainStateMachineMustReturnTrue()
+    public void Throw_exception_when_name_is_null()
     {
-        // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
-        var confirmed = Status.Confirmed;
-        var deactivated = Status.Deactivated;
-
-        // Act
-        var pendingConfirmationToConfirmedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Confirmed);
-        var confirmedToDeactivatedResult = confirmed.CanBeChangedToThisStatus(Status.Deactivated);
-        var deactivatedToDeletedResult = deactivated.CanBeChangedToThisStatus(Status.Deleted);
-        var confirmedToDeletedResult = confirmed.CanBeChangedToThisStatus(Status.Deleted);
-        var deactivatedToConfirmedResult = deactivated.CanBeChangedToThisStatus(Status.Confirmed);
-
-        // Assert
-        Assert.True(pendingConfirmationToConfirmedResult);
-        Assert.True(confirmedToDeactivatedResult);
-        Assert.True(deactivatedToDeletedResult);
-        Assert.True(confirmedToDeletedResult);
-        Assert.True(deactivatedToConfirmedResult);
+        // Act & Assert
+        var exception = Assert.Throws<ValueOutOfRangeException>(() => Status.FromName(null));
+        Assert.Contains("name", exception.Message);
     }
 
     [Fact]
-    public void CanBeChangedToThisStatusWhenPotentialStatusIsInvalidForDomainStateMachineMustReturnFalse()
+    public void Return_status_when_id_exists()
     {
-        // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
-        var confirmed = Status.Confirmed;
-        var deactivated = Status.Deactivated;
-
         // Act
-        var confirmedToPendingConfirmationResult = confirmed.CanBeChangedToThisStatus(Status.PendingConfirmation);
-        var pendingConfirmationToDeactivatedResult = pendingConfirmation.CanBeChangedToThisStatus(Status.Deactivated);
-        var deactivatedToPendingConfirmationResult = deactivated.CanBeChangedToThisStatus(Status.PendingConfirmation);
-
+        var result = Status.FromId(1);
 
         // Assert
-        Assert.False(confirmedToPendingConfirmationResult);
-        Assert.False(pendingConfirmationToDeactivatedResult);
-        Assert.False(deactivatedToPendingConfirmationResult);
+        Assert.Equal(Status.PendingConfirmation, result);
     }
 
     [Fact]
-    public void PotentialStatusIsEqualCurrentStatusMustThrowAlreadyHaveThisStateException()
+    public void Throw_exception_when_id_not_exists()
     {
-        // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
-
-        // Act
-        void Act()
-        {
-            pendingConfirmation.CanBeChangedToThisStatus(Status.PendingConfirmation);
-        }
-
-        // Assert
-        Assert.Throws<AlreadyHaveThisStateException>(Act);
+        // Act & Assert
+        var exception = Assert.Throws<ValueOutOfRangeException>(() => Status.FromId(999));
+        Assert.Contains("id", exception.Message);
     }
 
     [Fact]
-    public void CanBeChangedToThisStatusWhenPotentialStatusIsNullMustThrowsValueIsRequiredException()
+    public void Return_true_when_same_statuses_are_equal()
     {
         // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
+        var status1 = Status.Confirmed;
+        var status2 = Status.Confirmed;
 
         // Act
-        void Act()
-        {
-            pendingConfirmation.CanBeChangedToThisStatus(null);
-        }
-
-        // Assert
-        Assert.Throws<ValueIsRequiredException>(Act);
-    }
-
-    [Fact]
-    public void EqOperatorForIdenticalStatusesMustReturnTrue()
-    {
-        // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
-
-        // Act
-        var result = pendingConfirmation == Status.PendingConfirmation;
+        var result = status1 == status2;
 
         // Assert
         Assert.True(result);
     }
 
     [Fact]
-    public void EqOperatorForDifferentStatusesMustReturnFalse()
+    public void Return_false_when_different_statuses_are_not_equal()
     {
         // Arrange
-        var pendingConfirmation = Status.PendingConfirmation;
+        var status1 = Status.Confirmed;
+        var status2 = Status.PendingConfirmation;
 
         // Act
-        var result = pendingConfirmation == Status.Confirmed;
+        var result = status1 == status2;
 
         // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void NotEqOperatorForIdenticalStatusesMustReturnFalse()
+    public void Return_true_when_both_statuses_are_null()
     {
         // Arrange
+        Status status1 = null;
+        Status status2 = null;
 
         // Act
-        var result = Status.PendingConfirmation != Status.PendingConfirmation;
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
-    public void NotEqOperatorForDifferentStatusesMustReturnTrue()
-    {
-        // Arrange
-
-        // Act
-        var result = Status.PendingConfirmation != Status.Confirmed;
+        var result = status1 == status2;
 
         // Assert
         Assert.True(result);
+    }
+
+    [Fact]
+    public void Return_false_when_one_status_is_null()
+    {
+        // Arrange
+        var status1 = Status.Confirmed;
+        Status status2 = null;
+
+        // Act
+        var result1 = status1 == status2;
+        var result2 = status2 == status1;
+
+        // Assert
+        Assert.False(result1);
+        Assert.False(result2);
+    }
+
+    [Fact]
+    public void Return_false_when_same_statuses_are_not_not_equal()
+    {
+        // Arrange
+        var status1 = Status.Confirmed;
+        var status2 = Status.Confirmed;
+
+        // Act
+        var result = status1 != status2;
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Return_true_when_different_statuses_are_not_equal()
+    {
+        // Arrange
+        var status1 = Status.Confirmed;
+        var status2 = Status.PendingConfirmation;
+
+        // Act
+        var result = status1 != status2;
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Static_fields_have_correct_ids_and_names()
+    {
+        // Assert
+        Assert.Equal(1, Status.PendingConfirmation.Id);
+        Assert.Equal("pendingconfirmation", Status.PendingConfirmation.Name);
+        
+        Assert.Equal(2, Status.Confirmed.Id);
+        Assert.Equal("confirmed", Status.Confirmed.Name);
+        
+        Assert.Equal(3, Status.Deactivated.Id);
+        Assert.Equal("deactivated", Status.Deactivated.Name);
+        
+        Assert.Equal(4, Status.Deleted.Id);
+        Assert.Equal("deleted", Status.Deleted.Name);
     }
 }

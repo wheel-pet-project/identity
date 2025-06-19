@@ -61,8 +61,6 @@ public class OutboxBackgroundJob(
             await transaction.CommitAsync();
         }
 
-        return;
-
         async Task PublishToMediator(
             DomainEvent @event,
             ConcurrentQueue<EventUpdate> updateQueue,

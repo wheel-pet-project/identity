@@ -68,8 +68,7 @@ VALUES (1, 'customer'),
        (5, 'hr');
 
 INSERT INTO status (id, name)
-VALUES (1, 'approved'),
-       (2, 'pending confirmation'),
-       (3, 'pending approval'),
+VALUES (1, 'pending confirmation'),
+       (2, 'confirmed'),
        (4, 'deactivated'),
        (5, 'deleted');

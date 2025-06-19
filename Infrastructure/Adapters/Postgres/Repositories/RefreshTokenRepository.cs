@@ -22,14 +22,14 @@ public class RefreshTokenRepository(
 
     public async Task<RefreshToken?> GetNotRevokedToken(Guid refreshTokenId)
     {
-        var command = new CommandDefinition(GetNotRevokedSql, new { refreshTokenId }, session.Transaction);
+        var command = new CommandDefinition(GetNotRevokedSql, new { refreshTokenId });
         return await retryPolicy.ExecuteAsync(() => session.Connection
             .QuerySingleOrDefaultAsync<RefreshToken>(command));
     }
 
     public async Task<List<RefreshToken>> GetNotRevokedTokensByAccountId(Guid accountId)
     {
-        var command = new CommandDefinition(GetNotRevokedTokensByAccountIdSql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(GetNotRevokedTokensByAccountIdSql, new { accountId });
         var tokens =
             (await retryPolicy.ExecuteAsync(() => session.Connection.QueryAsync<RefreshToken>(command))).AsList();
 

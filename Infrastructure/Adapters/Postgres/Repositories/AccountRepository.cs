@@ -11,10 +11,9 @@ public class AccountRepository(
 {
     public async Task<Account?> GetById(Guid accountId, CancellationToken cancellationToken = default)
     {
-        var queryCommand = new CommandDefinition(GetByIdSql, new { accountId }, cancellationToken: cancellationToken,
-            transaction: session.Transaction);
+        var queryCommand = new CommandDefinition(GetByIdSql, new { accountId }, cancellationToken: cancellationToken);
 
-        var accounts = await retryPolicy.ExecuteAsync(async () =>
+        var accounts = (await retryPolicy.ExecuteAsync(async () =>
             await session.Connection.QueryAsync<Account, Role, Status, Account>(queryCommand,
                 (account, role, status) =>
                 {
@@ -26,18 +25,16 @@ public class AccountRepository(
                     statusField!.SetValue(account, Status.FromId(status.Id));
 
                     return account;
-                }));
-
-        var accountList = accounts.AsList().AsReadOnly();
-        return accountList.FirstOrDefault();
+                }))).AsList();
+        
+        return accounts.FirstOrDefault();
     }
 
     public async Task<Account?> GetByEmail(
         string email,
         CancellationToken cancellationToken = default)
     {
-        var queryCommand = new CommandDefinition(GetByEmailSql, new { email }, cancellationToken: cancellationToken,
-            transaction: session.Transaction);
+        var queryCommand = new CommandDefinition(GetByEmailSql, new { email }, cancellationToken: cancellationToken);
 
         var accounts = await retryPolicy.ExecuteAsync(async () =>
             await session.Connection.QueryAsync<Account, Role, Status, Account>(queryCommand,

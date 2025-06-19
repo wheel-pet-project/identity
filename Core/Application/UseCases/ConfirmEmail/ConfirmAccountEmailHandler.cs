@@ -21,13 +21,17 @@ public class ConfirmAccountEmailHandler(
         if (verifyingHashResult.IsFailed) return verifyingHashResult;
 
         var account = await accountRepository.GetById(command.AccountId, _);
-        if (account is null)
-            throw new DataConsistencyViolationException(
+        Console.WriteLine(account?.Email);
+        if (account == null) throw new DataConsistencyViolationException(
                 "Data consistency violation: account that couldn't be found has been confirmed");
 
         account.Confirm();
 
-        return await SaveInTransaction(async () => { await confirmationTokenRepository.Delete(command.AccountId); });
+        return await SaveInTransaction(async () =>
+        {
+            await accountRepository.UpdateStatus(account);
+            await confirmationTokenRepository.Delete(command.AccountId);
+        });
     }
 
     private async Task<Result> GetConfirmationTokenAndVerifyInpuHash(ConfirmAccountEmailCommand command)

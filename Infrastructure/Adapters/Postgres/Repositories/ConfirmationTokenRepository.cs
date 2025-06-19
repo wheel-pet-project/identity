@@ -19,7 +19,7 @@ public class ConfirmationTokenRepository(
 
     public async Task<ConfirmationToken?> Get(Guid accountId)
     {
-        var command = new CommandDefinition(GetSql, new { accountId }, session.Transaction);
+        var command = new CommandDefinition(GetSql, new { accountId });
 
         return await retryPolicy.ExecuteAsync(() =>
             session.Connection.QuerySingleOrDefaultAsync<ConfirmationToken>(command));

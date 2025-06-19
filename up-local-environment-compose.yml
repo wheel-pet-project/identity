@@ -2,7 +2,7 @@
   
   # Database  
   c-identity-db:
-    image: postgres:latest
+    image: postgres:17.5
     container_name: c-identity-db
     restart: on-failure
     environment:
