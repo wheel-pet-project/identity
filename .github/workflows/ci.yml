@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore Identity.sln
+      
+    - name: Build solution
+      run: dotnet build Identity.sln --no-restore --configuration Release
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          src/**/bin/Release/
+          src/**/obj/Release/
+        retention-days: 1
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore Identity.sln
+      
+    - name: Run unit tests
+      run: dotnet test tests/UnitTests/UnitTests.csproj --no-restore --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage/unit-tests
+      
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results
+        path: coverage/unit-tests
+        retention-days: 7
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: identity_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore Identity.sln
+      
+    - name: Wait for PostgreSQL
+      run: |
+        until pg_isready -h localhost -p 5432 -U postgres; do
+          echo "Waiting for PostgreSQL to be ready..."
+          sleep 2
+        done
+        
+    - name: Setup database schema
+      run: |
+        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d identity_test -f tests/IntegrationTests/db.sql
+      env:
+        PGPASSWORD: postgres
+        
+    - name: Run integration tests
+      run: dotnet test tests/IntegrationTests/IntegrationTests.csproj --no-restore --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage/integration-tests
+      env:
+        POSTGRES_CONNECTION_STRING: "Host=localhost;Port=5432;Database=identity_test;Username=postgres;Password=postgres"
+        
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results
+        path: coverage/integration-tests
+        retention-days: 7
