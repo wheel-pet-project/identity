@@ -1,23 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{82A282B0-ED0F-40C4-B889-40F3D88B6B67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{82A282B0-ED0F-40C4-B889-40F3D88B6B67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{D7EC679B-C55C-45E6-8410-8700CA1693AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "src\Api\Api.csproj", "{D7EC679B-C55C-45E6-8410-8700CA1693AD}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{436A0199-80F4-4E5A-9C9E-AE7B2D0A2D27}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{436A0199-80F4-4E5A-9C9E-AE7B2D0A2D27}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C2B99048-45D4-40BC-84B8-D15D96326793}"
 	ProjectSection(SolutionItems) = preProject
 		up-local-environment-compose.yml = up-local-environment-compose.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{07F222FD-53BA-4DCF-8B13-A29822B15A2B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "src\Core\Core.csproj", "{07F222FD-53BA-4DCF-8B13-A29822B15A2B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{6B7DD9BE-7FBC-4132-9A0E-1C7F0AB011C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "tests\UnitTests\UnitTests.csproj", "{6B7DD9BE-7FBC-4132-9A0E-1C7F0AB011C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{7038351E-1C7D-4B95-9868-26BA751119E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{7038351E-1C7D-4B95-9868-26BA751119E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTests", "FunctionalTests\FunctionalTests.csproj", "{01F3F27F-7AA6-4585-A422-F1FA2CBC4A75}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalTests", "tests\FunctionalTests\FunctionalTests.csproj", "{01F3F27F-7AA6-4585-A422-F1FA2CBC4A75}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{D9142ABB-EFD0-4A5A-93A2-72ED31D7538C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,5 +56,8 @@ Global
 		{6B7DD9BE-7FBC-4132-9A0E-1C7F0AB011C7} = {436A0199-80F4-4E5A-9C9E-AE7B2D0A2D27}
 		{7038351E-1C7D-4B95-9868-26BA751119E6} = {436A0199-80F4-4E5A-9C9E-AE7B2D0A2D27}
 		{01F3F27F-7AA6-4585-A422-F1FA2CBC4A75} = {436A0199-80F4-4E5A-9C9E-AE7B2D0A2D27}
+		{D7EC679B-C55C-45E6-8410-8700CA1693AD} = {D9142ABB-EFD0-4A5A-93A2-72ED31D7538C}
+		{07F222FD-53BA-4DCF-8B13-A29822B15A2B} = {D9142ABB-EFD0-4A5A-93A2-72ED31D7538C}
+		{82A282B0-ED0F-40C4-B889-40F3D88B6B67} = {D9142ABB-EFD0-4A5A-93A2-72ED31D7538C}
 	EndGlobalSection
 EndGlobal
