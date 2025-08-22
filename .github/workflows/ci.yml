@@ -76,11 +76,10 @@ jobs:
     
     env:
       DOTNET_VERSION: '8.0.x'
-      POSTGRES_VERSION: '15'
     
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:15
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
