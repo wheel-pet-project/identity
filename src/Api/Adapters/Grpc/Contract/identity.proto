@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proto.IdentityV1";
+
+package identity.v1;
+
+enum Role{
+  CUSTOMER_UNSPECIFIED = 0;
+  ADMIN = 1;
+  SUPPORT = 2;
+  MAINTENANCE = 3;
+  HR = 4;
+}
+
+enum Status{
+  CONFIRMED_UNSPECIFIED = 0;
+  PENDING_CONFIRMATION = 1;
+  DEACTIVATED = 2;
+}
+
+service Identity {
+  rpc CreateAccount (CreateRequest) returns (CreateResponse);
+  rpc Authorize (AuthorizeRequest) returns (AuthorizeResponse);
+  rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
+  rpc ConfirmEmail (ConfirmEmailRequest) returns (ConfirmEmailResponse);
+  rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse);
+  rpc RecoverPassword (RecoverPasswordRequest) returns (RecoverPasswordResponse);
+  rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse);
+}
+
+
+// Authorize account
+message AuthorizeRequest {
+  string tkn = 1;
+}
+message AuthorizeResponse {
+  string acc_id = 2;
+  Role role = 3;
+  Status status = 4;
+}
+
+
+// Authenticate account
+message AuthenticateRequest{
+  string email = 1;
+  string pass = 2;
+}
+message AuthenticateResponse{
+  string tkn = 1;
+  string refresh_tkn = 2;
+}
+
+
+// Create account
+message CreateRequest{
+  Role role = 1;
+  string email = 2;
+  string phone = 3;
+  string pass = 4;
+}
+message CreateResponse{
+  string acc_id = 1;
+}
+
+
+// Confirm email
+message ConfirmEmailRequest{
+  string acc_id = 1;
+  string confirmation_tkn = 2;
+}
+message ConfirmEmailResponse{
+} 
+
+
+// Refresh access token
+message RefreshAccessTokenRequest{
+  string refresh_tkn = 1;
+}
+message RefreshAccessTokenResponse{
+  string tkn = 1;
+  string refresh_tkn = 2;
+}
+
+
+// Recover password
+message RecoverPasswordRequest{
+  string email = 1;
+}
+message RecoverPasswordResponse{}
+
+
+// Update Password
+message UpdatePasswordRequest{
+  string new_pass = 1;
+  string email = 2;
+  string reset_tkn = 3;
+}
+message UpdatePasswordResponse{}
+
+

@@ -1,0 +1,201 @@
+using Core.Application.UseCases.RefreshAccessToken;
+using Core.Domain.AccountAggregate;
+using Core.Domain.RefreshTokenAggregate;
+using Core.Domain.SharedKernel.Exceptions.InternalExceptions;
+using Core.Infrastructure.Interfaces.JwtProvider;
+using Core.Ports.Postgres;
+using Core.Ports.Postgres.Repositories;
+using FluentResults;
+using Moq;
+using Xunit;
+
+namespace UnitTests.Core.Application.UseCases;
+
+public class RefreshAccessTokenUseCaseShould
+{
+    private readonly RefreshAccountAccessTokenCommand _command = new("jwt_refresh_token");
+    private const string ExpectedJwtAccessToken = "new_jwt_access_token";
+    private const string ExpectedJwtRefreshToken = "new_jwt_refresh_token";
+
+    private readonly Account _account =
+        Account.Create(Role.Customer, "test@test.com", "+79008007060", new string('*', 60), Guid.NewGuid());
+
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
+
+
+    [Fact]
+    public async Task ReturnSuccessForCorrectRequest()
+    {
+        // Arrange
+        _account.Confirm();
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_command, default);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equivalent(new RefreshAccountAccessTokenResponse(ExpectedJwtAccessToken, ExpectedJwtRefreshToken),
+            result.Value);
+    }
+
+    [Fact]
+    public async Task ReturnCorrectErrorIfVerifyingJwtRefreshTokenFails()
+    {
+        // Arrange
+        _account.Confirm();
+        var expectedError = new Error("expected error");
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureJwtProvider(Result.Fail(expectedError));
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_command, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+        Assert.Equal(expectedError, result.Errors.First());
+    }
+
+    [Fact]
+    public async Task ReturnFailedResultIfGetRefreshTokenReturnsNull()
+    {
+        // Arrange
+        _account.Confirm();
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureRefreshTokenRepository(null);
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_command, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task ThrowsDataConsistencyViolationExceptionIfGetByIdReturnNotFoundError()
+    {
+        // Arrange
+        _account.Confirm();
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureAccountRepository(null);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        async Task Act()
+        {
+            await useCase.Handle(_command, default);
+        }
+
+        // Assert
+        await Assert.ThrowsAsync<DataConsistencyViolationException>(Act);
+    }
+
+    [Fact]
+    public async Task ReturnFailedResultIfAccountCannotBeAuthenticated()
+    {
+        // Arrange
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(It.IsAny<Guid>()));
+        useCaseBuilder.ConfigureUnitOfWork(Result.Ok());
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_command, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+
+
+    [Fact]
+    public async Task ReturnCorrectErrorIfTransactionFails()
+    {
+        // Arrange
+        _account.Confirm();
+        var expectedError = new Error("expected error");
+        var refreshToken = RefreshToken.Create(_account, _timeProvider);
+
+        var useCaseBuilder = new UseCaseBuilder();
+        useCaseBuilder.ConfigureAccountRepository(_account);
+        useCaseBuilder.ConfigureRefreshTokenRepository(refreshToken);
+        useCaseBuilder.ConfigureJwtProvider(Result.Ok(refreshToken.Id),
+            ExpectedJwtAccessToken,
+            ExpectedJwtRefreshToken);
+        useCaseBuilder.ConfigureUnitOfWork(Result.Fail(expectedError));
+        var useCase = useCaseBuilder.Build();
+
+        // Act
+        var result = await useCase.Handle(_command, default);
+
+        // Assert
+        Assert.True(result.IsFailed);
+        Assert.Equivalent(expectedError, result.Errors.First());
+    }
+
+    private class UseCaseBuilder
+    {
+        private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
+        private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
+        private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+        private readonly Mock<IJwtProvider> _jwtProviderMock = new();
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
+
+        public RefreshAccountAccessTokenHandler Build()
+        {
+            return new RefreshAccountAccessTokenHandler(_accountRepositoryMock.Object,
+                _refreshTokenRepositoryMock.Object, _jwtProviderMock.Object,
+                _unitOfWorkMock.Object, _timeProvider);
+        }
+
+        public void ConfigureAccountRepository(Account getByIdShouldReturn)
+        {
+            _accountRepositoryMock.Setup(x => x.GetById(It.IsAny<Guid>(), default)).ReturnsAsync(getByIdShouldReturn);
+        }
+
+        public void ConfigureRefreshTokenRepository(RefreshToken getRefreshTokenInfoShouldReturn)
+        {
+            _refreshTokenRepositoryMock.Setup(x => x.GetNotRevokedToken(It.IsAny<Guid>()))
+                .ReturnsAsync(getRefreshTokenInfoShouldReturn);
+            _refreshTokenRepositoryMock
+                .Setup(x => x.AddTokenAndRevokeOldToken(It.IsAny<RefreshToken>(), It.IsAny<RefreshToken>()));
+        }
+
+        public void ConfigureUnitOfWork(Result commitShouldReturn)
+        {
+            _unitOfWorkMock.Setup(x => x.Commit()).ReturnsAsync(commitShouldReturn);
+        }
+
+        public void ConfigureJwtProvider(
+            Result<Guid> verifyJwtRefreshTokenShouldReturn,
+            string generateJwtAccessTokenShouldReturn = ExpectedJwtAccessToken,
+            string generateJwtRefreshTokenShouldReturn = ExpectedJwtRefreshToken)
+        {
+            _jwtProviderMock.Setup(x => x.VerifyJwtRefreshToken(It.IsAny<string>()))
+                .ReturnsAsync(verifyJwtRefreshTokenShouldReturn);
+            _jwtProviderMock.Setup(x => x.GenerateJwtAccessToken(It.IsAny<Account>()))
+                .Returns(generateJwtAccessTokenShouldReturn);
+            _jwtProviderMock.Setup(x => x.GenerateJwtRefreshToken(It.IsAny<RefreshToken>()))
+                .Returns(generateJwtRefreshTokenShouldReturn);
+        }
+    }
+}

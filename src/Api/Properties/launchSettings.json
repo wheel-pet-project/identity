@@ -1,0 +1,45 @@
+﻿{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:6000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5410",
+        "POSTGRES_DB": "identity_db",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "password",
+        "BOOTSTRAP_SERVERS": "localhost:9092",
+        "MONGO_CONNECTION_STRING": "mongodb://carsharing:12s56daw4gby@localhost:27017/identity?authSource=admin",
+        "JWT_SECRET_KEY": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
+        "JWT_ISSUER": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
+        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "15",
+        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "21"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:6001;http://localhost:6000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5410",
+        "POSTGRES_DB": "identity_db",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "password",
+        "BOOTSTRAP_SERVERS": "localhost:9092",
+        "MONGO_CONNECTION_STRING": "mongodb://carsharing:12s56daw4gby@localhost:27017/identity?authSource=admin",
+        "JWT_SECRET_KEY": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
+        "JWT_ISSUER": "obz)1M@TKw{UJrI–xvf:})<}3<VMdk}#R<KD;GG6tp$?CnM^UхI[c^bLG$V}&VEa",
+        "JWT_ACCESS_TOKEN_EXPIRATION_MINUTES": "15",
+        "JWT_REFRESH_TOKEN_EXPIRATION_DAYS": "21"
+      }
+    }
+  }
+}
